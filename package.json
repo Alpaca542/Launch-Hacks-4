@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "firebase-tools": "^14.9.0"
+  },
+  "dependencies": {
+    "groq-sdk": "^0.26.0"
   }
 }

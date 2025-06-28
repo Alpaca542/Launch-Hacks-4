@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -20,9 +20,25 @@ const nodeTypes = {
 };
 
 function App() {
-    const [connectionNodeId, setConnectionNodeId] = useState(null);
-    const [connectionHandleId, setConnectionHandleId] = useState(null);
-    const [connectionHandleType, setConnectionHandleType] = useState(null);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Use the correct Firebase function URL with updated CORS
+                const response = await fetch(
+                    "https://groqchat-zm2y2mo6eq-uc.a.run.app?message=hey"
+                );
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log(data);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        };
+        console.log("Fetching data from GroqChat function...");
+        fetchData();
+    }, []);
 
     const initialNodes = [
         {
@@ -118,21 +134,6 @@ function App() {
         [setEdges]
     );
 
-    const onConnectStart = useCallback(
-        (_, { nodeId, handleId, handleType }) => {
-            setConnectionNodeId(nodeId);
-            setConnectionHandleId(handleId);
-            setConnectionHandleType(handleType);
-        },
-        []
-    );
-
-    const onConnectEnd = useCallback(() => {
-        setConnectionNodeId(null);
-        setConnectionHandleId(null);
-        setConnectionHandleType(null);
-    }, []);
-
     return (
         <div style={{ width: "100vw", height: "100vh" }}>
             <ReactFlow
@@ -141,8 +142,6 @@ function App() {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                onConnectStart={onConnectStart}
-                onConnectEnd={onConnectEnd}
                 nodeTypes={nodeTypes}
                 connectionMode={ConnectionMode.Loose}
                 fitView

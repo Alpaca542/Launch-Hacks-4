@@ -1,0 +1,60 @@
+/* eslint-disable */
+import * as v2 from "firebase-functions/v2";
+import Groq from "groq-sdk";
+
+const groq = new Groq({
+    apiKey: "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",
+});
+
+export const groqChat = v2.https.onRequest(
+    {
+        cors: true,
+        invoker: "public",
+        timeoutSeconds: 60,
+        memory: "256MiB",
+    },
+    async (req, res) => {
+        try {
+            // Set CORS headers explicitly for all requests
+            res.set("Access-Control-Allow-Origin", "*");
+            res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            res.set("Access-Control-Max-Age", "86400");
+
+            // Handle preflight requests
+            if (req.method === "OPTIONS") {
+                res.status(200).end();
+                return;
+            }
+
+            console.log("Request received:", req.method, req.url);
+            console.log("Headers:", req.headers);
+
+            // Parse URL and extract message from query parameters
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            const message =
+                url.searchParams.get("message") || req.body?.message;
+
+            console.log("Extracted message:", message);
+
+            if (!message) {
+                res.status(400).json({ error: "Message is required" });
+                return;
+            }
+
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [{ role: "user", content: message }],
+                model: "llama3-8b-8192",
+            });
+
+            res.json({
+                response:
+                    chatCompletion.choices[0]?.message?.content ||
+                    "No response generated",
+            });
+        } catch (error) {
+            console.error("Error:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+    }
+);
