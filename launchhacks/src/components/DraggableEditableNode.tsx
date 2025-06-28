@@ -2,12 +2,21 @@ import { useState } from "react";
 import { Handle, Position } from "reactflow";
 import "./EditableNode.css";
 
-function DraggableEditableNode({ data, id }) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [text, setText] = useState(data.label || "Draggable Node");
-    const [showTooltip, setShowTooltip] = useState(false);
+interface NodeData {
+    label?: string;
+}
 
-    const handleClick = (e) => {
+interface DraggableEditableNodeProps {
+    data: NodeData;
+    id: string;
+}
+
+function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [text, setText] = useState<string>(data.label || "Draggable Node");
+    const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
+    const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsEditing(true);
     };
@@ -17,11 +26,11 @@ function DraggableEditableNode({ data, id }) {
         console.log("Draggable node text changed to:", text);
     };
 
-    const handleInputClick = (e) => {
+    const handleInputClick = (e: React.MouseEvent) => {
         e.stopPropagation();
     };
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: React.KeyboardEvent) => {
         e.stopPropagation();
         if (e.key === "Enter") {
             handleSave();

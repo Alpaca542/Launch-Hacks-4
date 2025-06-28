@@ -1,7 +1,21 @@
 import React from "react";
 
-const NotificationItem = ({ notification, onRemove }) => {
-    const getIcon = (type) => {
+interface Notification {
+    id: string;
+    type: "success" | "error" | "warning" | "info";
+    message: string;
+}
+
+interface NotificationItemProps {
+    notification: Notification;
+    onRemove: (id: string) => void;
+}
+
+const NotificationItem: React.FC<NotificationItemProps> = ({
+    notification,
+    onRemove,
+}) => {
+    const getIcon = (type: Notification["type"]): string => {
         switch (type) {
             case "success":
                 return "✅";
@@ -36,7 +50,15 @@ const NotificationItem = ({ notification, onRemove }) => {
     );
 };
 
-const NotificationContainer = ({ notifications, onRemove }) => {
+interface NotificationContainerProps {
+    notifications: Notification[];
+    onRemove: (id: string) => void;
+}
+
+const NotificationContainer: React.FC<NotificationContainerProps> = ({
+    notifications,
+    onRemove,
+}) => {
     if (notifications.length === 0) return null;
 
     return (

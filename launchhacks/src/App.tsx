@@ -60,12 +60,12 @@ function App() {
     } = useBoardManagement(user, { showSuccess, showError, showInfo });
 
     // Keyboard shortcuts
-    useKeyboardShortcuts(
+    useKeyboardShortcuts({
         allBoards,
         currentBoard,
         createNewBoard,
-        switchToBoard
-    );
+        switchToBoard,
+    });
 
     // Handle sign out with state cleanup
     const handleSignOut = async () => {
@@ -95,7 +95,10 @@ function App() {
                 allBoards={allBoards}
                 currentBoard={currentBoard}
                 onSwitchBoard={switchToBoard}
-                onCreateBoard={createNewBoard}
+                onCreateBoard={() => {
+                    createNewBoard();
+                    return Promise.resolve();
+                }}
                 onDeleteBoard={deleteBoard}
                 onSignOut={handleSignOut}
                 isLoading={isSwitchingBoard}

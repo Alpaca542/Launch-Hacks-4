@@ -2,7 +2,19 @@ import { useState, useEffect } from "react";
 import { Handle, Position } from "reactflow";
 import "./EditableNode.css";
 
-function TopBar({ name, onSetName, user, isSaving }) {
+interface User {
+    isAnonymous?: boolean;
+    email?: string | null;
+}
+
+interface TopBarProps {
+    name: string;
+    onSetName: (name: string) => void;
+    user: User | null;
+    isSaving: boolean;
+}
+
+function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
@@ -11,7 +23,7 @@ function TopBar({ name, onSetName, user, isSaving }) {
         setEditedName(name || "");
     }, [name]);
 
-    const handleKeyPress = (event) => {
+    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
             onSetName(editedName);
             setEdit(false);
