@@ -7,6 +7,7 @@ import {
     onAuthStateChanged,
     User,
 } from "firebase/auth";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../utils/constants";
 
 function AuthWindow({ onAuthed }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,12 +39,50 @@ function AuthWindow({ onAuthed }) {
         setError("");
 
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            onAuthed(auth.currentUser);
+            // Validate inputs
+            if (!email || !password) {
+                throw new Error("Please fill in all fields");
+            }
+
+            // Enhanced email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
+            }
+
+            if (password.length < 6) {
+                throw new Error(ERROR_MESSAGES.WEAK_PASSWORD);
+            }
+
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+            onAuthed(userCredential.user);
         } catch (error) {
-            setError(error.message);
+            console.error("Sign up error:", error);
+
+            // Handle specific Firebase auth errors
+            let errorMessage = "Failed to create account";
+
+            if (error.code === "auth/email-already-in-use") {
+                errorMessage = ERROR_MESSAGES.EMAIL_IN_USE;
+            } else if (error.code === "auth/invalid-email") {
+                errorMessage = ERROR_MESSAGES.INVALID_EMAIL;
+            } else if (error.code === "auth/weak-password") {
+                errorMessage = ERROR_MESSAGES.WEAK_PASSWORD;
+            } else if (error.code === "auth/operation-not-allowed") {
+                errorMessage =
+                    "Email/password accounts are not enabled. Please contact support.";
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleSignIn = async (e) => {
@@ -52,12 +91,48 @@ function AuthWindow({ onAuthed }) {
         setError("");
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            onAuthed(auth.currentUser);
+            // Validate inputs
+            if (!email || !password) {
+                throw new Error("Please fill in all fields");
+            }
+
+            // Enhanced email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
+            }
+
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+            onAuthed(userCredential.user);
         } catch (error) {
-            setError(error.message);
+            console.error("Sign in error:", error);
+
+            // Handle specific Firebase auth errors
+            let errorMessage = "Failed to sign in";
+
+            if (error.code === "auth/user-not-found") {
+                errorMessage = ERROR_MESSAGES.USER_NOT_FOUND;
+            } else if (error.code === "auth/wrong-password") {
+                errorMessage = ERROR_MESSAGES.WRONG_PASSWORD;
+            } else if (error.code === "auth/invalid-email") {
+                errorMessage = ERROR_MESSAGES.INVALID_EMAIL;
+            } else if (error.code === "auth/user-disabled") {
+                errorMessage =
+                    "This account has been disabled. Please contact support.";
+            } else if (error.code === "auth/too-many-requests") {
+                errorMessage = ERROR_MESSAGES.TOO_MANY_REQUESTS;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleSignOut = async () => {

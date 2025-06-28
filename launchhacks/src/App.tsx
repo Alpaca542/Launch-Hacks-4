@@ -1,0 +1,137 @@
+import React, { useCallback } from "react";
+import ReactFlow, {
+    Background,
+    Controls,
+    MiniMap,
+    addEdge,
+    ConnectionMode,
+    Connection,
+    Edge,
+    BackgroundVariant,
+    EdgeChange,
+} from "reactflow";
+import "reactflow/dist/style.css";
+import "./App.css";
+
+// Components
+import AuthWindow from "./components/AuthWindow";
+import SideBar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
+import NotificationContainer from "./components/NotificationContainer";
+
+// Hooks
+import { useAuth } from "./hooks/useAuth";
+import { useBoardManagement } from "./hooks/useBoardManagement";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useNotifications } from "./hooks/useNotifications";
+
+// Configuration
+import { nodeTypes } from "./config/nodeTypes";
+
+function App() {
+    // Authentication
+    const { user, signOut, onAuthed } = useAuth();
+
+    // Notifications
+    const {
+        notifications,
+        removeNotification,
+        showSuccess,
+        showError,
+        showInfo,
+    } = useNotifications();
+
+    // Board Management
+    const {
+        nodes,
+        edges,
+        allBoards,
+        currentBoard,
+        isLoading,
+        isSwitchingBoard,
+        isSaving,
+        onNodesChange,
+        onEdgesChange,
+        switchToBoard,
+        createNewBoard,
+        deleteBoard,
+        updateBoardName,
+        clearBoardState,
+    } = useBoardManagement(user, { showSuccess, showError, showInfo });
+
+    // Keyboard shortcuts
+    useKeyboardShortcuts(
+        allBoards,
+        currentBoard,
+        createNewBoard,
+        switchToBoard
+    );
+
+    // Handle sign out with state cleanup
+    const handleSignOut = async () => {
+        await signOut();
+        clearBoardState();
+    };
+
+    // ReactFlow connection handler
+    const onConnect = useCallback(
+        (params: Connection) => {
+            const newEdges = addEdge(params, edges);
+            // @ts-ignore - ReactFlow type mismatch
+            onEdgesChange([{ type: "reset", items: newEdges }]);
+        },
+        [onEdgesChange, edges]
+    );
+
+    // Render authentication screen if not logged in
+    if (!user) {
+        return <AuthWindow onAuthed={onAuthed} />;
+    }
+
+    // Main application interface
+    return (
+        <>
+            <SideBar
+                allBoards={allBoards}
+                currentBoard={currentBoard}
+                onSwitchBoard={switchToBoard}
+                onCreateBoard={createNewBoard}
+                onDeleteBoard={deleteBoard}
+                onSignOut={handleSignOut}
+                isLoading={isSwitchingBoard}
+            />
+            <TopBar
+                name={currentBoard?.name || "Loading..."}
+                onSetName={updateBoardName}
+                user={user}
+                isSaving={isSaving}
+            />
+            <NotificationContainer
+                notifications={notifications}
+                onRemove={removeNotification}
+            />
+            <div style={{ width: "100vw", height: "100vh" }}>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    connectionMode={ConnectionMode.Loose}
+                    fitView
+                >
+                    <Controls />
+                    <MiniMap />
+                    <Background
+                        variant={BackgroundVariant.Dots}
+                        gap={12}
+                        size={1}
+                    />
+                </ReactFlow>
+            </div>
+        </>
+    );
+}
+
+export default App;
