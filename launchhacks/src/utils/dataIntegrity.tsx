@@ -1,6 +1,3 @@
-// Data integrity and validation utilities
-import { COLLECTIONS } from "./constants";
-
 // Type definitions
 export interface ValidationResult {
     isValid: boolean;

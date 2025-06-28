@@ -37,7 +37,7 @@ export const testFirestoreConnection = async (
         console.log("Documents in collection:", snapshot.size);
 
         return { success: true, message: "Firestore connection working" };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Firestore connection test failed:", error);
         return {
             success: false,

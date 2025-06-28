@@ -128,7 +128,7 @@ export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
 
         console.log("Fetched all boards:", boards);
         return boards;
-    } catch (err) {
+    } catch (err: any) {
         console.error("Fetch all boards error:", err);
 
         // Handle specific Firestore index error
@@ -348,7 +348,7 @@ export const createBoard = async (
         await setDoc(doc(db, COLLECTIONS.BOARDS, newBoard.id), newBoard);
         console.log("Board created successfully:", newBoard);
         return newBoard;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating new board:", error);
 
         // Handle specific Firestore errors
@@ -374,7 +374,7 @@ export const deleteBoard = async (boardId: string): Promise<void> => {
     try {
         await deleteDoc(doc(db, COLLECTIONS.BOARDS, boardId));
         console.log("Board deleted successfully");
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting board:", error);
         if (error.code === "permission-denied") {
             throw new Error("Permission denied. Cannot delete this board.");

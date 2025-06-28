@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db, auth } from "../firebase";
+import { auth } from "../firebase";
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -7,9 +7,13 @@ import {
     onAuthStateChanged,
     User,
 } from "firebase/auth";
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../utils/constants";
+import { ERROR_MESSAGES } from "../utils/constants";
 
-function AuthWindow({ onAuthed }) {
+interface AuthWindowProps {
+    onAuthed: (user: User) => void;
+}
+
+function AuthWindow({ onAuthed }: AuthWindowProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<User | null>(null);
     const [email, setEmail] = useState("");
@@ -22,7 +26,7 @@ function AuthWindow({ onAuthed }) {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setIsAuthenticated(true);
-                onAuthed(auth.currentUser);
+                onAuthed(user);
                 setUser(user);
             } else {
                 setIsAuthenticated(false);
@@ -33,7 +37,7 @@ function AuthWindow({ onAuthed }) {
         return () => unsubscribe();
     }, [onAuthed]);
 
-    const handleSignUp = async (e) => {
+    const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
@@ -60,7 +64,7 @@ function AuthWindow({ onAuthed }) {
                 password
             );
             onAuthed(userCredential.user);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Sign up error:", error);
 
             // Handle specific Firebase auth errors
@@ -85,7 +89,7 @@ function AuthWindow({ onAuthed }) {
         }
     };
 
-    const handleSignIn = async (e) => {
+    const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
@@ -108,7 +112,7 @@ function AuthWindow({ onAuthed }) {
                 password
             );
             onAuthed(userCredential.user);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Sign in error:", error);
 
             // Handle specific Firebase auth errors
@@ -138,7 +142,7 @@ function AuthWindow({ onAuthed }) {
     const handleSignOut = async () => {
         try {
             await signOut(auth);
-        } catch (error) {
+        } catch (error: any) {
             setError(error.message);
         }
     };

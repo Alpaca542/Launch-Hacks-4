@@ -16,11 +16,6 @@ import {
     NodeData,
     EdgeData,
 } from "../services/boardService";
-import {
-    testFirestoreConnection,
-    logUserPermissions,
-} from "../utils/debugHelpers";
-import { performDataIntegrityCheck } from "../utils/dataIntegrity";
 import { UseNotificationsReturn } from "./useNotifications";
 
 // Type definitions
@@ -215,7 +210,7 @@ export const useBoardManagement = (
 
     // Switch to board
     const switchToBoard = useCallback(
-        async (boardId) => {
+        async (boardId: string) => {
             try {
                 // Don't switch to the same board
                 if (currentBoard?.id === boardId) {
@@ -362,7 +357,7 @@ export const useBoardManagement = (
                 }
                 return null;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating new board:", error);
             if (showError) {
                 showError(`Failed to create board: ${error.message}`);
@@ -382,7 +377,7 @@ export const useBoardManagement = (
 
     // Delete board
     const deleteBoard = useCallback(
-        async (boardId) => {
+        async (boardId: string) => {
             try {
                 if (allBoards.length <= 1) {
                     if (showError) {
@@ -446,7 +441,7 @@ export const useBoardManagement = (
 
     // Update board name
     const updateBoardName = useCallback(
-        async (name) => {
+        async (name: string) => {
             if (currentBoard && currentBoard.name !== name) {
                 const updatedBoard = {
                     ...currentBoard,
