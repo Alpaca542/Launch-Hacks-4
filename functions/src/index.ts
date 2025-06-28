@@ -9,33 +9,33 @@ const groq = new Groq({
 export const groqChat = v2.https.onRequest(
     {
         cors: true,
-        invoker: "public",
         timeoutSeconds: 60,
         memory: "256MiB",
     },
     async (req, res) => {
         try {
-            // Set CORS headers explicitly for all requests
+            // Enable CORS for all origins - more comprehensive headers
             res.set("Access-Control-Allow-Origin", "*");
-            res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            res.set("Access-Control-Max-Age", "86400");
+            res.set(
+                "Access-Control-Allow-Methods",
+                "GET, POST, OPTIONS, PUT, DELETE"
+            );
+            res.set(
+                "Access-Control-Allow-Headers",
+                "Content-Type, Authorization, X-Requested-With"
+            );
+            res.set("Access-Control-Max-Age", "3600");
 
             // Handle preflight requests
             if (req.method === "OPTIONS") {
-                res.status(200).end();
+                res.status(204).send("");
                 return;
             }
-
-            console.log("Request received:", req.method, req.url);
-            console.log("Headers:", req.headers);
 
             // Parse URL and extract message from query parameters
             const url = new URL(req.url, `http://${req.headers.host}`);
             const message =
                 url.searchParams.get("message") || req.body?.message;
-
-            console.log("Extracted message:", message);
 
             if (!message) {
                 res.status(400).json({ error: "Message is required" });
