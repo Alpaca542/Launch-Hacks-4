@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback } from "react";
-import { Node, useReactFlow } from "reactflow";
+import { Node } from "reactflow";
 import {
     generateRandomColor,
     generateColorVariation,
@@ -31,8 +31,6 @@ interface TokenInteractionProviderProps {
 export const TokenInteractionProvider: React.FC<
     TokenInteractionProviderProps
 > = ({ children, nodes, onNodesChange, onEdgesChange }) => {
-    const { setNodes } = useReactFlow();
-
     const handleTokenClick = useCallback(
         (
             tokenValue: string,
@@ -72,33 +70,46 @@ export const TokenInteractionProvider: React.FC<
 
             // Add the new node and edge
             onNodesChange([{ type: "add", item: newNode }]);
-            onEdgesChange([{ type: "add", item: newEdge }]);
-
-            // Step 5: Update the token color by updating the source node
+            onEdgesChange([{ type: "add", item: newEdge }]); // Step 5: Update the token color by updating the source node
+            // Color the token in both modes for cross-mode compatibility
             console.log(
                 "Updating token color for:",
                 tokenValue,
                 "with color:",
                 color
             );
-            setNodes((currentNodes) =>
-                currentNodes.map((node) =>
-                    node.id === sourceNodeId
-                        ? {
-                              ...node,
-                              data: {
-                                  ...node.data,
-                                  tokenColors: {
-                                      ...node.data.tokenColors,
-                                      [tokenValue]: color,
-                                  },
-                              },
-                          }
-                        : node
-                )
-            );
+
+            // Create a node data update change for ReactFlow
+            const sourceNode = nodes.find((node) => node.id === sourceNodeId);
+            if (sourceNode) {
+                const updatedTokenColors = {
+                    ...sourceNode.data.tokenColors,
+                    // Original token
+                    [tokenValue]: color,
+                    // Cross-mode compatibility
+                    // If it's a concept token (has underscores), also color the word version
+                    [tokenValue.replace(/_/g, "")]: color,
+                    // If it's a word token, also color the concept version
+                    [`_${tokenValue}_`]: color,
+                };
+
+                // Use ReactFlow's standard node change format for data updates
+                onNodesChange([
+                    {
+                        type: "change",
+                        id: sourceNodeId,
+                        item: {
+                            ...sourceNode,
+                            data: {
+                                ...sourceNode.data,
+                                tokenColors: updatedTokenColors,
+                            },
+                        },
+                    },
+                ]);
+            }
         },
-        [nodes, onNodesChange, onEdgesChange, setNodes]
+        [nodes, onNodesChange, onEdgesChange]
     );
 
     return (

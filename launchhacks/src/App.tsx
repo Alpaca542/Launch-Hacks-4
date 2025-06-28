@@ -27,6 +27,7 @@ import { nodeTypes } from "./config/nodeTypes";
 
 // Context
 import { ModeProvider, useMode } from "./contexts/ModeContext";
+import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 
 function AppContent() {
     // Authentication
@@ -124,24 +125,30 @@ function AppContent() {
                 onRemove={removeNotification}
             />
             <div style={{ width: "100vw", height: "100vh" }}>
-                <ReactFlow
+                <TokenInteractionProvider
                     nodes={nodes}
-                    edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    onConnect={onConnect}
-                    nodeTypes={nodeTypes}
-                    connectionMode={ConnectionMode.Loose}
-                    fitView
                 >
-                    <Controls />
-                    <MiniMap />
-                    <Background
-                        variant={BackgroundVariant.Cross}
-                        gap={12}
-                        size={1}
-                    />
-                </ReactFlow>
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        nodeTypes={nodeTypes}
+                        connectionMode={ConnectionMode.Loose}
+                        fitView
+                    >
+                        <Controls />
+                        <MiniMap />
+                        <Background
+                            variant={BackgroundVariant.Cross}
+                            gap={12}
+                            size={1}
+                        />
+                    </ReactFlow>
+                </TokenInteractionProvider>
             </div>
         </>
     );

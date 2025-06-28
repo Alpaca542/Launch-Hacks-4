@@ -1,58 +1,58 @@
-[debug] [2025-06-28T19:23:27.629Z] ----------------------------------------------------------------------
-[debug] [2025-06-28T19:23:27.631Z] Command:       /Users/mihaililyin/.nvm/versions/node/v22.11.0/bin/node /Applications/Launch-Hacks-4/node_modules/.bin/firebase emulators:start
-[debug] [2025-06-28T19:23:27.631Z] CLI Version:   14.9.0
-[debug] [2025-06-28T19:23:27.631Z] Platform:      darwin
-[debug] [2025-06-28T19:23:27.631Z] Node Version:  v22.11.0
-[debug] [2025-06-28T19:23:27.632Z] Time:          Sat Jun 28 2025 23:23:27 GMT+0400 (Armenia Standard Time)
-[debug] [2025-06-28T19:23:27.632Z] ----------------------------------------------------------------------
+[debug] [2025-06-28T20:35:09.468Z] ----------------------------------------------------------------------
+[debug] [2025-06-28T20:35:09.470Z] Command:       /Users/mihaililyin/.nvm/versions/node/v22.11.0/bin/node /Applications/Launch-Hacks-4/node_modules/.bin/firebase emulators:start
+[debug] [2025-06-28T20:35:09.470Z] CLI Version:   14.9.0
+[debug] [2025-06-28T20:35:09.470Z] Platform:      darwin
+[debug] [2025-06-28T20:35:09.470Z] Node Version:  v22.11.0
+[debug] [2025-06-28T20:35:09.470Z] Time:          Sun Jun 29 2025 00:35:09 GMT+0400 (Armenia Standard Time)
+[debug] [2025-06-28T20:35:09.470Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-06-28T19:23:27.753Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-06-28T19:23:27.753Z] > authorizing via signed-in user (mihaililyin08@gmail.com)
+[debug] [2025-06-28T20:35:09.595Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-28T20:35:09.595Z] > authorizing via signed-in user (mihaililyin08@gmail.com)
 [info] i  emulators: Starting emulators: functions, hosting, extensions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, hosting, extensions"}}
-[debug] [2025-06-28T19:23:27.755Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:27.755Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:27.755Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a [none]
-[debug] [2025-06-28T19:23:28.739Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a 200
-[debug] [2025-06-28T19:23:28.739Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a {"projectNumber":"785731389668","projectId":"tinkproject-78374a","lifecycleState":"ACTIVE","name":"Tink","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-28T09:15:03.245077Z"}
-[debug] [2025-06-28T19:23:29.055Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-06-28T20:35:09.597Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:09.597Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:09.598Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a [none]
+[debug] [2025-06-28T20:35:10.653Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a 200
+[debug] [2025-06-28T20:35:10.653Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/tinkproject-78374a {"projectNumber":"785731389668","projectId":"tinkproject-78374a","lifecycleState":"ACTIVE","name":"Tink","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-28T09:15:03.245077Z"}
+[debug] [2025-06-28T20:35:11.033Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
 [warn] ⚠  hosting: Hosting Emulator unable to start on port 5000, starting on 5002 instead. {"metadata":{"emulator":{"name":"hosting"},"message":"Hosting Emulator unable to start on port 5000, starting on 5002 instead."}}
-[debug] [2025-06-28T19:23:29.056Z] [hosting] Hosting Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2025-06-28T19:23:29.056Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}]},"metadata":{"message":"assigned listening specs for emulators"}}
-[debug] [2025-06-28T19:23:29.059Z] [hub] writing locator at /var/folders/jh/n7tqp_f53gvgv02w39243dnm0000gn/T/hub-tinkproject-78374a.json
-[debug] [2025-06-28T19:23:29.065Z] [Extensions] Started Extensions emulator, this is a noop.
-[debug] [2025-06-28T19:23:29.263Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2025-06-28T19:23:29.263Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2025-06-28T19:23:29.263Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2025-06-28T19:23:29.263Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[debug] [2025-06-28T20:35:11.034Z] [hosting] Hosting Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-06-28T20:35:11.034Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-06-28T20:35:11.038Z] [hub] writing locator at /var/folders/jh/n7tqp_f53gvgv02w39243dnm0000gn/T/hub-tinkproject-78374a.json
+[debug] [2025-06-28T20:35:11.041Z] [Extensions] Started Extensions emulator, this is a noop.
+[debug] [2025-06-28T20:35:11.257Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-06-28T20:35:11.257Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-06-28T20:35:11.257Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-06-28T20:35:11.257Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
 [warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, pubsub, storage, dataconnect\u001b[22m"}}
-[debug] [2025-06-28T19:23:29.268Z] defaultcredentials: writing to file /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json
-[debug] [2025-06-28T19:23:29.269Z] Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json"}}
-[debug] [2025-06-28T19:23:29.269Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:29.269Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:29.269Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig [none]
-[debug] [2025-06-28T19:23:30.087Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig 200
-[debug] [2025-06-28T19:23:30.087Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig {"projectId":"tinkproject-78374a","storageBucket":"tinkproject-78374a.firebasestorage.app"}
-[debug] [2025-06-28T19:23:30.105Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:30.106Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:30.106Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites 
-[debug] [2025-06-28T19:23:31.814Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites 200
-[debug] [2025-06-28T19:23:31.814Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites {"sites":[{"name":"projects/tinkproject-78374a/sites/tinkproject-78374a","defaultUrl":"https://tinkproject-78374a.web.app","appId":"1:785731389668:web:f57803cf98bdd9bf5d84f1","type":"DEFAULT_SITE"}]}
-[debug] [2025-06-28T19:23:31.815Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:31.815Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:31.815Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config [none]
-[debug] [2025-06-28T19:23:32.440Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config 200
-[debug] [2025-06-28T19:23:32.441Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config {"projectId":"tinkproject-78374a","appId":"1:785731389668:web:f57803cf98bdd9bf5d84f1","storageBucket":"tinkproject-78374a.firebasestorage.app","apiKey":"AIzaSyByTZ08eCsc2wv0VIWUHNtHSdmAA_JI5hM","authDomain":"tinkproject-78374a.firebaseapp.com","messagingSenderId":"785731389668"}
-[debug] [2025-06-28T19:23:32.452Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:32.452Z] Checked if tokens are valid: true, expires at: 1751141857335
-[debug] [2025-06-28T19:23:32.453Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a [none]
-[debug] [2025-06-28T19:23:32.831Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a 200
-[debug] [2025-06-28T19:23:32.831Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a {"projectId":"tinkproject-78374a","projectNumber":"785731389668","displayName":"Tink","name":"projects/tinkproject-78374a","resources":{"hostingSite":"tinkproject-78374a"},"state":"ACTIVE","etag":"1_2e13b2ed-59bc-43fe-8ecc-295321a00cfd"}
+[debug] [2025-06-28T20:35:11.263Z] defaultcredentials: writing to file /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json
+[debug] [2025-06-28T20:35:11.264Z] Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json"}}
+[debug] [2025-06-28T20:35:11.264Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:11.264Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:11.264Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig [none]
+[debug] [2025-06-28T20:35:11.696Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig 200
+[debug] [2025-06-28T20:35:11.697Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/adminSdkConfig {"projectId":"tinkproject-78374a","storageBucket":"tinkproject-78374a.firebasestorage.app"}
+[debug] [2025-06-28T20:35:11.712Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:11.712Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:11.712Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites 
+[debug] [2025-06-28T20:35:13.182Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites 200
+[debug] [2025-06-28T20:35:13.182Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/tinkproject-78374a/sites {"sites":[{"name":"projects/tinkproject-78374a/sites/tinkproject-78374a","defaultUrl":"https://tinkproject-78374a.web.app","appId":"1:785731389668:web:f57803cf98bdd9bf5d84f1","type":"DEFAULT_SITE"}]}
+[debug] [2025-06-28T20:35:13.183Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:13.183Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:13.183Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config [none]
+[debug] [2025-06-28T20:35:13.824Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config 200
+[debug] [2025-06-28T20:35:13.825Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a/webApps/1:785731389668:web:f57803cf98bdd9bf5d84f1/config {"projectId":"tinkproject-78374a","appId":"1:785731389668:web:f57803cf98bdd9bf5d84f1","storageBucket":"tinkproject-78374a.firebasestorage.app","apiKey":"AIzaSyByTZ08eCsc2wv0VIWUHNtHSdmAA_JI5hM","authDomain":"tinkproject-78374a.firebaseapp.com","messagingSenderId":"785731389668"}
+[debug] [2025-06-28T20:35:13.833Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:13.834Z] Checked if tokens are valid: true, expires at: 1751144669156
+[debug] [2025-06-28T20:35:13.834Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a [none]
+[debug] [2025-06-28T20:35:14.098Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a 200
+[debug] [2025-06-28T20:35:14.099Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tinkproject-78374a {"projectId":"tinkproject-78374a","projectNumber":"785731389668","displayName":"Tink","name":"projects/tinkproject-78374a","resources":{"hostingSite":"tinkproject-78374a"},"state":"ACTIVE","etag":"1_2e13b2ed-59bc-43fe-8ecc-295321a00cfd"}
 [info] i  hosting[tinkproject-78374a]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
 [info] ✔  hosting[tinkproject-78374a]: Local server: http://127.0.0.1:5002 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://127.0.0.1:5002\u001b[22m\u001b[24m"}}
-[debug] [2025-06-28T19:23:32.898Z] [Extensions] Connecting Extensions emulator, this is a noop.
+[debug] [2025-06-28T20:35:14.167Z] [Extensions] Connecting Extensions emulator, this is a noop.
 [info] i  functions: Watching "/Applications/Launch-Hacks-4/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Applications/Launch-Hacks-4/functions\" for Cloud Functions..."}}
-[debug] [2025-06-28T19:23:32.903Z] Validating nodejs source
-[debug] [2025-06-28T19:23:33.260Z] > [functions] package.json contents: {
+[debug] [2025-06-28T20:35:14.171Z] Validating nodejs source
+[debug] [2025-06-28T20:35:14.632Z] > [functions] package.json contents: {
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
@@ -84,22 +84,22 @@
   },
   "private": true
 }
-[debug] [2025-06-28T19:23:33.260Z] Building nodejs source
-[debug] [2025-06-28T19:23:33.260Z] Failed to find version of module node: reached end of search path /Applications/Launch-Hacks-4/functions/node_modules
+[debug] [2025-06-28T20:35:14.632Z] Building nodejs source
+[debug] [2025-06-28T20:35:14.633Z] Failed to find version of module node: reached end of search path /Applications/Launch-Hacks-4/functions/node_modules
 [info] ✔  functions: Using node@22 from host. 
-[debug] [2025-06-28T19:23:33.261Z] Could not find functions.yaml. Must use http discovery
-[debug] [2025-06-28T19:23:33.265Z] Found firebase-functions binary at '/Applications/Launch-Hacks-4/functions/node_modules/.bin/firebase-functions'
-[info] Serving at port 8287
+[debug] [2025-06-28T20:35:14.634Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-06-28T20:35:14.638Z] Found firebase-functions binary at '/Applications/Launch-Hacks-4/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8993
 
-[error] (node:74391) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[error] (node:94625) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 
-[debug] [2025-06-28T19:23:33.533Z] Got response from /__/functions.yaml {"endpoints":{"groqChat":{"availableMemoryMb":256,"timeoutSeconds":60,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{"invoker":["public"]},"entryPoint":"groqChat"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
-[debug] [2025-06-28T19:23:37.555Z] defaultcredentials: writing to file /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json
-[debug] [2025-06-28T19:23:37.556Z] Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json"}}
+[debug] [2025-06-28T20:35:14.952Z] Got response from /__/functions.yaml {"endpoints":{"groqChat":{"availableMemoryMb":256,"timeoutSeconds":60,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{"invoker":["public"]},"entryPoint":"groqChat"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2025-06-28T20:35:18.967Z] defaultcredentials: writing to file /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json
+[debug] [2025-06-28T20:35:18.967Z] Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/mihaililyin/.config/firebase/mihaililyin08_gmail_com_application_default_credentials.json"}}
 [info] ✔  functions: Loaded functions definitions from source: groqChat. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: groqChat."}}
 [info] ✔  functions[us-central1-groqChat]: http function initialized (http://127.0.0.1:5001/tinkproject-78374a/us-central1/groqChat). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/tinkproject-78374a/us-central1/groqChat)."}}
-[debug] [2025-06-28T19:23:37.562Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[debug] [2025-06-28T20:35:18.973Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
 [info] 
 ┌─────────────────────────────────────────────────────────────┐
 │ ✔  All emulators ready! It is now safe to connect your app. │
@@ -122,7 +122,7 @@
 └─────────────────────────┴───────────────┴─────────────────────┘
 Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
  
-[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:19:24:04 +0000] "GET / HTTP/1.1" 200 852 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:19:24:04 +0000] \"GET / HTTP/1.1\" 200 852 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] "GET /assets/index-D9N1evsA.css HTTP/1.1" 200 - "http://127.0.0.1:5002/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] \"GET /assets/index-D9N1evsA.css HTTP/1.1\" 200 - \"http://127.0.0.1:5002/\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 - \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] "GET /assets/index-BpI4rbpO.js HTTP/1.1" 200 - "http://127.0.0.1:5002/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:19:24:05 +0000] \"GET /assets/index-BpI4rbpO.js HTTP/1.1\" 200 - \"http://127.0.0.1:5002/\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] "GET / HTTP/1.1" 200 852 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] \"GET / HTTP/1.1\" 200 852 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] "GET /assets/index-D9N1evsA.css HTTP/1.1" 200 - "http://127.0.0.1:5002/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] \"GET /assets/index-D9N1evsA.css HTTP/1.1\" 200 - \"http://127.0.0.1:5002/\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] "GET /assets/index-CZ8zBp7l.js HTTP/1.1" 200 - "http://127.0.0.1:5002/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] \"GET /assets/index-CZ8zBp7l.js HTTP/1.1\" 200 - \"http://127.0.0.1:5002/\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [28/Jun/2025:20:35:21 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 - \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\""}}

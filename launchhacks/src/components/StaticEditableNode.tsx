@@ -2,8 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useMode } from "../contexts/ModeContext";
-import WordToken from "./WordToken";
-import ConceptToken from "./ConceptToken";
+import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import { getContrastColor, darkenColor } from "../utils/nodeHelpers";
 
 interface NodeData {
@@ -24,11 +23,46 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     const { mode } = useMode();
-    const reactFlowInstance = useReactFlow();
+    const { getNodes } = useReactFlow();
+    const { handleTokenClick } = useTokenInteraction();
 
-    // Get current node position
-    const currentNode = reactFlowInstance.getNode(id);
-    const nodePosition = currentNode?.position || { x: 0, y: 0 };
+    // Helper to get token color (checks both modes)
+    const getTokenColor = useCallback(
+        (token: string) => {
+            return (
+                data.tokenColors?.[token] ||
+                data.tokenColors?.[`_${token}_`] ||
+                data.tokenColors?.[token.replace(/_/g, "")]
+            );
+        },
+        [data.tokenColors]
+    );
+
+    // Simple token click handler
+    const handleTokenClickLocal = useCallback(
+        (tokenValue: string, e: React.MouseEvent) => {
+            e.stopPropagation();
+            console.log("Static Token clicked:", tokenValue);
+
+            // Get current node info
+            const currentNodes = getNodes();
+            const currentNode = currentNodes.find((node) => node.id === id);
+            if (!currentNode) {
+                console.error("Current node not found");
+                return;
+            }
+
+            // Use the context handler
+            handleTokenClick(
+                tokenValue,
+                id,
+                currentNode.position,
+                currentNode.type || "staticEditable",
+                data.color
+            );
+        },
+        [id, getNodes, handleTokenClick, data.color]
+    );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -92,19 +126,25 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         {displayWords.map((word, index) => (
                             <span
                                 key={index}
+                                className="word-token"
                                 style={{
+                                    backgroundColor: getTokenColor(word),
+                                    color: getTokenColor(word)
+                                        ? getContrastColor(getTokenColor(word)!)
+                                        : undefined,
+                                    cursor: "pointer",
+                                    padding: getTokenColor(word)
+                                        ? "2px 4px"
+                                        : undefined,
+                                    borderRadius: getTokenColor(word)
+                                        ? "4px"
+                                        : undefined,
+                                    margin: "1px",
                                     display: "inline-block",
-                                    margin: "2px",
                                 }}
+                                onClick={(e) => handleTokenClickLocal(word, e)}
                             >
-                                <WordToken
-                                    value={word}
-                                    nodeId={id}
-                                    nodePosition={nodePosition}
-                                    nodeType="staticEditable"
-                                    nodeColor={data.color}
-                                    tokenColor={data.tokenColors?.[word]}
-                                />
+                                {word}
                                 {index < displayWords.length - 1 ? " " : ""}
                             </span>
                         ))}
@@ -131,15 +171,33 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         if (index % 2 === 1) {
                             // This is a concept (between underscores)
                             return (
-                                <ConceptToken
+                                <span
                                     key={index}
-                                    value={part}
-                                    nodeId={id}
-                                    nodePosition={nodePosition}
-                                    nodeType="staticEditable"
-                                    nodeColor={data.color}
-                                    tokenColor={data.tokenColors?.[part]}
-                                />
+                                    className="concept-token"
+                                    style={{
+                                        backgroundColor: getTokenColor(part),
+                                        color: getTokenColor(part)
+                                            ? getContrastColor(
+                                                  getTokenColor(part)!
+                                              )
+                                            : undefined,
+                                        cursor: "pointer",
+                                        padding: getTokenColor(part)
+                                            ? "3px 6px"
+                                            : undefined,
+                                        borderRadius: getTokenColor(part)
+                                            ? "6px"
+                                            : undefined,
+                                        margin: "2px",
+                                        fontWeight: "bold",
+                                        display: "inline-block",
+                                    }}
+                                    onClick={(e) =>
+                                        handleTokenClickLocal(part, e)
+                                    }
+                                >
+                                    {part}
+                                </span>
                             );
                         } else {
                             // This is regular text
@@ -159,6 +217,8 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
+        handleTokenClickLocal,
+        getTokenColor,
     ]);
 
     return (

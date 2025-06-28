@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNodesState, useEdgesState, Node, Edge } from "reactflow";
 import { User } from "firebase/auth";
-import { convertTextIntoHtmlConceptTokens } from "../services/ConvertTextToHtml";
-import { convertTextIntoHtmlWordTokens } from "../services/ConvertTextToHtml";
 
 import {
     fetchAllBoards,
@@ -16,8 +14,6 @@ import {
     initialNodes,
     initialEdges,
     BoardData,
-    NodeData,
-    EdgeData,
 } from "../services/boardService";
 import { UseNotificationsReturn } from "./useNotifications";
 

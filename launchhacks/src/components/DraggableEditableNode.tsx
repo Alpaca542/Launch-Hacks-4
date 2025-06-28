@@ -2,15 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useMode } from "../contexts/ModeContext";
-import { 
-    generateRandomColor, 
-    generateColorVariation, 
-    calculateNewNodePosition,
-    createNewNode,
-    createNewEdge,
-    getContrastColor, 
-    darkenColor 
-} from "../utils/nodeHelpers";
+import { useTokenInteraction } from "../contexts/TokenInteractionContext";
+import { getContrastColor, darkenColor } from "../utils/nodeHelpers";
 
 interface NodeData {
     label?: string;
@@ -30,51 +23,46 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     const { mode } = useMode();
-    const { setNodes, setEdges, getNodes, getEdges } = useReactFlow();
+    const { getNodes } = useReactFlow();
+    const { handleTokenClick } = useTokenInteraction();
 
-    // Handle token click
-    const handleTokenClick = useCallback((tokenValue: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        
-        // Generate color
-        const color = data.color ? generateColorVariation(data.color) : generateRandomColor();
-        
-        // Get current node position  
-        const currentNodes = getNodes();
-        const currentNode = currentNodes.find(node => node.id === id);
-        if (!currentNode) return;
-        
-        // Calculate new position
-        const newPosition = calculateNewNodePosition(currentNode.position, currentNodes);
-        
-        // Create new node
-        const newNode = createNewNode(newPosition, tokenValue, color, "draggableEditable");
-        
-        // Create new edge
-        const newEdge = createNewEdge(id, newNode.id, color);
-        
-        // Add to flow
-        setNodes(nodes => [...nodes, newNode]);
-        setEdges(edges => [...edges, newEdge]);
-        
-        // Update current node to mark token as colored
-        setNodes(nodes => 
-            nodes.map(node => 
-                node.id === id 
-                    ? {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            tokenColors: {
-                                ...node.data.tokenColors,
-                                [tokenValue]: color
-                            }
-                        }
-                    }
-                    : node
-            )
-        );
-    }, [data.color, id, setNodes, setEdges, getNodes]);
+    // Helper to get token color (checks both modes)
+    const getTokenColor = useCallback(
+        (token: string) => {
+            return (
+                data.tokenColors?.[token] ||
+                data.tokenColors?.[`_${token}_`] ||
+                data.tokenColors?.[token.replace(/_/g, "")]
+            );
+        },
+        [data.tokenColors]
+    );
+
+    // Simple token click handler
+    const handleTokenClickLocal = useCallback(
+        (tokenValue: string, e: React.MouseEvent) => {
+            e.stopPropagation();
+            console.log("Token clicked:", tokenValue);
+
+            // Get current node info
+            const currentNodes = getNodes();
+            const currentNode = currentNodes.find((node) => node.id === id);
+            if (!currentNode) {
+                console.error("Current node not found");
+                return;
+            }
+
+            // Use the context handler
+            handleTokenClick(
+                tokenValue,
+                id,
+                currentNode.position,
+                currentNode.type || "draggableEditable",
+                data.color
+            );
+        },
+        [id, getNodes, handleTokenClick, data.color]
+    );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -140,15 +128,21 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 key={index}
                                 className="word-token"
                                 style={{
-                                    backgroundColor: data.tokenColors?.[word],
-                                    color: data.tokenColors?.[word] ? getContrastColor(data.tokenColors[word]) : undefined,
-                                    cursor: 'pointer',
-                                    padding: data.tokenColors?.[word] ? '2px 4px' : undefined,
-                                    borderRadius: data.tokenColors?.[word] ? '4px' : undefined,
-                                    margin: '1px',
-                                    display: 'inline-block'
+                                    backgroundColor: getTokenColor(word),
+                                    color: getTokenColor(word)
+                                        ? getContrastColor(getTokenColor(word)!)
+                                        : undefined,
+                                    cursor: "pointer",
+                                    padding: getTokenColor(word)
+                                        ? "2px 4px"
+                                        : undefined,
+                                    borderRadius: getTokenColor(word)
+                                        ? "4px"
+                                        : undefined,
+                                    margin: "1px",
+                                    display: "inline-block",
                                 }}
-                                onClick={(e) => handleTokenClick(word, e)}
+                                onClick={(e) => handleTokenClickLocal(word, e)}
                             >
                                 {word}
                                 {index < displayWords.length - 1 ? " " : ""}
@@ -181,16 +175,26 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     key={index}
                                     className="concept-token"
                                     style={{
-                                        backgroundColor: data.tokenColors?.[part],
-                                        color: data.tokenColors?.[part] ? getContrastColor(data.tokenColors[part]) : undefined,
-                                        cursor: 'pointer',
-                                        padding: data.tokenColors?.[part] ? '3px 6px' : undefined,
-                                        borderRadius: data.tokenColors?.[part] ? '6px' : undefined,
-                                        margin: '2px',
-                                        fontWeight: 'bold',
-                                        display: 'inline-block'
+                                        backgroundColor: getTokenColor(part),
+                                        color: getTokenColor(part)
+                                            ? getContrastColor(
+                                                  getTokenColor(part)!
+                                              )
+                                            : undefined,
+                                        cursor: "pointer",
+                                        padding: getTokenColor(part)
+                                            ? "3px 6px"
+                                            : undefined,
+                                        borderRadius: getTokenColor(part)
+                                            ? "6px"
+                                            : undefined,
+                                        margin: "2px",
+                                        fontWeight: "bold",
+                                        display: "inline-block",
                                     }}
-                                    onClick={(e) => handleTokenClick(part, e)}
+                                    onClick={(e) =>
+                                        handleTokenClickLocal(part, e)
+                                    }
                                 >
                                     {part}
                                 </span>
@@ -213,6 +217,8 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
+        handleTokenClickLocal,
+        getTokenColor,
     ]);
 
     return (
