@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -6,52 +6,69 @@ import ReactFlow, {
     useNodesState,
     useEdgesState,
     addEdge,
+    ConnectionMode,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import "./App.css";
+import StaticEditableNode from "./components/StaticEditableNode";
+import DraggableEditableNode from "./components/DraggableEditableNode";
+
+// Define custom node types outside the component to prevent re-creation
+const nodeTypes = {
+    staticEditable: StaticEditableNode,
+    draggableEditable: DraggableEditableNode,
+};
 
 function App() {
+    const [connectionNodeId, setConnectionNodeId] = useState(null);
+    const [connectionHandleId, setConnectionHandleId] = useState(null);
+    const [connectionHandleType, setConnectionHandleType] = useState(null);
+
     const initialNodes = [
         {
             id: "1",
-            type: "input",
-            data: { label: "Start Here" },
-            position: { x: 250, y: 25 },
-            draggable: true,
+            type: "staticEditable",
+            data: {
+                label: "Node A",
+            },
+            position: { x: 100, y: 100 },
+            draggable: false,
         },
         {
             id: "2",
+            type: "draggableEditable",
             data: {
-                label: (
-                    <div
-                        style={{
-                            padding: "10px",
-                            backgroundColor: "#f0f0f0",
-                            transition: "background-color 0.3s",
-                        }}
-                        onMouseEnter={(e) =>
-                            (e.target.style.backgroundColor = "red")
-                        }
-                        onMouseLeave={(e) =>
-                            (e.target.style.backgroundColor = "#f0f0f0")
-                        }
-                    >
-                        <div>Process Data</div>
-                        <button onClick={() => console.log("Button clicked!")}>
-                            Click Me
-                        </button>
-                    </div>
-                ),
+                label: "Node B",
             },
-            position: { x: 100, y: 125 },
+            position: { x: 400, y: 100 },
             draggable: true,
         },
         {
             id: "3",
-            type: "output",
-            data: { label: "Final Result" },
-            position: { x: 250, y: 250 },
+            type: "staticEditable",
+            data: {
+                label: "Node C",
+            },
+            position: { x: 700, y: 100 },
+            draggable: false,
+        },
+        {
+            id: "4",
+            type: "draggableEditable",
+            data: {
+                label: "Node D",
+            },
+            position: { x: 250, y: 300 },
             draggable: true,
+        },
+        {
+            id: "5",
+            type: "staticEditable",
+            data: {
+                label: "Node E",
+            },
+            position: { x: 550, y: 300 },
+            draggable: false,
         },
     ];
 
@@ -60,13 +77,36 @@ function App() {
             id: "e1-2",
             source: "1",
             target: "2",
-            animated: true,
+            sourceHandle: "right-source",
+            targetHandle: "left",
         },
         {
             id: "e2-3",
             source: "2",
             target: "3",
-            animated: true,
+            sourceHandle: "right-source",
+            targetHandle: "left",
+        },
+        {
+            id: "e1-4",
+            source: "1",
+            target: "4",
+            sourceHandle: "bottom-source",
+            targetHandle: "top",
+        },
+        {
+            id: "e4-5",
+            source: "4",
+            target: "5",
+            sourceHandle: "right-source",
+            targetHandle: "left",
+        },
+        {
+            id: "e2-5",
+            source: "2",
+            target: "5",
+            sourceHandle: "bottom-source",
+            targetHandle: "top",
         },
     ];
 
@@ -78,6 +118,21 @@ function App() {
         [setEdges]
     );
 
+    const onConnectStart = useCallback(
+        (_, { nodeId, handleId, handleType }) => {
+            setConnectionNodeId(nodeId);
+            setConnectionHandleId(handleId);
+            setConnectionHandleType(handleType);
+        },
+        []
+    );
+
+    const onConnectEnd = useCallback(() => {
+        setConnectionNodeId(null);
+        setConnectionHandleId(null);
+        setConnectionHandleType(null);
+    }, []);
+
     return (
         <div style={{ width: "100vw", height: "100vh" }}>
             <ReactFlow
@@ -86,6 +141,10 @@ function App() {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
+                nodeTypes={nodeTypes}
+                connectionMode={ConnectionMode.Loose}
                 fitView
             >
                 <Controls />
