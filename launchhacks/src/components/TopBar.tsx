@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Handle, Position } from "reactflow";
 import "./EditableNode.css";
 
 interface User {
@@ -12,9 +11,18 @@ interface TopBarProps {
     onSetName: (name: string) => void;
     user: User | null;
     isSaving: boolean;
+    isConceptMode: boolean;
+    onToggleMode: () => void;
 }
 
-function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
+function TopBar({
+    name,
+    onSetName,
+    user,
+    isSaving,
+    isConceptMode,
+    onToggleMode,
+}: TopBarProps) {
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
@@ -53,6 +61,17 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                                     💾 Saving...
                                 </span>
                             )}
+                            <button
+                                className="mode-toggle-btn"
+                                onClick={onToggleMode}
+                                title={`Switch to ${
+                                    isConceptMode ? "Word" : "Concept"
+                                } Mode`}
+                            >
+                                {isConceptMode
+                                    ? "📝 Word Mode"
+                                    : "🧠 Concept Mode"}
+                            </button>
                         </div>
                     </header>
                 </div>

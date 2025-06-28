@@ -12,11 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { COLLECTIONS, ERROR_MESSAGES } from "../utils/constants";
-import {
-    validateUser,
-    validateBoard,
-    validateBoardName,
-} from "../utils/validation";
+import { validateUser } from "../utils/validation";
 
 // TypeScript interfaces
 export interface BoardData {
@@ -41,6 +37,9 @@ export interface NodeData {
         y: number;
     };
     draggable?: boolean;
+    style?: {
+        [key: string]: any;
+    };
     updatedAt?: Date | Timestamp;
 }
 
@@ -58,25 +57,31 @@ export const initialNodes: NodeData[] = [
     {
         id: "1",
         type: "draggableEditable",
-        data: { label: "Node A" },
+        data: {
+            label: "The _artificial intelligence_ system processes _natural language_ effectively",
+        },
         position: { x: 250, y: 25 },
     },
     {
         id: "2",
         type: "draggableEditable",
-        data: { label: "Node B" },
+        data: {
+            label: "This is a simple sentence with multiple words to demonstrate word mode functionality",
+        },
         position: { x: 100, y: 125 },
     },
     {
         id: "3",
         type: "draggableEditable",
-        data: { label: "Node C" },
+        data: {
+            label: "_Machine learning_ algorithms can _predict outcomes_ with high accuracy",
+        },
         position: { x: 400, y: 125 },
     },
     {
         id: "4",
         type: "staticEditable",
-        data: { label: "Node D" },
+        data: { label: "Static node with _key concepts_ highlighted" },
         position: { x: 250, y: 200 },
         draggable: false,
     },
@@ -268,13 +273,26 @@ export const saveNodesToBoard = async (
                 COLLECTIONS.NODES,
                 node.id
             );
-            batch.set(nodeRef, {
+
+            // Filter out undefined values to prevent Firestore errors
+            const nodeData: any = {
                 type: node.type,
                 data: node.data,
                 position: node.position,
-                draggable: node.draggable,
                 updatedAt: Timestamp.now(),
-            });
+            };
+
+            // Only include draggable if it's not undefined
+            if (node.draggable !== undefined) {
+                nodeData.draggable = node.draggable;
+            }
+
+            // Include style if it exists
+            if (node.style !== undefined) {
+                nodeData.style = node.style;
+            }
+
+            batch.set(nodeRef, nodeData);
         });
 
         await batch.commit();
@@ -309,13 +327,23 @@ export const saveEdgesToBoard = async (
                 COLLECTIONS.EDGES,
                 edge.id
             );
-            batch.set(edgeRef, {
+
+            // Filter out undefined values to prevent Firestore errors
+            const edgeData: any = {
                 source: edge.source,
                 target: edge.target,
-                sourceHandle: edge.sourceHandle,
-                targetHandle: edge.targetHandle,
                 updatedAt: Timestamp.now(),
-            });
+            };
+
+            // Only include sourceHandle and targetHandle if they're not undefined
+            if (edge.sourceHandle !== undefined) {
+                edgeData.sourceHandle = edge.sourceHandle;
+            }
+            if (edge.targetHandle !== undefined) {
+                edgeData.targetHandle = edge.targetHandle;
+            }
+
+            batch.set(edgeRef, edgeData);
         });
 
         await batch.commit();

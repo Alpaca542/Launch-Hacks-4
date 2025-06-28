@@ -1,41 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { auth } from "../firebase";
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    User,
 } from "firebase/auth";
 import { ERROR_MESSAGES } from "../utils/constants";
 
-interface AuthWindowProps {
-    onAuthed: (user: User) => void;
-}
-
-function AuthWindow({ onAuthed }: AuthWindowProps) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
+function AuthWindow() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isSignUp, setIsSignUp] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setIsAuthenticated(true);
-                onAuthed(user);
-                setUser(user);
-            } else {
-                setIsAuthenticated(false);
-                setUser(null);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [onAuthed]);
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,7 +39,8 @@ function AuthWindow({ onAuthed }: AuthWindowProps) {
                 email,
                 password
             );
-            onAuthed(userCredential.user);
+            // Authentication state is now handled by useAuth hook
+            console.log("User created successfully:", userCredential.user.uid);
         } catch (error: any) {
             console.error("Sign up error:", error);
 
@@ -111,7 +88,11 @@ function AuthWindow({ onAuthed }: AuthWindowProps) {
                 email,
                 password
             );
-            onAuthed(userCredential.user);
+            // Authentication state is now handled by useAuth hook
+            console.log(
+                "User signed in successfully:",
+                userCredential.user.uid
+            );
         } catch (error: any) {
             console.error("Sign in error:", error);
 
@@ -138,56 +119,6 @@ function AuthWindow({ onAuthed }: AuthWindowProps) {
             setLoading(false);
         }
     };
-
-    const handleSignOut = async () => {
-        try {
-            await signOut(auth);
-        } catch (error: any) {
-            setError(error.message);
-        }
-    };
-
-    if (isAuthenticated) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100vh",
-                    fontFamily: "Arial, sans-serif",
-                }}
-            >
-                <div
-                    style={{
-                        padding: "2rem",
-                        border: "1px solid #ccc",
-                        borderRadius: "8px",
-                        backgroundColor: "#f9f9f9",
-                        textAlign: "center",
-                    }}
-                >
-                    <p style={{ marginBottom: "1rem" }}>
-                        Welcome, {user?.email}!
-                    </p>
-                    <button
-                        onClick={handleSignOut}
-                        style={{
-                            padding: "0.5rem 1rem",
-                            backgroundColor: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Sign Out
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div

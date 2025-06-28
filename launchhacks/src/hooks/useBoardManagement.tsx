@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNodesState, useEdgesState, Node, Edge } from "reactflow";
 import { User } from "firebase/auth";
+import { convertTextIntoHtmlConceptTokens } from "../services/ConvertTextToHtml";
+import { convertTextIntoHtmlWordTokens } from "../services/ConvertTextToHtml";
+
 import {
     fetchAllBoards,
     fetchNodesFromBoard,
@@ -47,9 +50,7 @@ export const useBoardManagement = (
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [allBoards, setAllBoards] = useState<BoardData[]>([]);
     const [currentBoard, setCurrentBoard] = useState<BoardData | null>(null);
-    const [saveTimeoutRef, setSaveTimeoutRef] = useState<NodeJS.Timeout | null>(
-        null
-    );
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const { showSuccess, showError, showInfo } = notifications;
 
@@ -141,8 +142,8 @@ export const useBoardManagement = (
     // Debounced auto-save function
     const debouncedSave = useCallback(
         async (boardId: string, nodesToSave: any, edgesToSave: any) => {
-            if (saveTimeoutRef) {
-                clearTimeout(saveTimeoutRef);
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
             }
 
             const timeoutId = setTimeout(async () => {
@@ -173,13 +174,13 @@ export const useBoardManagement = (
                     }
                 } finally {
                     setIsSaving(false);
-                    setSaveTimeoutRef(null);
+                    saveTimeoutRef.current = null;
                 }
             }, 1000);
 
-            setSaveTimeoutRef(timeoutId);
+            saveTimeoutRef.current = timeoutId;
         },
-        [saveTimeoutRef, showError]
+        [showError]
     );
 
     // Auto-save when nodes or edges change
@@ -194,19 +195,14 @@ export const useBoardManagement = (
         }
 
         return () => {
-            if (saveTimeoutRef) {
-                clearTimeout(saveTimeoutRef);
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [
-        nodes,
-        edges,
-        isLoading,
-        currentBoard,
-        isSwitchingBoard,
-        debouncedSave,
-        saveTimeoutRef,
-    ]);
+        // Note: debouncedSave is not included in deps to prevent unnecessary re-renders
+        // It's stable since it only depends on showError from notifications
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [nodes, edges, isLoading, currentBoard, isSwitchingBoard]);
 
     // Switch to board
     const switchToBoard = useCallback(
@@ -471,9 +467,9 @@ export const useBoardManagement = (
     // Clear all state (for sign out)
     const clearBoardState = useCallback(() => {
         // Clear any pending save timeouts
-        if (saveTimeoutRef) {
-            clearTimeout(saveTimeoutRef);
-            setSaveTimeoutRef(null);
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
         }
 
         setAllBoards([]);

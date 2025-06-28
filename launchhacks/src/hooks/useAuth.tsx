@@ -7,7 +7,6 @@ import { handleSignOut } from "../services/authService";
 export interface UseAuthReturn {
     user: User | null;
     signOut: () => Promise<void>;
-    onAuthed: (user: User | null) => void;
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -15,11 +14,10 @@ export const useAuth = (): UseAuthReturn => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+            setUser(user);
             if (user) {
-                setUser(user);
                 console.log("User signed in:", user.uid);
             } else {
-                setUser(null);
                 console.log("No user signed in");
             }
         });
@@ -36,13 +34,8 @@ export const useAuth = (): UseAuthReturn => {
         }
     };
 
-    const onAuthed = (user: User | null): void => {
-        setUser(user);
-    };
-
     return {
         user,
         signOut,
-        onAuthed,
     };
 };

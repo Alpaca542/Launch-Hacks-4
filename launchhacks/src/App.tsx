@@ -1,14 +1,11 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import ReactFlow, {
     Background,
     Controls,
     MiniMap,
-    addEdge,
     ConnectionMode,
     Connection,
-    Edge,
     BackgroundVariant,
-    EdgeChange,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import "./App.css";
@@ -28,9 +25,15 @@ import { useNotifications } from "./hooks/useNotifications";
 // Configuration
 import { nodeTypes } from "./config/nodeTypes";
 
-function App() {
+// Context
+import { ModeProvider, useMode } from "./contexts/ModeContext";
+
+function AppContent() {
     // Authentication
-    const { user, signOut, onAuthed } = useAuth();
+    const { user, signOut } = useAuth();
+
+    // Mode context
+    const { mode, toggleMode } = useMode();
 
     // Notifications
     const {
@@ -47,7 +50,6 @@ function App() {
         edges,
         allBoards,
         currentBoard,
-        isLoading,
         isSwitchingBoard,
         isSaving,
         onNodesChange,
@@ -67,7 +69,7 @@ function App() {
         switchToBoard,
     });
 
-    // Handle sign out with state cleanup
+    // // Handle sign out with state cleanup
     const handleSignOut = async () => {
         await signOut();
         clearBoardState();
@@ -76,16 +78,22 @@ function App() {
     // ReactFlow connection handler
     const onConnect = useCallback(
         (params: Connection) => {
-            const newEdges = addEdge(params, edges);
-            // @ts-ignore - ReactFlow type mismatch
-            onEdgesChange([{ type: "reset", items: newEdges }]);
+            // Create the new edge and pass it as an add change
+            const newEdge = {
+                id: `e${params.source}-${params.target}`,
+                source: params.source!,
+                target: params.target!,
+                sourceHandle: params.sourceHandle,
+                targetHandle: params.targetHandle,
+            };
+            onEdgesChange([{ type: "add", item: newEdge }]);
         },
-        [onEdgesChange, edges]
+        [onEdgesChange]
     );
 
     // Render authentication screen if not logged in
     if (!user) {
-        return <AuthWindow onAuthed={onAuthed} />;
+        return <AuthWindow />;
     }
 
     // Main application interface
@@ -108,6 +116,8 @@ function App() {
                 onSetName={updateBoardName}
                 user={user}
                 isSaving={isSaving}
+                isConceptMode={mode === "concept"}
+                onToggleMode={toggleMode}
             />
             <NotificationContainer
                 notifications={notifications}
@@ -127,13 +137,21 @@ function App() {
                     <Controls />
                     <MiniMap />
                     <Background
-                        variant={BackgroundVariant.Dots}
+                        variant={BackgroundVariant.Cross}
                         gap={12}
                         size={1}
                     />
                 </ReactFlow>
             </div>
         </>
+    );
+}
+
+function App() {
+    return (
+        <ModeProvider>
+            <AppContent />
+        </ModeProvider>
     );
 }
 
