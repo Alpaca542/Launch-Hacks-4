@@ -38,12 +38,6 @@ function DraggableEditableNode({ data, id }) {
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
         >
-            {/* Multiple handles for many-to-many connections */}
-            <Handle type="target" position={Position.Top} id="top" />
-            <Handle type="target" position={Position.Left} id="left" />
-            <Handle type="target" position={Position.Right} id="right" />
-            <Handle type="target" position={Position.Bottom} id="bottom" />
-
             {showTooltip && (
                 <div className="node-tooltip">
                     <div className="tooltip-content">
@@ -70,11 +64,6 @@ function DraggableEditableNode({ data, id }) {
                     <div className="node-text">{text}</div>
                 )}
             </div>
-
-            {/* Multiple source handles for many-to-many connections */}
-            <Handle type="source" position={Position.Top} id="top-source" />
-            <Handle type="source" position={Position.Left} id="left-source" />
-            <Handle type="source" position={Position.Right} id="right-source" />
             <Handle
                 type="source"
                 position={Position.Bottom}

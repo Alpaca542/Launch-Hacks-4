@@ -61,7 +61,9 @@ function StaticEditableNode({ data, id }) {
                     autoFocus
                 />
             ) : (
-                <div className="node-text">{text}</div>
+                <div className="node-text" onClick={handleClick}>
+                    {text}
+                </div>
             )}
 
             <Handle
