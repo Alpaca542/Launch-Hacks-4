@@ -10,10 +10,12 @@ import {
 } from "../utils/nodeHelpers";
 
 interface NodeData {
-    title?: string;
+    label?: string;
+    myColor?: string;
     summary?: string;
     full_text?: string;
-    myColor?: string;
+    onExpand?: () => void;
+    expanded?: boolean;
 }
 
 interface DraggableEditableNodeProps {
@@ -23,11 +25,10 @@ interface DraggableEditableNodeProps {
 
 function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [summary, setSummary] = useState<string>(data.summary || "Draggable Node");
-    const [title] = useState<string>(data.title || "");
-    const [fullText] = useState<string>(data.full_text || "");
+    const [summary, setSummary] = useState<string>(
+        data.summary || data.label || "Draggable Node"
+    );
     const [showTooltip, setShowTooltip] = useState<boolean>(false);
-    const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     const { getNodes } = useReactFlow();
     const { handleTokenClick } = useTokenInteraction();
@@ -85,20 +86,19 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 handleSave();
             }
             if (e.key === "Escape") {
-                setSummary(data.summary || "Draggable Node");
+                setSummary(data.summary || data.label || "Draggable Node");
                 setIsEditing(false);
             }
         },
-        [handleSave, data.summary]
+        [handleSave, data.summary, data.label]
     );
 
-    const toggleExpansion = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-        },
-        [isExpanded]
-    );
+    const toggleExpansion = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!data.expanded) {
+            data.onExpand?.();
+        }
+    };
 
     // Group tokens by concept for blue outline
     const groupedTokens = useMemo(() => {
@@ -163,15 +163,15 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                             </span>
                         );
                     })}
-                    {tokens.length > 5 && !isExpanded && <span>...</span>}
+                    {tokens.length > 5 && !data.expanded && <span>...</span>}
                 </div>
                 {tokens.length > 5 && (
                     <button
                         className="node-expand-btn"
                         onClick={toggleExpansion}
-                        title={isExpanded ? "Show less" : "Show more"}
+                        title={data.expanded ? "Show less" : "Show more"}
                     >
-                        {isExpanded ? "−" : "+"}
+                        {data.expanded ? "−" : "+"}
                     </button>
                 )}
             </div>
@@ -179,7 +179,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }, [
         isEditing,
         summary,
-        isExpanded,
         tokens,
         groupedTokens,
         handleClick,

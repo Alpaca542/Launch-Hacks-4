@@ -12,6 +12,8 @@ import {
 interface NodeData {
     label?: string;
     myColor?: string;
+    summary?: string;
+    full_text?: string;
 }
 
 interface StaticEditableNodeProps {
@@ -21,7 +23,9 @@ interface StaticEditableNodeProps {
 
 function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [text, setText] = useState<string>(data.label || "Static Node");
+    const [summary, setSummary] = useState<string>(
+        data.summary || data.label || "Static Node"
+    );
     const [showTooltip, setShowTooltip] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -29,7 +33,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     const { handleTokenClick } = useTokenInteraction();
 
     // Parse text into tokens
-    const tokens = useMemo(() => parseTextIntoTokens(text), [text]);
+    const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
 
     // Check if token is clickable
     const isTokenClickable = useCallback(() => {
@@ -80,11 +84,11 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 handleSave();
             }
             if (e.key === "Escape") {
-                setText(data.label || "Static Node");
+                setSummary(data.summary || data.label || "Static Node");
                 setIsEditing(false);
             }
         },
-        [handleSave, data.label]
+        [handleSave, data.summary, data.label]
     );
 
     const toggleExpansion = useCallback(
@@ -100,8 +104,8 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             return (
                 <input
                     type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
                     onBlur={handleSave}
                     onKeyDown={handleKeyPress}
                     onClick={handleInputClick}
@@ -160,7 +164,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         );
     }, [
         isEditing,
-        text,
+        summary,
         isExpanded,
         tokens,
         handleClick,

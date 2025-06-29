@@ -8,6 +8,7 @@ import ReactFlow, {
     BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import ExplanationWindow from "./components/ExplanationWindow";
 
 // Components
 import AuthWindow from "./components/AuthWindow";

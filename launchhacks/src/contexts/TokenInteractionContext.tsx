@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback } from "react";
+import React, { createContext, useContext, useCallback, useState } from "react";
 import { Node } from "reactflow";
 import {
     generateRandomColor,
@@ -7,8 +7,8 @@ import {
     createNewNode,
     createNewEdge,
 } from "../utils/nodeHelpers";
+import ExplanationWindow from "../components/ExplanationWindow";
 
-// Token interface with concept support
 export interface Token {
     word: string;
     myConcept?: string;
@@ -24,9 +24,6 @@ interface TokenInteractionContextType {
     ) => string;
 }
 
-const TokenInteractionContext =
-    createContext<TokenInteractionContextType | null>(null);
-
 interface TokenInteractionProviderProps {
     children: React.ReactNode;
     nodes: Node[];
@@ -34,9 +31,48 @@ interface TokenInteractionProviderProps {
     onEdgesChange: (changes: any) => void;
 }
 
+interface ExtendedNodeState {
+    isVisible: boolean;
+    text: string;
+}
+
+const TokenInteractionContext =
+    createContext<TokenInteractionContextType | null>(null);
+
 export const TokenInteractionProvider: React.FC<
     TokenInteractionProviderProps
 > = ({ children, nodes, onNodesChange, onEdgesChange }) => {
+    const [extendedNode, setExtendedNode] = useState<ExtendedNodeState>({
+        isVisible: false,
+        text: "",
+    });
+
+    const determineNodeColor = useCallback(
+        (sourceNodeType: string, sourceNodeColor?: string): string => {
+            if (sourceNodeType === "staticEditable") {
+                return generateRandomColor();
+            }
+            return sourceNodeColor
+                ? generateColorVariation(sourceNodeColor)
+                : generateRandomColor();
+        },
+        []
+    );
+
+    const handleExtendNode = useCallback(
+        (nodeId: string, text: any) => {
+            const extendedNodeData = nodes.find((node) => node.id === nodeId);
+            if (!extendedNodeData) return;
+
+            setExtendedNode({ isVisible: true, text });
+        },
+        [nodes]
+    );
+
+    const hideExtendedNode = useCallback(() => {
+        setExtendedNode({ isVisible: false, text: "" });
+    }, []);
+
     const handleTokenClick = useCallback(
         (
             token: Token,
@@ -45,45 +81,45 @@ export const TokenInteractionProvider: React.FC<
             sourceNodeType: string,
             sourceNodeColor?: string
         ) => {
-            // Determine color based on source node type
-            let color: string;
-            if (sourceNodeType === "staticEditable") {
-                color = generateRandomColor();
-            } else {
-                color = sourceNodeColor
-                    ? generateColorVariation(sourceNodeColor)
-                    : generateRandomColor();
-            }
-
-            // Calculate position for new node
+            const color = determineNodeColor(sourceNodeType, sourceNodeColor);
             const newPosition = calculateNewNodePosition(
                 sourceNodePosition,
                 nodes
             );
-
-            // Create new node - use concept if it exists, otherwise use word
             const nodeLabel = token.myConcept || token.word;
+
             const newNode = createNewNode(
                 newPosition,
                 nodeLabel,
                 color,
-                sourceNodeType
+                sourceNodeType,
+                handleExtendNode
             );
 
-            // Create new edge
             const newEdge = createNewEdge(sourceNodeId, newNode.id, color);
 
-            // Add the new node and edge
             onNodesChange([{ type: "add", item: newNode }]);
             onEdgesChange([{ type: "add", item: newEdge }]);
 
             return color;
         },
-        [nodes, onNodesChange, onEdgesChange]
+        [
+            nodes,
+            onNodesChange,
+            onEdgesChange,
+            determineNodeColor,
+            handleExtendNode,
+        ]
     );
 
     return (
         <TokenInteractionContext.Provider value={{ handleTokenClick }}>
+            <ExplanationWindow
+                show={extendedNode.isVisible}
+                title="Extended Node Information"
+                text={extendedNode.text}
+                onHide={hideExtendedNode}
+            />
             {children}
         </TokenInteractionContext.Provider>
     );

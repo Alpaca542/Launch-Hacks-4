@@ -30,6 +30,8 @@ export interface NodeData {
     type: string;
     data: {
         label: string;
+        summary?: string;
+        full_text?: string;
         [key: string]: any;
     };
     position: {
@@ -65,6 +67,9 @@ export const initialNodes: NodeData[] = [
         type: "draggableEditable",
         data: {
             label: "The _artificial intelligence_ system processes _natural language_ effectively",
+            summary:
+                "The _artificial intelligence_ system processes _natural language_ effectively",
+            full_text: "",
         },
         position: { x: 250, y: 25 },
     },
@@ -73,6 +78,9 @@ export const initialNodes: NodeData[] = [
         type: "draggableEditable",
         data: {
             label: "This is a simple sentence with multiple words to demonstrate word mode functionality",
+            summary:
+                "This is a simple sentence with multiple words to demonstrate word mode functionality",
+            full_text: "",
         },
         position: { x: 100, y: 125 },
     },
@@ -81,6 +89,9 @@ export const initialNodes: NodeData[] = [
         type: "draggableEditable",
         data: {
             label: "_Machine learning_ algorithms can _predict outcomes_ with high accuracy",
+            summary:
+                "_Machine learning_ algorithms can _predict outcomes_ with high accuracy",
+            full_text: "",
         },
         position: { x: 400, y: 125 },
     },
@@ -89,6 +100,8 @@ export const initialNodes: NodeData[] = [
         type: "staticEditable",
         data: {
             label: "Static node with _key concepts_ highlighted",
+            summary: "Static node with _key concepts_ highlighted",
+            full_text: "",
         },
         position: { x: 250, y: 200 },
         draggable: false,
