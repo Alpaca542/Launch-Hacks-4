@@ -8,9 +8,15 @@ import {
     createNewEdge,
 } from "../utils/nodeHelpers";
 
+// Token interface with concept support
+export interface Token {
+    word: string;
+    myConcept?: string;
+}
+
 interface TokenInteractionContextType {
     handleTokenClick: (
-        tokenValue: string,
+        token: Token,
         sourceNodeId: string,
         sourceNodePosition: { x: number; y: number },
         sourceNodeType: string,
@@ -33,79 +39,72 @@ export const TokenInteractionProvider: React.FC<
 > = ({ children, nodes, onNodesChange, onEdgesChange }) => {
     const handleTokenClick = useCallback(
         (
-            tokenValue: string,
+            token: Token,
             sourceNodeId: string,
             sourceNodePosition: { x: number; y: number },
             sourceNodeType: string,
             sourceNodeColor?: string
         ) => {
-            // Step 3 & 4: Determine color based on source node type
+            // Check if token is already colored - if so, do nothing
+            const checkNode = nodes.find((n) => n.id === sourceNodeId);
+            const concept = token.myConcept || token.word;
+
+            // Check if this token/concept is already colored
+            const isAlreadyColored = checkNode?.data.tokenColors?.[concept];
+            if (isAlreadyColored) {
+                console.log("Token/concept already colored, ignoring click");
+                return;
+            }
+
+            // Determine color based on source node type
             let color: string;
             if (sourceNodeType === "staticEditable") {
-                // Static node - generate random color
                 color = generateRandomColor();
             } else {
-                // Dynamic node - use color variation
                 color = sourceNodeColor
                     ? generateColorVariation(sourceNodeColor)
                     : generateRandomColor();
             }
 
-            // Step 1: Calculate position for new node
+            // Calculate position for new node
             const newPosition = calculateNewNodePosition(
                 sourceNodePosition,
                 nodes
             );
 
-            // Step 1: Create new node
+            // Create new node - use concept if it exists, otherwise use word
+            const nodeLabel = token.myConcept || token.word;
             const newNode = createNewNode(
                 newPosition,
-                tokenValue,
+                nodeLabel,
                 color,
                 sourceNodeType
             );
 
-            // Step 2: Create new edge
+            // Create new edge
             const newEdge = createNewEdge(sourceNodeId, newNode.id, color);
 
             // Add the new node and edge
             onNodesChange([{ type: "add", item: newNode }]);
-            onEdgesChange([{ type: "add", item: newEdge }]); // Step 5: Update the token color by updating the source node
-            // Color the token in both modes for cross-mode compatibility
-            console.log(
-                "Updating token color for:",
-                tokenValue,
-                "with color:",
-                color
-            );
+            onEdgesChange([{ type: "add", item: newEdge }]);
 
-            // Create a node data update change for ReactFlow
-            const sourceNode = nodes.find((node) => node.id === sourceNodeId);
+            console.log("Coloring concept:", concept, "with color:", color);
+
+            // Find and update the source node to add token color for the concept
+            const sourceNode = nodes.find((n) => n.id === sourceNodeId);
             if (sourceNode) {
-                const updatedTokenColors = {
-                    ...sourceNode.data.tokenColors,
-                    // Original token
-                    [tokenValue]: color,
-                    // Cross-mode compatibility
-                    // If it's a concept token (has underscores), also color the word version
-                    [tokenValue.replace(/_/g, "")]: color,
-                    // If it's a word token, also color the concept version
-                    [`_${tokenValue}_`]: color,
-                };
-
-                // Use ReactFlow's standard node change format for data updates
-                onNodesChange([
-                    {
-                        type: "change",
-                        id: sourceNodeId,
-                        item: {
-                            ...sourceNode,
-                            data: {
-                                ...sourceNode.data,
-                                tokenColors: updatedTokenColors,
-                            },
+                const updatedNode = {
+                    ...sourceNode,
+                    data: {
+                        ...sourceNode.data,
+                        tokenColors: {
+                            ...sourceNode.data.tokenColors,
+                            [concept]: color, // Store by concept name
                         },
                     },
+                };
+                onNodesChange([
+                    { type: "replace", id: sourceNodeId, item: updatedNode },
                 ]);
             }
         },

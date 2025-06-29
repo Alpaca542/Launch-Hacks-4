@@ -1,5 +1,43 @@
 import { Node, Edge, MarkerType } from "reactflow";
 
+// Token interface
+export interface Token {
+    word: string;
+    myConcept?: string;
+}
+
+// Parse text into tokens with concept information
+export const parseTextIntoTokens = (text: string): Token[] => {
+    const tokens: Token[] = [];
+    const parts = text.split("_");
+
+    for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 0) {
+            // Regular text - split into words
+            const words = parts[i]
+                .split(/\s+/)
+                .filter((word) => word.trim() !== "");
+            words.forEach((word) => {
+                tokens.push({ word: word.trim() });
+            });
+        } else {
+            // Concept text - each word belongs to this concept
+            const conceptName = parts[i].trim();
+            const words = conceptName
+                .split(/\s+/)
+                .filter((word) => word.trim() !== "");
+            words.forEach((word) => {
+                tokens.push({
+                    word: word.trim(),
+                    myConcept: conceptName,
+                });
+            });
+        }
+    }
+
+    return tokens;
+};
+
 // Color utilities
 export const generateRandomColor = (): string => {
     const colors = [
@@ -101,25 +139,18 @@ export const createNewNode = (
     position: { x: number; y: number },
     tokenValue: string,
     color: string,
-    sourceNodeType: string
+    _sourceNodeType: string // Prefix with underscore to indicate unused
 ): Node => {
     const nodeId = generateNodeId();
 
     return {
         id: nodeId,
-        type:
-            sourceNodeType === "staticEditable"
-                ? "draggableEditable"
-                : "draggableEditable",
+        type: "draggableEditable", // Always create draggable nodes
         position,
         data: {
             label: tokenValue,
-            color: color,
-        },
-        style: {
-            backgroundColor: color,
-            color: getContrastColor(color),
-            border: `2px solid ${darkenColor(color, 20)}`,
+            myColor: color, // Changed from color to myColor
+            tokenColors: {}, // Initialize empty token colors
         },
     };
 };

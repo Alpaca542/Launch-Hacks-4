@@ -11,18 +11,9 @@ interface TopBarProps {
     onSetName: (name: string) => void;
     user: User | null;
     isSaving: boolean;
-    isConceptMode: boolean;
-    onToggleMode: () => void;
 }
 
-function TopBar({
-    name,
-    onSetName,
-    user,
-    isSaving,
-    isConceptMode,
-    onToggleMode,
-}: TopBarProps) {
+function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
@@ -61,17 +52,6 @@ function TopBar({
                                     💾 Saving...
                                 </span>
                             )}
-                            <button
-                                className="mode-toggle-btn"
-                                onClick={onToggleMode}
-                                title={`Switch to ${
-                                    isConceptMode ? "Word" : "Concept"
-                                } Mode`}
-                            >
-                                {isConceptMode
-                                    ? "📝 Word Mode"
-                                    : "🧠 Concept Mode"}
-                            </button>
                         </div>
                     </header>
                 </div>

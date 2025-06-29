@@ -503,12 +503,48 @@ div[style*="width: 100vw"] {
     border-radius: 3px;
     transition: all 0.2s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .word-token:hover {
     background: rgba(255, 255, 255, 0.2);
     color: #333;
     transform: translateY(-1px);
+}
+
+.word-token.disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.word-token.disabled:hover {
+    background: none;
+    transform: none;
+}
+
+/* Token group styles for concepts */
+.token-group {
+    position: relative;
+    margin: 1px;
+}
+
+.multi-token-concept {
+    border: 2px solid #4A90E2 !important;
+    border-radius: 6px !important;
+    padding: 2px 4px !important;
+    margin: 2px !important;
+    background-color: rgba(74, 144, 226, 0.1);
+    transition: all 0.2s ease;
+}
+
+.multi-token-concept:hover {
+    border-color: #357ABD;
+    background-color: rgba(74, 144, 226, 0.2);
+}
+
+.multi-token-concept.colored {
+    border-color: transparent !important;
+    background-color: inherit !important;
 }
 
 /* Node content styling for different modes */

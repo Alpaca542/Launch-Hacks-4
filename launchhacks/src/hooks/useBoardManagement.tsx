@@ -100,7 +100,7 @@ export const useBoardManagement = (
                         );
                     }
                     setNodes(initialNodes);
-                    setEdges(initialEdges);
+                    setEdges(initialEdges as Edge[]);
                     return;
                 }
 
@@ -113,7 +113,7 @@ export const useBoardManagement = (
                 ]);
 
                 setNodes(nodesData);
-                setEdges(edgesData);
+                setEdges(edgesData as Edge[]);
 
                 if (showInfo && !hasFallbackBoard) {
                     showInfo("Board loaded successfully!");
@@ -126,7 +126,7 @@ export const useBoardManagement = (
                     );
                 }
                 setNodes(initialNodes);
-                setEdges(initialEdges);
+                setEdges(initialEdges as Edge[]);
             } finally {
                 setIsLoading(false);
             }
@@ -261,7 +261,7 @@ export const useBoardManagement = (
                     ]);
 
                     setNodes(nodesData);
-                    setEdges(edgesData);
+                    setEdges(edgesData as Edge[]);
 
                     if (showSuccess) {
                         showSuccess(`Switched to "${openedBoard.name}"`);
@@ -336,7 +336,7 @@ export const useBoardManagement = (
 
                 // Load initial nodes and edges for the new board
                 setNodes(initialNodes);
-                setEdges(initialEdges);
+                setEdges(initialEdges as Edge[]);
 
                 if (showSuccess) {
                     showSuccess("New board created and opened!");

@@ -26,15 +26,11 @@ import { useNotifications } from "./hooks/useNotifications";
 import { nodeTypes } from "./config/nodeTypes";
 
 // Context
-import { ModeProvider, useMode } from "./contexts/ModeContext";
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 
 function AppContent() {
     // Authentication
     const { user, signOut } = useAuth();
-
-    // Mode context
-    const { mode, toggleMode } = useMode();
 
     // Notifications
     const {
@@ -117,8 +113,6 @@ function AppContent() {
                 onSetName={updateBoardName}
                 user={user}
                 isSaving={isSaving}
-                isConceptMode={mode === "concept"}
-                onToggleMode={toggleMode}
             />
             <NotificationContainer
                 notifications={notifications}
@@ -155,11 +149,7 @@ function AppContent() {
 }
 
 function App() {
-    return (
-        <ModeProvider>
-            <AppContent />
-        </ModeProvider>
-    );
+    return <AppContent />;
 }
 
 export default App;

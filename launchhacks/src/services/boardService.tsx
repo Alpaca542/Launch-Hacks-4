@@ -49,6 +49,12 @@ export interface EdgeData {
     target: string;
     sourceHandle?: string;
     targetHandle?: string;
+    style?: {
+        [key: string]: any;
+    };
+    markerEnd?: {
+        [key: string]: any;
+    };
     updatedAt?: Date | Timestamp;
 }
 
@@ -341,6 +347,16 @@ export const saveEdgesToBoard = async (
             }
             if (edge.targetHandle !== undefined) {
                 edgeData.targetHandle = edge.targetHandle;
+            }
+
+            // Include style if it exists (for edge colors)
+            if (edge.style !== undefined) {
+                edgeData.style = edge.style;
+            }
+
+            // Include markerEnd if it exists (for arrow colors)
+            if (edge.markerEnd !== undefined) {
+                edgeData.markerEnd = edge.markerEnd;
             }
 
             batch.set(edgeRef, edgeData);
