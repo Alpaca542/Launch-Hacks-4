@@ -34,9 +34,16 @@ function AuthWindow() {
                 throw new Error(ERROR_MESSAGES.WEAK_PASSWORD);
             }
 
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
             // Authentication state is now handled by useAuth hook
+            console.log("User created successfully:", userCredential.user.uid);
         } catch (error: any) {
+            console.error("Sign up error:", error);
+
             // Handle specific Firebase auth errors
             let errorMessage = "Failed to create account";
 
@@ -76,9 +83,19 @@ function AuthWindow() {
                 throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
             }
 
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
             // Authentication state is now handled by useAuth hook
+            console.log(
+                "User signed in successfully:",
+                userCredential.user.uid
+            );
         } catch (error: any) {
+            console.error("Sign in error:", error);
+
             // Handle specific Firebase auth errors
             let errorMessage = "Failed to sign in";
 
@@ -104,117 +121,78 @@ function AuthWindow() {
     };
 
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100vh",
-                fontFamily: "Arial, sans-serif",
-                backgroundColor: "#f5f5f5",
-            }}
-        >
-            <div
-                style={{
-                    padding: "2rem",
-                    border: "1px solid #ccc",
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    minWidth: "300px",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                }}
-            >
-                <h2 style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                    {isSignUp ? "Sign Up" : "Sign In"}
-                </h2>
-                <form onSubmit={isSignUp ? handleSignUp : handleSignIn}>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        style={{
-                            width: "100%",
-                            padding: "0.75rem",
-                            marginBottom: "1rem",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            fontSize: "1rem",
-                            boxSizing: "border-box",
-                        }}
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        style={{
-                            width: "100%",
-                            padding: "0.75rem",
-                            marginBottom: "1rem",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            fontSize: "1rem",
-                            boxSizing: "border-box",
-                        }}
-                    />
+        <div className="auth-window-container">
+            <div className="auth-window">
+                <div className="auth-window-header">
+                    <h2 className="auth-window-title">
+                        {isSignUp ? "Create Account" : "Welcome Back"}
+                    </h2>
+                    <p className="auth-window-subtitle">
+                        {isSignUp
+                            ? "Join the platform to start building your boards"
+                            : "Sign in to access your boards and continue your work"}
+                    </p>
+                </div>
+
+                <form
+                    onSubmit={isSignUp ? handleSignUp : handleSignIn}
+                    className="auth-form"
+                >
+                    <div className="auth-input-group">
+                        <input
+                            type="email"
+                            placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className="auth-input"
+                        />
+                    </div>
+
+                    <div className="auth-input-group">
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className="auth-input"
+                        />
+                    </div>
+
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            width: "100%",
-                            padding: "0.75rem",
-                            backgroundColor: loading ? "#ccc" : "#007bff",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            fontSize: "1rem",
-                            cursor: loading ? "not-allowed" : "pointer",
-                            marginBottom: "1rem",
-                        }}
+                        className={`auth-submit-btn ${
+                            loading ? "loading" : ""
+                        }`}
                     >
-                        {loading
-                            ? "Loading..."
-                            : isSignUp
-                            ? "Sign Up"
-                            : "Sign In"}
+                        {loading ? (
+                            <div className="loading-spinner"></div>
+                        ) : isSignUp ? (
+                            "Create Account"
+                        ) : (
+                            "Sign In"
+                        )}
                     </button>
-                    {error && (
-                        <p
-                            style={{
-                                color: "red",
-                                textAlign: "center",
-                                marginBottom: "1rem",
-                                fontSize: "0.9rem",
-                            }}
-                        >
-                            {error}
-                        </p>
-                    )}
+
+                    {error && <div className="auth-error">{error}</div>}
                 </form>
-                <p style={{ textAlign: "center", margin: 0 }}>
-                    {isSignUp
-                        ? "Already have an account?"
-                        : "Don't have an account?"}
+
+                <div className="auth-switch">
+                    <span className="auth-switch-text">
+                        {isSignUp
+                            ? "Already have an account?"
+                            : "Don't have an account?"}
+                    </span>
                     <button
                         type="button"
                         onClick={() => setIsSignUp(!isSignUp)}
-                        style={{
-                            background: "none",
-                            border: "none",
-                            color: "#007bff",
-                            textDecoration: "underline",
-                            cursor: "pointer",
-                            marginLeft: "0.5rem",
-                            fontSize: "1rem",
-                        }}
+                        className="auth-switch-btn"
                     >
                         {isSignUp ? "Sign In" : "Sign Up"}
                     </button>
-                </p>
+                </div>
             </div>
         </div>
     );

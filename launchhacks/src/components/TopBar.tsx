@@ -11,9 +11,16 @@ interface TopBarProps {
     onSetName: (name: string) => void;
     user: User | null;
     isSaving: boolean;
+    sidebarCollapsed?: boolean;
 }
 
-function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
+function TopBar({
+    name,
+    onSetName,
+    user,
+    isSaving,
+    sidebarCollapsed = false,
+}: TopBarProps) {
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
@@ -36,7 +43,11 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
 
     return (
         <>
-            <div className="name">
+            <div
+                className={`name ${
+                    sidebarCollapsed ? "sidebar-collapsed" : ""
+                }`}
+            >
                 <div className="app-container">
                     <header className="app-header">
                         <h1>Tink Flow Editor</h1>
@@ -73,12 +84,12 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                             autoFocus
                         />
                     )}
-                    <div className="keyboard-shortcuts">
+                    {/* <div className="keyboard-shortcuts">
                         <small>
                             💡 Tips: Ctrl+N for new board, Ctrl+1-9 to switch
                             boards
                         </small>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </>

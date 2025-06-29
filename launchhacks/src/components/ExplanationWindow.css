@@ -1,297 +1,267 @@
-/* Professional Reading Environment for ExplanationWindow */
+/* Professional Dark Explanation Modal */
 
+/* Modal backdrop */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+/* Explanation modal specific styles */
 .explanation-modal .modal-dialog {
-    max-width: 900px;
-    margin: 2rem auto;
+    max-width: 800px !important;
 }
 
 .explanation-modal .modal-content {
-    background: #0f0f0f;
-    border: 1px solid #333333;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 8px 16px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(20px);
+    background: linear-gradient(145deg, #1e1e1e 0%, #2a2a2a 50%, #1a1a1a 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.9),
+        0 10px 30px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(24px) !important;
     overflow: hidden;
+    min-height: 400px;
 }
 
-.explanation-header {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    border-bottom: 1px solid #333333;
-    padding: 24px 32px;
-    border-radius: 16px 16px 0 0 !important;
+.explanation-modal .modal-header {
+    background: linear-gradient(135deg, rgba(79, 134, 247, 0.08), rgba(124, 58, 237, 0.05)) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 28px 36px 24px !important;
+    position: relative;
 }
 
-.explanation-header .btn-close {
-    background: transparent;
-    opacity: 0.6;
-    filter: invert(1);
-    transition: all 0.2s ease;
-    width: 20px;
-    height: 20px;
+.explanation-modal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #4f86f7, #7c3aed, #ec4899);
 }
 
-.explanation-header .btn-close:hover {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-.explanation-title {
-    color: #e5e5e5;
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0;
-    letter-spacing: -0.025em;
+.explanation-modal .modal-title {
+    color: #f1f5f9 !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    letter-spacing: -0.02em;
     line-height: 1.2;
+    background: linear-gradient(135deg, #4f86f7, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.explanation-body {
-    background: #0a0a0a;
-    padding: 0;
-    max-height: 70vh;
+.explanation-modal .btn-close {
+    background: none !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 28px !important;
+    opacity: 0.7 !important;
+    transition: all 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.explanation-modal .btn-close:hover {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f1f5f9 !important;
+    transform: scale(1.05) !important;
+}
+
+.explanation-modal .modal-body {
+    padding: 32px 36px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.01), transparent) !important;
+    max-height: 60vh;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-.explanation-content {
-    padding: 32px 40px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 100%);
-}
-
-.explanation-markdown {
-    color: #d1d5db;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
-    font-size: 16px;
-    line-height: 1.7;
-    max-width: none;
-}
-
-/* Markdown Elements Styling */
-.explanation-markdown h1 {
-    color: #f9fafb;
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 24px 0;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #374151;
-    letter-spacing: -0.025em;
-}
-
-.explanation-markdown h2 {
-    color: #f3f4f6;
-    font-size: 24px;
-    font-weight: 600;
-    margin: 32px 0 16px 0;
-    letter-spacing: -0.025em;
-}
-
-.explanation-markdown h3 {
-    color: #e5e7eb;
-    font-size: 20px;
-    font-weight: 600;
-    margin: 24px 0 12px 0;
-}
-
-.explanation-markdown h4,
-.explanation-markdown h5,
-.explanation-markdown h6 {
-    color: #d1d5db;
-    font-weight: 600;
-    margin: 20px 0 8px 0;
-}
-
-.explanation-markdown p {
-    margin: 0 0 16px 0;
-    color: #d1d5db;
-}
-
-.explanation-markdown strong {
-    color: #f9fafb;
-    font-weight: 600;
-}
-
-.explanation-markdown em {
-    color: #e5e7eb;
-    font-style: italic;
-}
-
-.explanation-markdown code {
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-    font-size: 14px;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-.explanation-markdown pre {
-    background: #111827;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    overflow-x: auto;
-    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.explanation-markdown pre code {
-    background: none;
-    color: #e5e7eb;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-}
-
-.explanation-markdown blockquote {
-    border-left: 4px solid #3b82f6;
-    background: rgba(59, 130, 246, 0.05);
-    margin: 16px 0;
-    padding: 16px 20px;
-    border-radius: 0 8px 8px 0;
-    color: #e5e7eb;
-    font-style: italic;
-}
-
-.explanation-markdown ul,
-.explanation-markdown ol {
-    padding-left: 24px;
-    margin: 16px 0;
-}
-
-.explanation-markdown li {
-    margin: 8px 0;
-    color: #d1d5db;
-}
-
-.explanation-markdown li::marker {
-    color: #9ca3af;
-}
-
-.explanation-markdown a {
-    color: #60a5fa;
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.explanation-markdown a:hover {
-    color: #93c5fd;
-    border-bottom-color: #60a5fa;
-}
-
-.explanation-markdown table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #374151;
-}
-
-.explanation-markdown th,
-.explanation-markdown td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #374151;
-}
-
-.explanation-markdown th {
-    background: rgba(255, 255, 255, 0.05);
-    color: #f9fafb;
-    font-weight: 600;
-}
-
-.explanation-markdown td {
-    color: #d1d5db;
-}
-
-.explanation-markdown hr {
-    border: none;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #374151, transparent);
-    margin: 32px 0;
-}
-
-/* Custom scrollbar for the modal body */
-.explanation-body::-webkit-scrollbar {
+.explanation-modal .modal-body::-webkit-scrollbar {
     width: 8px;
 }
 
-.explanation-body::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+.explanation-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.explanation-modal .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
-.explanation-body::-webkit-scrollbar-thumb {
+.explanation-modal .modal-body::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    transition: background 0.2s ease;
 }
 
-.explanation-body::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+/* Markdown content styling */
+.explanation-modal .modal-body p {
+    margin: 0 !important;
+    line-height: 1.8 !important;
+    font-size: 16px !important;
+    color: #e2e8f0 !important;
+    font-weight: 400 !important;
 }
 
-.explanation-footer {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    border-top: 1px solid #333333;
-    padding: 20px 32px;
-    border-radius: 0 0 16px 16px !important;
-    display: flex;
-    justify-content: flex-end;
+.explanation-modal .modal-body h1,
+.explanation-modal .modal-body h2,
+.explanation-modal .modal-body h3,
+.explanation-modal .modal-body h4,
+.explanation-modal .modal-body h5,
+.explanation-modal .modal-body h6 {
+    color: #f1f5f9 !important;
+    font-weight: 700 !important;
+    margin: 24px 0 16px 0 !important;
+    letter-spacing: -0.025em;
 }
 
-.explanation-close-btn {
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(4px);
+.explanation-modal .modal-body h1 {
+    font-size: 32px !important;
+    background: linear-gradient(135deg, #4f86f7, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.explanation-close-btn:hover {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.5);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+.explanation-modal .modal-body h2 {
+    font-size: 24px !important;
+    color: #cbd5e1 !important;
 }
 
-.explanation-close-btn:active {
-    transform: translateY(0);
+.explanation-modal .modal-body h3 {
+    font-size: 20px !important;
+    color: #cbd5e1 !important;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .explanation-modal .modal-dialog {
-        max-width: 95%;
-        margin: 1rem auto;
-    }
+.explanation-modal .modal-body strong {
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+}
 
-    .explanation-header {
-        padding: 20px 24px;
-    }
+.explanation-modal .modal-body em {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+}
 
-    .explanation-title {
-        font-size: 20px;
-    }
+.explanation-modal .modal-body code {
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: #34d399 !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+    font-size: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
 
-    .explanation-content {
-        padding: 24px 28px;
-    }
+.explanation-modal .modal-body pre {
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #e2e8f0 !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    overflow-x: auto !important;
+    margin: 20px 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+}
 
-    .explanation-markdown {
-        font-size: 15px;
-        line-height: 1.6;
-    }
+.explanation-modal .modal-body blockquote {
+    border-left: 4px solid #4f86f7 !important;
+    background: rgba(79, 134, 247, 0.05) !important;
+    padding: 16px 20px !important;
+    margin: 20px 0 !important;
+    border-radius: 0 8px 8px 0 !important;
+}
 
-    .explanation-footer {
-        padding: 16px 24px;
-    }
+.explanation-modal .modal-body blockquote p {
+    color: #cbd5e1 !important;
+    font-style: italic !important;
+    margin: 0 !important;
+}
+
+.explanation-modal .modal-body ul,
+.explanation-modal .modal-body ol {
+    padding-left: 24px !important;
+    margin: 16px 0 !important;
+}
+
+.explanation-modal .modal-body li {
+    color: #e2e8f0 !important;
+    margin: 8px 0 !important;
+    line-height: 1.7 !important;
+}
+
+.explanation-modal .modal-body a {
+    color: #60a5fa !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.explanation-modal .modal-body a:hover {
+    color: #93c5fd !important;
+    text-decoration: underline !important;
+}
+
+.explanation-modal .modal-footer {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.1), transparent) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 24px 36px 28px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.explanation-modal .modal-footer button {
+    background: linear-gradient(135deg, #374151, #4b5563) !important;
+    color: #e5e7eb !important;
+    border: none !important;
+    padding: 14px 28px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.explanation-modal .modal-footer button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.explanation-modal .modal-footer button:hover {
+    background: linear-gradient(135deg, #4b5563, #6b7280) !important;
+    color: #f9fafb !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.explanation-modal .modal-footer button:hover::before {
+    opacity: 1;
+}
+
+/* Animation for modal entrance */
+.explanation-modal.fade .modal-dialog {
+    transform: translateY(-60px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.explanation-modal.show .modal-dialog {
+    transform: translateY(0) scale(1);
 }

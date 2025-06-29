@@ -19,26 +19,18 @@ function ExplanationWindow(props: ExplanationWindowProps) {
             centered
             className="explanation-modal"
         >
-            <Modal.Header closeButton className="explanation-header">
-                <Modal.Title
-                    id="contained-modal-title-vcenter"
-                    className="explanation-title"
-                >
+            <Modal.Header closeButton>
+                <Modal.Title id="contained-modal-title-vcenter">
                     {props.title}
                 </Modal.Title>
             </Modal.Header>
-            <Modal.Body className="explanation-body">
-                <div className="explanation-content">
-                    <div className="explanation-markdown">
-                        <Markdown>{props.text}</Markdown>
-                    </div>
-                </div>
+            <Modal.Body>
+                <p>
+                    <Markdown>{props.text}</Markdown>
+                </p>
             </Modal.Body>
-            <Modal.Footer className="explanation-footer">
-                <button
-                    onClick={props.onHide}
-                    className="explanation-close-btn"
-                >
+            <Modal.Footer>
+                <button onClick={props.onHide} className="btn btn-secondary">
                     Close
                 </button>
             </Modal.Footer>

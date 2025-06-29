@@ -216,25 +216,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     : undefined,
             }}
         >
-            <Handle type="target" position={Position.Bottom} id="bottom" />
-
-            {showTooltip && (
-                <div className="node-tooltip">
-                    <div className="tooltip-content">
-                        <span>📍 Static Node</span>
-                        <span>Click to edit text</span>
-                        <span>Click words to create connections</span>
-                    </div>
-                </div>
-            )}
-
             {renderContent}
-
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="bottom-source"
-            />
 
             <ExplanationWindow
                 show={showExplanation}

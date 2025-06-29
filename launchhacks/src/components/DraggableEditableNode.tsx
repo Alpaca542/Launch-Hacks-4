@@ -244,23 +244,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                     : undefined,
             }}
         >
-            {showTooltip && (
-                <div className="node-tooltip">
-                    <div className="tooltip-content">
-                        <span>🎯 Draggable Node</span>
-                        <span>Drag me around!</span>
-                        <span>Click to edit text</span>
-                        <span>Click words to create connections</span>
-                    </div>
-                </div>
-            )}
-
             <div className="node-content">{renderContent}</div>
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="bottom-source"
-            />
 
             <ExplanationWindow
                 show={showExplanation}

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -8,7 +8,6 @@ import ReactFlow, {
     BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import "./styles/dark-theme.css";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -29,6 +28,9 @@ import { nodeTypes } from "./config/nodeTypes";
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 
 function AppContent() {
+    // Sidebar state
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
     // Authentication
     const { user, signOut } = useAuth();
 
@@ -72,6 +74,11 @@ function AppContent() {
         clearBoardState();
     };
 
+    // Toggle sidebar
+    const toggleSidebar = () => {
+        setSidebarCollapsed(!sidebarCollapsed);
+    };
+
     // ReactFlow connection handler
     const onConnect = useCallback(
         (params: Connection) => {
@@ -95,7 +102,7 @@ function AppContent() {
 
     // Main application interface
     return (
-        <div className="app-container">
+        <>
             <SideBar
                 allBoards={allBoards}
                 currentBoard={currentBoard}
@@ -106,46 +113,50 @@ function AppContent() {
                 onDeleteBoard={deleteBoard}
                 onSignOut={handleSignOut}
                 isLoading={isSwitchingBoard}
+                isCollapsed={sidebarCollapsed}
+                onToggleSidebar={toggleSidebar}
             />
-            <div className="main-layout">
-                <TopBar
-                    name={currentBoard?.name || "Loading..."}
-                    onSetName={updateBoardName}
-                    user={user}
-                    isSaving={isSaving}
-                />
-                <div className="main-content">
-                    <TokenInteractionProvider
-                        nodes={nodes}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                    >
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            onConnect={onConnect}
-                            nodeTypes={nodeTypes}
-                            connectionMode={ConnectionMode.Loose}
-                            fitView
-                        >
-                            <Controls />
-                            <MiniMap />
-                            <Background
-                                variant={BackgroundVariant.Dots}
-                                gap={16}
-                                size={1}
-                            />
-                        </ReactFlow>
-                    </TokenInteractionProvider>
-                </div>
-            </div>
+            <TopBar
+                name={currentBoard?.name || "Loading..."}
+                onSetName={updateBoardName}
+                user={user}
+                isSaving={isSaving}
+                sidebarCollapsed={sidebarCollapsed}
+            />
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-        </div>
+            <div
+                className={`reactflow-board-container ${
+                    sidebarCollapsed ? "sidebar-collapsed" : "with-sidebar"
+                }`}
+            >
+                <TokenInteractionProvider
+                    nodes={nodes}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                >
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        nodeTypes={nodeTypes}
+                        connectionMode={ConnectionMode.Loose}
+                        fitView
+                    >
+                        <Controls />
+                        <Background
+                            variant={BackgroundVariant.Cross}
+                            gap={12}
+                            size={1}
+                        />
+                    </ReactFlow>
+                </TokenInteractionProvider>
+            </div>
+        </>
     );
 }
 

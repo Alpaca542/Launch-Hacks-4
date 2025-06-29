@@ -65,7 +65,6 @@ function BoardNameModal({
             centered
             backdrop="static"
             keyboard={false}
-            className="board-name-modal"
         >
             <Modal.Header closeButton>
                 <Modal.Title>Create New Board</Modal.Title>
