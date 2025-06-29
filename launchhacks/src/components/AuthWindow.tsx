@@ -34,16 +34,9 @@ function AuthWindow() {
                 throw new Error(ERROR_MESSAGES.WEAK_PASSWORD);
             }
 
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                email,
-                password
-            );
+            await createUserWithEmailAndPassword(auth, email, password);
             // Authentication state is now handled by useAuth hook
-            console.log("User created successfully:", userCredential.user.uid);
         } catch (error: any) {
-            console.error("Sign up error:", error);
-
             // Handle specific Firebase auth errors
             let errorMessage = "Failed to create account";
 
@@ -83,19 +76,9 @@ function AuthWindow() {
                 throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
             }
 
-            const userCredential = await signInWithEmailAndPassword(
-                auth,
-                email,
-                password
-            );
+            await signInWithEmailAndPassword(auth, email, password);
             // Authentication state is now handled by useAuth hook
-            console.log(
-                "User signed in successfully:",
-                userCredential.user.uid
-            );
         } catch (error: any) {
-            console.error("Sign in error:", error);
-
             // Handle specific Firebase auth errors
             let errorMessage = "Failed to sign in";
 

@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Handle, Position } from "reactflow";
-import "./EditableNode.css";
 
 interface BoardData {
     id: string;
     userId: string;
     name: string;
-    createdAt: any;
+    createdAt: Date | any; // Firebase Timestamp
     isOpen: boolean;
     isFallback?: boolean;
 }
@@ -86,7 +84,6 @@ function SideBar({
                     </div>
                     <ul>
                         {allBoards?.map((board) => {
-                            console.log("Rendering board:", board);
                             return (
                                 <li
                                     key={board.id}

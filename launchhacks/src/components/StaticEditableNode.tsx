@@ -12,7 +12,6 @@ import {
 interface NodeData {
     label?: string;
     myColor?: string;
-    tokenColors?: { [key: string]: string };
 }
 
 interface StaticEditableNodeProps {
@@ -32,40 +31,20 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     // Parse text into tokens
     const tokens = useMemo(() => parseTextIntoTokens(text), [text]);
 
-    // Helper to get token color by concept
-    const getTokenColor = useCallback(
-        (token: Token) => {
-            const concept = token.myConcept || token.word;
-            return data.tokenColors?.[concept];
-        },
-        [data.tokenColors]
-    );
-
-    // Check if token is clickable (not already colored)
-    const isTokenClickable = useCallback(
-        (token: Token) => {
-            return !getTokenColor(token);
-        },
-        [getTokenColor]
-    );
+    // Check if token is clickable
+    const isTokenClickable = useCallback(() => {
+        return true; // All tokens are clickable now
+    }, []);
 
     // Token click handler
     const handleTokenClickLocal = useCallback(
         (token: Token, e: React.MouseEvent) => {
             e.stopPropagation();
 
-            if (!isTokenClickable(token)) {
-                console.log("Token already colored, ignoring click");
-                return;
-            }
-
-            console.log("Static Token clicked:", token);
-
             // Get current node info
             const currentNodes = getNodes();
             const currentNode = currentNodes.find((node) => node.id === id);
             if (!currentNode) {
-                console.error("Current node not found");
                 return;
             }
 
@@ -78,7 +57,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 data.myColor
             );
         },
-        [id, getNodes, handleTokenClick, data.myColor, isTokenClickable]
+        [id, getNodes, handleTokenClick, data.myColor]
     );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
@@ -88,8 +67,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
 
     const handleSave = useCallback(() => {
         setIsEditing(false);
-        console.log("Static node text changed to:", text);
-    }, [text]);
+    }, []);
 
     const handleInputClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -137,9 +115,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             <div className="node-content-word">
                 <div onClick={handleClick}>
                     {tokens.map((token, index) => {
-                        const concept = token.myConcept || token.word;
-                        const tokenColor = data.tokenColors?.[concept];
-                        const isClickable = isTokenClickable(token);
+                        const isClickable = isTokenClickable();
 
                         return (
                             <span
@@ -148,18 +124,15 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                                     !isClickable ? "disabled" : ""
                                 }`}
                                 style={{
-                                    backgroundColor: tokenColor,
-                                    color: tokenColor ? tokenColor : undefined,
                                     cursor: isClickable ? "pointer" : "default",
-                                    padding: tokenColor ? "2px 4px" : "1px 3px",
+                                    padding: "1px 3px",
                                     borderRadius: "4px",
                                     margin: "1px",
                                     display: "inline-block",
                                     opacity: isClickable ? 1 : 0.7,
-                                    border:
-                                        token.myConcept && !tokenColor
-                                            ? "2px solid #4A90E2"
-                                            : undefined,
+                                    border: token.myConcept
+                                        ? "2px solid #4A90E2"
+                                        : undefined,
                                 }}
                                 onClick={(e) =>
                                     isClickable
@@ -190,14 +163,12 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         text,
         isExpanded,
         tokens,
-        data.tokenColors,
         handleClick,
         handleSave,
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
         handleTokenClickLocal,
-        getTokenColor,
         isTokenClickable,
     ]);
 

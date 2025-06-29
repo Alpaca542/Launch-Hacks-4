@@ -15,11 +15,6 @@ export const useAuth = (): UseAuthReturn => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
             setUser(user);
-            if (user) {
-                console.log("User signed in:", user.uid);
-            } else {
-                console.log("No user signed in");
-            }
         });
 
         return () => unsubscribe();
@@ -30,7 +25,8 @@ export const useAuth = (): UseAuthReturn => {
             await handleSignOut();
             setUser(null);
         } catch (error) {
-            console.error("Error in sign out:", error);
+            // Error handling could be improved with proper error reporting
+            throw error;
         }
     };
 

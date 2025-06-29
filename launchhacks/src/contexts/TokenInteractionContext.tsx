@@ -21,7 +21,7 @@ interface TokenInteractionContextType {
         sourceNodePosition: { x: number; y: number },
         sourceNodeType: string,
         sourceNodeColor?: string
-    ) => void;
+    ) => string;
 }
 
 const TokenInteractionContext =
@@ -45,17 +45,6 @@ export const TokenInteractionProvider: React.FC<
             sourceNodeType: string,
             sourceNodeColor?: string
         ) => {
-            // Check if token is already colored - if so, do nothing
-            const checkNode = nodes.find((n) => n.id === sourceNodeId);
-            const concept = token.myConcept || token.word;
-
-            // Check if this token/concept is already colored
-            const isAlreadyColored = checkNode?.data.tokenColors?.[concept];
-            if (isAlreadyColored) {
-                console.log("Token/concept already colored, ignoring click");
-                return;
-            }
-
             // Determine color based on source node type
             let color: string;
             if (sourceNodeType === "staticEditable") {
@@ -88,25 +77,7 @@ export const TokenInteractionProvider: React.FC<
             onNodesChange([{ type: "add", item: newNode }]);
             onEdgesChange([{ type: "add", item: newEdge }]);
 
-            console.log("Coloring concept:", concept, "with color:", color);
-
-            // Find and update the source node to add token color for the concept
-            const sourceNode = nodes.find((n) => n.id === sourceNodeId);
-            if (sourceNode) {
-                const updatedNode = {
-                    ...sourceNode,
-                    data: {
-                        ...sourceNode.data,
-                        tokenColors: {
-                            ...sourceNode.data.tokenColors,
-                            [concept]: color, // Store by concept name
-                        },
-                    },
-                };
-                onNodesChange([
-                    { type: "replace", id: sourceNodeId, item: updatedNode },
-                ]);
-            }
+            return color;
         },
         [nodes, onNodesChange, onEdgesChange]
     );

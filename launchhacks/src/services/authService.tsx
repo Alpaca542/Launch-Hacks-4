@@ -1,7 +1,10 @@
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+const FULL_PROMPT =
+    "Please explain the provided concept in details. Every key concept needs to be showcased by the notation _concept_ The concept: ";
+const SUMMARY_PROMPT =
+    "Please summarise the provided text. Your main goal is to mention in the summary all the key concepts showcased by the notation _concept_. In the returned text, you should keep the same notation. The original text: ";
 
-// Type definitions
 export interface AIResponse {
     message?: string;
     data?: any;
@@ -11,9 +14,7 @@ export interface AIResponse {
 export const handleSignOut = async (): Promise<void> => {
     try {
         await signOut(auth);
-        console.log("User signed out successfully");
     } catch (error) {
-        console.error("Error signing out:", error);
         throw error;
     }
 };
@@ -29,10 +30,21 @@ export const askAI = async (message: string): Promise<AIResponse> => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: AIResponse = await response.json();
-        console.log(data);
         return data;
     } catch (err) {
-        console.error("Fetch error:", err);
+        throw err;
+    }
+};
+
+export const getFullResponse = async (concept: string) => {
+    try {
+        const full_response = await askAI(FULL_PROMPT + concept);
+        const summary_reponse = await askAI(SUMMARY_PROMPT + concept);
+        return {
+            full_response,
+            summary_reponse,
+        };
+    } catch (err) {
         throw err;
     }
 };

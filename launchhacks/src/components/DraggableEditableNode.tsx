@@ -10,9 +10,10 @@ import {
 } from "../utils/nodeHelpers";
 
 interface NodeData {
-    label?: string;
+    title?: string;
+    summary?: string;
+    full_text?: string;
     myColor?: string;
-    tokenColors?: { [key: string]: string };
 }
 
 interface DraggableEditableNodeProps {
@@ -22,7 +23,9 @@ interface DraggableEditableNodeProps {
 
 function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [text, setText] = useState<string>(data.label || "Draggable Node");
+    const [summary, setSummary] = useState<string>(data.summary || "Draggable Node");
+    const [title] = useState<string>(data.title || "");
+    const [fullText] = useState<string>(data.full_text || "");
     const [showTooltip, setShowTooltip] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -30,55 +33,36 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const { handleTokenClick } = useTokenInteraction();
 
     // Parse text into tokens
-    const tokens = useMemo(() => parseTextIntoTokens(text), [text]);
+    const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
 
-    // Helper to get token color by concept
-    const getTokenColor = useCallback(
-        (token: Token) => {
-            const concept = token.myConcept || token.word;
-            return data.tokenColors?.[concept];
-        },
-        [data.tokenColors]
-    );
-
-    // Check if token is clickable (not already colored)
-    const isTokenClickable = useCallback(
-        (token: Token) => {
-            return !getTokenColor(token);
-        },
-        [getTokenColor]
-    );
+    // Check if token is clickable
+    const isTokenClickable = useCallback(() => {
+        return true; // All tokens are clickable now
+    }, []);
 
     // Token click handler
     const handleTokenClickLocal = useCallback(
         (token: Token, e: React.MouseEvent) => {
             e.stopPropagation();
 
-            if (!isTokenClickable(token)) {
-                console.log("Token already colored, ignoring click");
-                return;
-            }
-
-            console.log("Token clicked:", token);
-
             // Get current node info
             const currentNodes = getNodes();
             const currentNode = currentNodes.find((node) => node.id === id);
             if (!currentNode) {
-                console.error("Current node not found");
                 return;
             }
 
             // Use the context handler
-            handleTokenClick(
+            let color: string = handleTokenClick(
                 token,
                 id,
                 currentNode.position,
                 currentNode.type || "draggableEditable",
                 data.myColor
             );
+            return color;
         },
-        [id, getNodes, handleTokenClick, data.myColor, isTokenClickable]
+        [id, getNodes, handleTokenClick, data.myColor]
     );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
@@ -88,8 +72,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
 
     const handleSave = useCallback(() => {
         setIsEditing(false);
-        console.log("Draggable node text changed to:", text);
-    }, [text]);
+    }, []);
 
     const handleInputClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -102,11 +85,11 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 handleSave();
             }
             if (e.key === "Escape") {
-                setText(data.label || "Draggable Node");
+                setSummary(data.summary || "Draggable Node");
                 setIsEditing(false);
             }
         },
-        [handleSave, data.label]
+        [handleSave, data.summary]
     );
 
     const toggleExpansion = useCallback(
@@ -135,8 +118,8 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             return (
                 <input
                     type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
                     onBlur={handleSave}
                     onKeyDown={handleKeyPress}
                     onClick={handleInputClick}
@@ -150,9 +133,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             <div className="node-content-word">
                 <div onClick={handleClick}>
                     {tokens.map((token, index) => {
-                        const concept = token.myConcept || token.word;
-                        const tokenColor = data.tokenColors?.[concept];
-                        const isClickable = isTokenClickable(token);
+                        const isClickable = isTokenClickable();
 
                         return (
                             <span
@@ -161,20 +142,15 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     !isClickable ? "disabled" : ""
                                 }`}
                                 style={{
-                                    backgroundColor: tokenColor,
-                                    color: tokenColor
-                                        ? getContrastColor(tokenColor)
-                                        : undefined,
                                     cursor: isClickable ? "pointer" : "default",
-                                    padding: tokenColor ? "2px 4px" : "1px 3px",
+                                    padding: "1px 3px",
                                     borderRadius: "4px",
                                     margin: "1px",
                                     display: "inline-block",
                                     opacity: isClickable ? 1 : 0.7,
-                                    border:
-                                        token.myConcept && !tokenColor
-                                            ? "2px solid #4A90E2"
-                                            : undefined,
+                                    border: token.myConcept
+                                        ? "2px solid #4A90E2"
+                                        : undefined,
                                 }}
                                 onClick={(e) =>
                                     isClickable
@@ -202,18 +178,16 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         );
     }, [
         isEditing,
-        text,
+        summary,
         isExpanded,
         tokens,
         groupedTokens,
-        data.tokenColors,
         handleClick,
         handleSave,
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
         handleTokenClickLocal,
-        getTokenColor,
         isTokenClickable,
     ]);
 

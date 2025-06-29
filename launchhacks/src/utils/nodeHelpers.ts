@@ -150,7 +150,6 @@ export const createNewNode = (
         data: {
             label: tokenValue,
             myColor: color, // Changed from color to myColor
-            tokenColors: {}, // Initialize empty token colors
         },
     };
 };

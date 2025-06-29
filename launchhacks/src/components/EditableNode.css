@@ -504,6 +504,8 @@ div[style*="width: 100vw"] {
     transition: all 0.2s ease;
     cursor: pointer;
     position: relative;
+    background: unset !important;
+    /* Ensure inline styles take precedence */
 }
 
 .word-token:hover {
@@ -515,11 +517,8 @@ div[style*="width: 100vw"] {
 .word-token.disabled {
     cursor: default;
     opacity: 0.7;
-}
-
-.word-token.disabled:hover {
-    background: none;
-    transform: none;
+    background: unset !important;
+    /* Ensure inline styles take precedence */
 }
 
 /* Token group styles for concepts */
