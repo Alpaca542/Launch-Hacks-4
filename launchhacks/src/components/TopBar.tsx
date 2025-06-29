@@ -50,46 +50,83 @@ function TopBar({
             >
                 <div className="app-container">
                     <header className="app-header">
-                        <h1>Tink Flow Editor</h1>
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "16px",
+                            }}
+                        >
+                            <h1>Launch Flow</h1>
+                            <span
+                                style={{ color: "#64748b", fontSize: "13px" }}
+                            >
+                                •
+                            </span>
+                            {!edit ? (
+                                <button
+                                    onClick={handleClick}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        color: "#94a3b8",
+                                        fontSize: "14px",
+                                        cursor: "pointer",
+                                        padding: "4px 8px",
+                                        borderRadius: "4px",
+                                        transition: "all 0.15s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background =
+                                            "rgba(255, 255, 255, 0.05)";
+                                        e.currentTarget.style.color = "#f1f5f9";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background =
+                                            "none";
+                                        e.currentTarget.style.color = "#94a3b8";
+                                    }}
+                                >
+                                    {name || "Untitled Board"}
+                                </button>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={editedName}
+                                    onChange={(e) =>
+                                        setEditedName(e.target.value)
+                                    }
+                                    onKeyDown={handleKeyPress}
+                                    onBlur={() => {
+                                        onSetName(editedName);
+                                        setEdit(false);
+                                    }}
+                                    style={{
+                                        background: "#2a2a2a",
+                                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                                        borderRadius: "4px",
+                                        padding: "4px 8px",
+                                        color: "#f1f5f9",
+                                        fontSize: "14px",
+                                        minWidth: "120px",
+                                    }}
+                                    autoFocus
+                                />
+                            )}
+                        </div>
                         <div className="user-info">
                             <p>
-                                Welcome,{" "}
                                 {user?.isAnonymous
-                                    ? "Anonymous User"
-                                    : user?.email || "User"}
+                                    ? "Guest"
+                                    : user?.email?.split("@")[0] || "User"}
                             </p>
                             {isSaving && (
                                 <span className="save-indicator">
-                                    💾 Saving...
+                                    💾 Saving
                                 </span>
                             )}
                         </div>
                     </header>
-                </div>
-                <div className="board-title-section">
-                    {!edit ? (
-                        <h6 onClick={handleClick} style={{ cursor: "pointer" }}>
-                            {name || "Untitled Board"}
-                        </h6>
-                    ) : (
-                        <input
-                            type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                            onBlur={() => {
-                                onSetName(editedName);
-                                setEdit(false);
-                            }}
-                            autoFocus
-                        />
-                    )}
-                    {/* <div className="keyboard-shortcuts">
-                        <small>
-                            💡 Tips: Ctrl+N for new board, Ctrl+1-9 to switch
-                            boards
-                        </small>
-                    </div> */}
                 </div>
             </div>
         </>

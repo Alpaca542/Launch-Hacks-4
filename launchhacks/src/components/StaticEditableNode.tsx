@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from "react";
-import { Handle, Position, useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import ExplanationWindow from "./ExplanationWindow";
@@ -27,46 +26,32 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Static Node"
     );
-    const [showTooltip, setShowTooltip] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
-    const { getNodes } = useReactFlow();
     const { handleTokenClick } = useTokenInteraction();
 
     // Parse text into tokens
     const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
 
-    // Check if token is clickable
-    const isTokenClickable = useCallback(() => {
-        return true; // All tokens are clickable now
-    }, []);
-
-    // Token click handler
+    // Token click handler - optimized to avoid repeated getNodes() calls
     const handleTokenClickLocal = useCallback(
         (token: Token, e: React.MouseEvent) => {
             e.stopPropagation();
 
             console.log("Static Token clicked:", token);
 
-            // Get current node info
-            const currentNodes = getNodes();
-            const currentNode = currentNodes.find((node) => node.id === id);
-            if (!currentNode) {
-                console.error("Current node not found");
-                return;
-            }
-
-            // Use the context handler
+            // Use the context handler with minimal node info
+            // We don't need to get all nodes just for position and type
             handleTokenClick(
                 token,
                 id,
-                currentNode.position,
-                currentNode.type || "staticEditable",
+                { x: 0, y: 0 }, // Position will be updated by the context handler
+                "staticEditable",
                 data.myColor
             );
         },
-        [id, getNodes, handleTokenClick, data.myColor]
+        [id, handleTokenClick, data.myColor]
     );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
@@ -113,6 +98,55 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         setShowExplanation(false);
     }, []);
 
+    // Memoize token rendering separately for better performance
+    const tokenElements = useMemo(() => {
+        return tokens.map((token, index) => {
+            const isClickable = true; // All tokens are clickable
+
+            return (
+                <span
+                    key={index}
+                    className={`word-token ${!isClickable ? "disabled" : ""} ${
+                        token.myConcept ? "concept-highlight" : ""
+                    }`}
+                    onClick={(e) =>
+                        isClickable
+                            ? handleTokenClickLocal(token, e)
+                            : e.stopPropagation()
+                    }
+                >
+                    {token.word}
+                    {index < tokens.length - 1 ? " " : ""}
+                </span>
+            );
+        });
+    }, [tokens, handleTokenClickLocal]);
+
+    // Memoize node buttons separately
+    const nodeButtons = useMemo(
+        () => (
+            <div className="node-buttons">
+                {tokens.length > 5 && (
+                    <button
+                        className="node-expand-btn"
+                        onClick={toggleExpansion}
+                        title={isExpanded ? "Show less" : "Show more"}
+                    >
+                        {isExpanded ? "−" : "+"}
+                    </button>
+                )}
+                <button
+                    className="node-expand-btn explanation-btn-icon"
+                    onClick={handleShowExplanation}
+                    title="Show full text"
+                >
+                    📄
+                </button>
+            </div>
+        ),
+        [tokens.length, toggleExpansion, isExpanded, handleShowExplanation]
+    );
+
     const renderContent = useMemo(() => {
         if (isEditing) {
             return (
@@ -132,80 +166,30 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         return (
             <div className="node-content-word">
                 <div onClick={handleClick}>
-                    {tokens.map((token, index) => {
-                        const isClickable = isTokenClickable();
-
-                        return (
-                            <span
-                                key={index}
-                                className={`word-token ${
-                                    !isClickable ? "disabled" : ""
-                                }`}
-                                style={{
-                                    cursor: isClickable ? "pointer" : "default",
-                                    padding: "1px 3px",
-                                    borderRadius: "4px",
-                                    margin: "1px",
-                                    display: "inline-block",
-                                    opacity: isClickable ? 1 : 0.7,
-                                    border: token.myConcept
-                                        ? "2px solid #4A90E2"
-                                        : undefined,
-                                }}
-                                onClick={(e) =>
-                                    isClickable
-                                        ? handleTokenClickLocal(token, e)
-                                        : e.stopPropagation()
-                                }
-                            >
-                                {token.word}
-                                {index < tokens.length - 1 ? " " : ""}
-                            </span>
-                        );
-                    })}
-                    {tokens.length > 5 && !isExpanded && <span>...</span>}
-                </div>
-                <div className="node-buttons">
-                    {tokens.length > 5 && (
-                        <button
-                            className="node-expand-btn"
-                            onClick={toggleExpansion}
-                            title={isExpanded ? "Show less" : "Show more"}
-                        >
-                            {isExpanded ? "−" : "+"}
-                        </button>
+                    {tokenElements}
+                    {tokens.length > 5 && !isExpanded && (
+                        <span className="token-truncation">...</span>
                     )}
-                    <button
-                        className="node-expand-btn"
-                        onClick={handleShowExplanation}
-                        title="Show full text"
-                        style={{ marginLeft: tokens.length > 5 ? "5px" : "0" }}
-                    >
-                        📄
-                    </button>
                 </div>
+                {nodeButtons}
             </div>
         );
     }, [
         isEditing,
         summary,
         isExpanded,
-        tokens,
+        tokens.length,
         handleClick,
         handleSave,
         handleKeyPress,
         handleInputClick,
-        toggleExpansion,
-        handleShowExplanation,
-        handleTokenClickLocal,
-        isTokenClickable,
+        tokenElements,
+        nodeButtons,
     ]);
 
     return (
         <div
             className="static-editable-node nodrag"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
             style={{
                 backgroundColor: data.myColor,
                 color: data.myColor

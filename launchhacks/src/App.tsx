@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import ReactFlow, {
     Background,
     Controls,
-    MiniMap,
     ConnectionMode,
     Connection,
     BackgroundVariant,

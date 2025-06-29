@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Handle, Position, useReactFlow } from "reactflow";
+import { useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import ExplanationWindow from "./ExplanationWindow";
@@ -29,7 +29,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Draggable Node"
     );
-    const [showTooltip, setShowTooltip] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(
         data.expanded || false
     );
@@ -166,18 +165,9 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 key={index}
                                 className={`word-token ${
                                     !isClickable ? "disabled" : ""
+                                } ${
+                                    token.myConcept ? "concept-highlight" : ""
                                 }`}
-                                style={{
-                                    cursor: isClickable ? "pointer" : "default",
-                                    padding: "1px 3px",
-                                    borderRadius: "4px",
-                                    margin: "1px",
-                                    display: "inline-block",
-                                    opacity: isClickable ? 1 : 0.7,
-                                    border: token.myConcept
-                                        ? "2px solid #4A90E2"
-                                        : undefined,
-                                }}
                                 onClick={(e) =>
                                     isClickable
                                         ? handleTokenClickLocal(token, e)
@@ -189,7 +179,9 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                             </span>
                         );
                     })}
-                    {tokens.length > 5 && !isExpanded && <span>...</span>}
+                    {tokens.length > 5 && !isExpanded && (
+                        <span className="token-truncation">...</span>
+                    )}
                 </div>
                 <div className="node-buttons">
                     {tokens.length > 5 && (
@@ -202,10 +194,9 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                         </button>
                     )}
                     <button
-                        className="node-expand-btn"
+                        className="node-expand-btn explanation-btn-icon"
                         onClick={handleShowExplanation}
                         title="Show full text"
-                        style={{ marginLeft: tokens.length > 5 ? "5px" : "0" }}
                     >
                         📄
                     </button>
@@ -232,8 +223,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     return (
         <div
             className="draggable-editable-node"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
             style={{
                 background: data.myColor,
                 color: data.myColor

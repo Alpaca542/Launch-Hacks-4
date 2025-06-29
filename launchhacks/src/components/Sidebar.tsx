@@ -78,36 +78,16 @@ function SideBar({
 
             <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
                 <div className="sidebar-header">
-                    <h2>Launch Hacks</h2>
+                    <h2>Boards</h2>
                     <button
                         onClick={handleShowModal}
                         disabled={isLoading || isCreatingBoard}
-                        style={{
-                            opacity: isLoading || isCreatingBoard ? 0.6 : 1,
-                            cursor:
-                                isLoading || isCreatingBoard
-                                    ? "not-allowed"
-                                    : "pointer",
-                        }}
+                        className="new-board-btn"
                     >
                         {isCreatingBoard ? "Creating..." : "+ New Board"}
                     </button>
                 </div>
                 <div className="sidebar-content">
-                    {isLoading && (
-                        <div className="loading-indicator">
-                            Switching boards...
-                        </div>
-                    )}
-                    <div
-                        style={{
-                            padding: "10px",
-                            fontSize: "12px",
-                            color: "#666",
-                        }}
-                    >
-                        Boards: {allBoards?.length || 0}
-                    </div>
                     <ul>
                         {allBoards?.map((board) => {
                             return (
@@ -150,6 +130,11 @@ function SideBar({
                             );
                         })}
                     </ul>
+                    {isLoading && (
+                        <div className="loading-indicator">
+                            Loading boards...
+                        </div>
+                    )}
                 </div>
                 <div className="sidebar-footer">
                     <button onClick={onSignOut}>Sign Out</button>
