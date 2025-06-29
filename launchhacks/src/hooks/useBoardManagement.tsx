@@ -29,7 +29,7 @@ export interface UseBoardManagementReturn {
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
     switchToBoard: (boardId: string) => Promise<void>;
-    createNewBoard: () => Promise<BoardData | null>;
+    createNewBoard: (boardName?: string) => Promise<BoardData | null>;
     deleteBoard: (boardId: string) => Promise<void>;
     updateBoardName: (name: string) => Promise<void>;
     clearBoardState: () => void;
@@ -285,87 +285,90 @@ export const useBoardManagement = (
     );
 
     // Create new board
-    const createNewBoard = useCallback(async (): Promise<BoardData | null> => {
-        try {
-            if (!user) {
-                if (showError) {
-                    showError("You must be logged in to create a board");
+    const createNewBoard = useCallback(
+        async (boardName?: string): Promise<BoardData | null> => {
+            try {
+                if (!user) {
+                    if (showError) {
+                        showError("You must be logged in to create a board");
+                    }
+                    return null;
                 }
-                return null;
-            }
 
-            if (showInfo) {
-                showInfo("Creating new board...");
-            }
+                if (showInfo) {
+                    showInfo("Creating new board...");
+                }
 
-            console.log("Creating new board for user:", user.uid);
-            console.log("Current boards count:", allBoards.length);
+                const newBoard = await createBoard(
+                    user.uid,
+                    boardName || null,
+                    allBoards
+                );
+                if (newBoard) {
+                    // First, close the current board if any
+                    if (currentBoard && !currentBoard.isFallback) {
+                        const closedBoard = { ...currentBoard, isOpen: false };
+                        updateBoardStatus(currentBoard.id, closedBoard).catch(
+                            console.error
+                        );
+                    }
 
-            const newBoard = await createBoard(user.uid, null, allBoards);
-            if (newBoard) {
-                console.log("Board created successfully:", newBoard);
+                    // Mark the new board as open
+                    const openNewBoard = { ...newBoard, isOpen: true };
 
-                // First, close the current board if any
-                if (currentBoard && !currentBoard.isFallback) {
-                    const closedBoard = { ...currentBoard, isOpen: false };
-                    updateBoardStatus(currentBoard.id, closedBoard).catch(
+                    // Update local state with the new board
+                    setAllBoards((prevBoards) => {
+                        const updatedBoards = prevBoards.map((board) =>
+                            board.id === currentBoard?.id
+                                ? { ...board, isOpen: false }
+                                : board
+                        );
+                        return [openNewBoard, ...updatedBoards];
+                    });
+
+                    // Set as current board
+                    setCurrentBoard(openNewBoard);
+
+                    // Update in Firestore
+                    updateBoardStatus(newBoard.id, openNewBoard).catch(
                         console.error
                     );
+
+                    // Load initial nodes and edges for the new board
+                    setNodes(initialNodes);
+                    setEdges(initialEdges as Edge[]);
+
+                    if (showSuccess) {
+                        showSuccess(
+                            `Board "${newBoard.name}" created and opened!`
+                        );
+                    }
+
+                    return openNewBoard;
+                } else {
+                    if (showError) {
+                        showError("Failed to create board. Please try again.");
+                    }
+                    return null;
                 }
-
-                // Mark the new board as open
-                const openNewBoard = { ...newBoard, isOpen: true };
-
-                // Update local state with the new board
-                setAllBoards((prevBoards) => {
-                    const updatedBoards = prevBoards.map((board) =>
-                        board.id === currentBoard?.id
-                            ? { ...board, isOpen: false }
-                            : board
-                    );
-                    return [openNewBoard, ...updatedBoards];
-                });
-
-                // Set as current board
-                setCurrentBoard(openNewBoard);
-
-                // Update in Firestore
-                updateBoardStatus(newBoard.id, openNewBoard).catch(
-                    console.error
-                );
-
-                // Load initial nodes and edges for the new board
-                setNodes(initialNodes);
-                setEdges(initialEdges as Edge[]);
-
-                if (showSuccess) {
-                    showSuccess("New board created and opened!");
-                }
-
-                return openNewBoard;
-            } else {
+            } catch (error: any) {
                 if (showError) {
-                    showError("Failed to create board. Please try again.");
+                    showError(`Failed to create board: ${error.message}`);
                 }
                 return null;
             }
-        } catch (error: any) {
-            console.error("Error creating new board:", error);
-            if (showError) {
-                showError(`Failed to create board: ${error.message}`);
-            }
-            return null;
-        }
-    }, [
-        user,
-        allBoards,
-        currentBoard,
-        showSuccess,
-        showError,
-        showInfo,
-        setNodes,
-        setEdges,
-    ]);
+        },
+        [
+            user,
+            allBoards,
+            currentBoard,
+            showSuccess,
+            showError,
+            showInfo,
+            setNodes,
+            setEdges,
+        ]
+    );
 
     // Delete board
     const deleteBoard = useCallback(

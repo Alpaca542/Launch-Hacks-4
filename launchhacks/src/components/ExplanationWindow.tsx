@@ -1,5 +1,7 @@
 import Markdown from "react-markdown";
 import Modal from "react-bootstrap/Modal";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./ExplanationWindow.css";
 
 interface ExplanationWindowProps {
     show: boolean;
@@ -15,41 +17,30 @@ function ExplanationWindow(props: ExplanationWindowProps) {
             size="lg"
             aria-labelledby="contained-modal-title-vcenter"
             centered
+            className="explanation-modal"
         >
-            <Modal.Header closeButton>
-                <Modal.Title id="contained-modal-title-vcenter">
-                    title{props.title}
+            <Modal.Header closeButton className="explanation-header">
+                <Modal.Title
+                    id="contained-modal-title-vcenter"
+                    className="explanation-title"
+                >
+                    {props.title}
                 </Modal.Title>
             </Modal.Header>
-            <Modal.Body>
-                <p>
-                    <Markdown>{props.text}</Markdown>
-                </p>
+            <Modal.Body className="explanation-body">
+                <div className="explanation-content">
+                    <div className="explanation-markdown">
+                        <Markdown>{props.text}</Markdown>
+                    </div>
+                </div>
             </Modal.Body>
-            <Modal.Footer>
-                <Modal.Footer>
-                    <button
-                        onClick={props.onHide}
-                        style={{
-                            padding: "8px 16px",
-                            backgroundColor: "#6c757d",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                        }}
-                        onMouseOver={(e) =>
-                            (e.currentTarget.style.backgroundColor = "#5a6268")
-                        }
-                        onMouseOut={(e) =>
-                            (e.currentTarget.style.backgroundColor = "#6c757d")
-                        }
-                    >
-                        Close
-                    </button>
-                </Modal.Footer>
+            <Modal.Footer className="explanation-footer">
+                <button
+                    onClick={props.onHide}
+                    className="explanation-close-btn"
+                >
+                    Close
+                </button>
             </Modal.Footer>
         </Modal>
     );

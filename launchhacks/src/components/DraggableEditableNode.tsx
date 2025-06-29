@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
+import ExplanationWindow from "./ExplanationWindow";
 import {
     getContrastColor,
     darkenColor,
@@ -29,12 +30,24 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         data.summary || data.label || "Draggable Node"
     );
     const [showTooltip, setShowTooltip] = useState<boolean>(false);
+    const [isExpanded, setIsExpanded] = useState<boolean>(
+        data.expanded || false
+    );
+    const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
     const { getNodes } = useReactFlow();
     const { handleTokenClick } = useTokenInteraction();
 
     // Parse text into tokens
     const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
+
+    // Display tokens based on expansion state
+    const displayTokens = useMemo(() => {
+        if (isExpanded || tokens.length <= 5) {
+            return tokens;
+        }
+        return tokens.slice(0, 5);
+    }, [tokens, isExpanded]);
 
     // Check if token is clickable
     const isTokenClickable = useCallback(() => {
@@ -93,17 +106,30 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         [handleSave, data.summary, data.label]
     );
 
-    const toggleExpansion = (e: React.MouseEvent) => {
+    const toggleExpansion = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+            if (!isExpanded && data.onExpand) {
+                data.onExpand();
+            }
+        },
+        [isExpanded, data.onExpand]
+    );
+
+    const handleShowExplanation = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!data.expanded) {
-            data.onExpand?.();
-        }
-    };
+        setShowExplanation(true);
+    }, []);
+
+    const handleHideExplanation = useCallback(() => {
+        setShowExplanation(false);
+    }, []);
 
     // Group tokens by concept for blue outline
     const groupedTokens = useMemo(() => {
         const groups: { [concept: string]: Token[] } = {};
-        tokens.forEach((token) => {
+        displayTokens.forEach((token) => {
             const concept = token.myConcept || token.word;
             if (!groups[concept]) {
                 groups[concept] = [];
@@ -111,7 +137,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             groups[concept].push(token);
         });
         return groups;
-    }, [tokens]);
+    }, [displayTokens]);
 
     const renderContent = useMemo(() => {
         if (isEditing) {
@@ -132,7 +158,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         return (
             <div className="node-content-word">
                 <div onClick={handleClick}>
-                    {tokens.map((token, index) => {
+                    {displayTokens.map((token, index) => {
                         const isClickable = isTokenClickable();
 
                         return (
@@ -159,33 +185,46 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 }
                             >
                                 {token.word}
-                                {index < tokens.length - 1 ? " " : ""}
+                                {index < displayTokens.length - 1 ? " " : ""}
                             </span>
                         );
                     })}
-                    {tokens.length > 5 && !data.expanded && <span>...</span>}
+                    {tokens.length > 5 && !isExpanded && <span>...</span>}
                 </div>
-                {tokens.length > 5 && (
+                <div className="node-buttons">
+                    {tokens.length > 5 && (
+                        <button
+                            className="node-expand-btn"
+                            onClick={toggleExpansion}
+                            title={isExpanded ? "Show less" : "Show more"}
+                        >
+                            {isExpanded ? "−" : "+"}
+                        </button>
+                    )}
                     <button
                         className="node-expand-btn"
-                        onClick={toggleExpansion}
-                        title={data.expanded ? "Show less" : "Show more"}
+                        onClick={handleShowExplanation}
+                        title="Show full text"
+                        style={{ marginLeft: tokens.length > 5 ? "5px" : "0" }}
                     >
-                        {data.expanded ? "−" : "+"}
+                        📄
                     </button>
-                )}
+                </div>
             </div>
         );
     }, [
         isEditing,
         summary,
+        displayTokens,
         tokens,
+        isExpanded,
         groupedTokens,
         handleClick,
         handleSave,
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
+        handleShowExplanation,
         handleTokenClickLocal,
         isTokenClickable,
     ]);
@@ -221,6 +260,13 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 type="source"
                 position={Position.Bottom}
                 id="bottom-source"
+            />
+
+            <ExplanationWindow
+                show={showExplanation}
+                title={summary}
+                text={data.full_text || "No detailed information available."}
+                onHide={handleHideExplanation}
             />
         </div>
     );

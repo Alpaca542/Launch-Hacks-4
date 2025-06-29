@@ -8,7 +8,7 @@ import ReactFlow, {
     BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import ExplanationWindow from "./components/ExplanationWindow";
+import "./styles/dark-theme.css";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -95,56 +95,57 @@ function AppContent() {
 
     // Main application interface
     return (
-        <>
+        <div className="app-container">
             <SideBar
                 allBoards={allBoards}
                 currentBoard={currentBoard}
                 onSwitchBoard={switchToBoard}
-                onCreateBoard={() => {
-                    createNewBoard();
-                    return Promise.resolve();
+                onCreateBoard={async (boardName?: string) => {
+                    await createNewBoard(boardName);
                 }}
                 onDeleteBoard={deleteBoard}
                 onSignOut={handleSignOut}
                 isLoading={isSwitchingBoard}
             />
-            <TopBar
-                name={currentBoard?.name || "Loading..."}
-                onSetName={updateBoardName}
-                user={user}
-                isSaving={isSaving}
-            />
+            <div className="main-layout">
+                <TopBar
+                    name={currentBoard?.name || "Loading..."}
+                    onSetName={updateBoardName}
+                    user={user}
+                    isSaving={isSaving}
+                />
+                <div className="main-content">
+                    <TokenInteractionProvider
+                        nodes={nodes}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                    >
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            nodeTypes={nodeTypes}
+                            connectionMode={ConnectionMode.Loose}
+                            fitView
+                        >
+                            <Controls />
+                            <MiniMap />
+                            <Background
+                                variant={BackgroundVariant.Dots}
+                                gap={16}
+                                size={1}
+                            />
+                        </ReactFlow>
+                    </TokenInteractionProvider>
+                </div>
+            </div>
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-            <div style={{ width: "100vw", height: "100vh" }}>
-                <TokenInteractionProvider
-                    nodes={nodes}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                >
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        nodeTypes={nodeTypes}
-                        connectionMode={ConnectionMode.Loose}
-                        fitView
-                    >
-                        <Controls />
-                        <MiniMap />
-                        <Background
-                            variant={BackgroundVariant.Cross}
-                            gap={12}
-                            size={1}
-                        />
-                    </ReactFlow>
-                </TokenInteractionProvider>
-            </div>
-        </>
+        </div>
     );
 }
 

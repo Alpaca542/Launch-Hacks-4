@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Handle, Position, useReactFlow } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
+import ExplanationWindow from "./ExplanationWindow";
 import {
     getContrastColor,
     darkenColor,
@@ -28,6 +29,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     );
     const [showTooltip, setShowTooltip] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
+    const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
     const { getNodes } = useReactFlow();
     const { handleTokenClick } = useTokenInteraction();
@@ -45,10 +47,13 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         (token: Token, e: React.MouseEvent) => {
             e.stopPropagation();
 
+            console.log("Static Token clicked:", token);
+
             // Get current node info
             const currentNodes = getNodes();
             const currentNode = currentNodes.find((node) => node.id === id);
             if (!currentNode) {
+                console.error("Current node not found");
                 return;
             }
 
@@ -98,6 +103,15 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         },
         [isExpanded]
     );
+
+    const handleShowExplanation = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowExplanation(true);
+    }, []);
+
+    const handleHideExplanation = useCallback(() => {
+        setShowExplanation(false);
+    }, []);
 
     const renderContent = useMemo(() => {
         if (isEditing) {
@@ -151,15 +165,25 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     })}
                     {tokens.length > 5 && !isExpanded && <span>...</span>}
                 </div>
-                {tokens.length > 5 && (
+                <div className="node-buttons">
+                    {tokens.length > 5 && (
+                        <button
+                            className="node-expand-btn"
+                            onClick={toggleExpansion}
+                            title={isExpanded ? "Show less" : "Show more"}
+                        >
+                            {isExpanded ? "−" : "+"}
+                        </button>
+                    )}
                     <button
                         className="node-expand-btn"
-                        onClick={toggleExpansion}
-                        title={isExpanded ? "Show less" : "Show more"}
+                        onClick={handleShowExplanation}
+                        title="Show full text"
+                        style={{ marginLeft: tokens.length > 5 ? "5px" : "0" }}
                     >
-                        {isExpanded ? "−" : "+"}
+                        📄
                     </button>
-                )}
+                </div>
             </div>
         );
     }, [
@@ -172,6 +196,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         handleKeyPress,
         handleInputClick,
         toggleExpansion,
+        handleShowExplanation,
         handleTokenClickLocal,
         isTokenClickable,
     ]);
@@ -209,6 +234,13 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 type="source"
                 position={Position.Bottom}
                 id="bottom-source"
+            />
+
+            <ExplanationWindow
+                show={showExplanation}
+                title={summary}
+                text={data.full_text || "No detailed information available."}
+                onHide={handleHideExplanation}
             />
         </div>
     );

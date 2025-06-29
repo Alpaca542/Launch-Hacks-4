@@ -139,24 +139,23 @@ export const createNewNode = (
     position: { x: number; y: number },
     tokenValue: string,
     color: string,
-    _sourceNodeType: string,
-    callback?: (nodeId: string, data: any) => void // Add callback parameter
+    _sourceNodeType: string // Prefix with underscore to indicate unused
 ): Node => {
     const nodeId = generateNodeId();
 
     return {
         id: nodeId,
-        type: "draggableEditable",
+        type: "draggableEditable", // Always create draggable nodes
         position,
         data: {
             label: tokenValue,
             summary: tokenValue,
             full_text: "",
-            myColor: color,
-            onCallback: callback, // Pass callback to node data
+            myColor: color, // Changed from color to myColor
         },
     };
 };
+
 export const createNewEdge = (
     sourceId: string,
     targetId: string,
