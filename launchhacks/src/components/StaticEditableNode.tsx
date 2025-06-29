@@ -218,12 +218,16 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         >
             {renderContent}
 
-            <ExplanationWindow
-                show={showExplanation}
-                title={summary}
-                text={data.full_text || "No detailed information available."}
-                onHide={handleHideExplanation}
-            />
+            {showExplanation && (
+                <ExplanationWindow
+                    show={showExplanation}
+                    title={summary}
+                    text={
+                        data.full_text || "No detailed information available."
+                    }
+                    onHide={handleHideExplanation}
+                />
+            )}
         </div>
     );
 }

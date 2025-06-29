@@ -246,12 +246,16 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         >
             <div className="node-content">{renderContent}</div>
 
-            <ExplanationWindow
-                show={showExplanation}
-                title={summary}
-                text={data.full_text || "No detailed information available."}
-                onHide={handleHideExplanation}
-            />
+            {showExplanation && (
+                <ExplanationWindow
+                    show={showExplanation}
+                    title={summary}
+                    text={
+                        data.full_text || "No detailed information available."
+                    }
+                    onHide={handleHideExplanation}
+                />
+            )}
         </div>
     );
 }

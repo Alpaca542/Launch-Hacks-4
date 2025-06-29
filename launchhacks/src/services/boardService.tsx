@@ -30,8 +30,6 @@ export interface NodeData {
     type: string;
     data: {
         label: string;
-        summary?: string;
-        full_text?: string;
         [key: string]: any;
     };
     position: {
@@ -67,53 +65,12 @@ export const initialNodes: NodeData[] = [
         type: "draggableEditable",
         data: {
             label: "The _artificial intelligence_ system processes _natural language_ effectively",
-            summary:
-                "The _artificial intelligence_ system processes _natural language_ effectively",
-            full_text: "",
         },
         position: { x: 250, y: 25 },
     },
-    {
-        id: "2",
-        type: "draggableEditable",
-        data: {
-            label: "This is a simple sentence with multiple words to demonstrate word mode functionality",
-            summary:
-                "This is a simple sentence with multiple words to demonstrate word mode functionality",
-            full_text: "",
-        },
-        position: { x: 100, y: 125 },
-    },
-    {
-        id: "3",
-        type: "draggableEditable",
-        data: {
-            label: "_Machine learning_ algorithms can _predict outcomes_ with high accuracy",
-            summary:
-                "_Machine learning_ algorithms can _predict outcomes_ with high accuracy",
-            full_text: "",
-        },
-        position: { x: 400, y: 125 },
-    },
-    {
-        id: "4",
-        type: "staticEditable",
-        data: {
-            label: "Static node with _key concepts_ highlighted",
-            summary: "Static node with _key concepts_ highlighted",
-            full_text: "",
-        },
-        position: { x: 250, y: 200 },
-        draggable: false,
-    },
 ];
 
-export const initialEdges: EdgeData[] = [
-    { id: "e1-2", source: "1", target: "2" },
-    { id: "e1-3", source: "1", target: "3" },
-    { id: "e2-4", source: "2", target: "4" },
-    { id: "e3-4", source: "3", target: "4" },
-];
+export const initialEdges: EdgeData[] = [];
 
 export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
     if (!validateUser({ uid: userId })) {
@@ -143,6 +100,7 @@ export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
                 doc(db, COLLECTIONS.BOARDS, defaultBoard.id),
                 defaultBoard
             );
+            console.log("Created default board:", defaultBoard);
             return [defaultBoard];
         }
 
@@ -151,8 +109,11 @@ export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
             ...(doc.data() as Omit<BoardData, "id">),
         }));
 
+        console.log("Fetched all boards:", boards);
         return boards;
     } catch (err: any) {
+        console.error("Fetch all boards error:", err);
+
         // Handle specific Firestore index error
         if (
             err.code === "failed-precondition" ||
@@ -210,6 +171,7 @@ export const fetchNodesFromBoard = async (
         const nodesSnapshot = await getDocs(nodesCollection);
 
         if (nodesSnapshot.empty) {
+            console.log("No nodes found for board, using initial nodes");
             return initialNodes;
         }
 
@@ -232,8 +194,10 @@ export const fetchNodesFromBoard = async (
             return node;
         });
 
+        console.log("Fetched nodes from board:", nodesFromFirestore);
         return nodesFromFirestore;
     } catch (err) {
+        console.error("Fetch nodes error:", err);
         return initialNodes;
     }
 };
@@ -256,6 +220,7 @@ export const fetchEdgesFromBoard = async (
         const edgesSnapshot = await getDocs(edgesCollection);
 
         if (edgesSnapshot.empty) {
+            console.log("No edges found for board, using initial edges");
             return initialEdges;
         }
 
@@ -266,8 +231,10 @@ export const fetchEdgesFromBoard = async (
             })
         );
 
+        console.log("Fetched edges from board:", edgesFromFirestore);
         return edgesFromFirestore;
     } catch (err) {
+        console.error("Fetch edges error:", err);
         return initialEdges;
     }
 };
@@ -277,6 +244,10 @@ export const saveNodesToBoard = async (
     nodesToSave: NodeData[]
 ): Promise<void> => {
     if (!boardId || !nodesToSave?.length) {
+        console.warn("Invalid parameters for saving nodes:", {
+            boardId,
+            nodesCount: nodesToSave?.length,
+        });
         return;
     }
 
@@ -315,7 +286,9 @@ export const saveNodesToBoard = async (
         });
 
         await batch.commit();
+        console.log("Nodes saved to board");
     } catch (err) {
+        console.error("Save nodes error:", err);
         throw new Error(ERROR_MESSAGES.SAVE_FAILED);
     }
 };
@@ -325,6 +298,10 @@ export const saveEdgesToBoard = async (
     edgesToSave: EdgeData[]
 ): Promise<void> => {
     if (!boardId || !edgesToSave?.length) {
+        console.warn("Invalid parameters for saving edges:", {
+            boardId,
+            edgesCount: edgesToSave?.length,
+        });
         return;
     }
 
@@ -370,7 +347,9 @@ export const saveEdgesToBoard = async (
         });
 
         await batch.commit();
+        console.log("Edges saved to board");
     } catch (err) {
+        console.error("Save edges error:", err);
         throw new Error(ERROR_MESSAGES.SAVE_FAILED);
     }
 };
@@ -393,9 +372,13 @@ export const createBoard = async (
             isOpen: false,
         };
 
+        console.log("Creating board:", newBoard);
         await setDoc(doc(db, COLLECTIONS.BOARDS, newBoard.id), newBoard);
+        console.log("Board created successfully:", newBoard);
         return newBoard;
     } catch (error: any) {
+        console.error("Error creating new board:", error);
+
         // Handle specific Firestore errors
         if (error.code === "permission-denied") {
             throw new Error(

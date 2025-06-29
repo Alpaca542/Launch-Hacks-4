@@ -335,7 +335,16 @@ export const useBoardManagement = (
                     );
 
                     // Load initial nodes and edges for the new board
-                    setNodes(initialNodes);
+                    setNodes([
+                        {
+                            id: "1",
+                            type: "staticEditable",
+                            data: {
+                                label: boardName || "New Board",
+                            },
+                            position: { x: 250, y: 25 },
+                        },
+                    ]);
                     setEdges(initialEdges as Edge[]);
 
                     if (showSuccess) {
