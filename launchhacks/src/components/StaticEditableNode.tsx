@@ -215,40 +215,113 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         // Show loading spinner if node is loading
         if (data.isLoading) {
             return (
-                <div className="node-loading-content">
-                    <LoadingSpinner
-                        size="small"
-                        color={data.myColor || "#4f86f7"}
-                    />
-                    <span className="loading-text">Loading concept...</span>
+                <div className="node-layout">
+                    <div className="node-header">
+                        <div className="node-title">Loading...</div>
+                    </div>
+                    <div className="node-main-content">
+                        <div className="node-summary-section">
+                            <div className="node-loading-content">
+                                <LoadingSpinner
+                                    size="small"
+                                    color={data.myColor || "#4f86f7"}
+                                />
+                                <span className="loading-text">
+                                    Loading concept...
+                                </span>
+                            </div>
+                        </div>
+                        <div className="node-suggestions-section">
+                            <div className="node-suggestions-header">
+                                Suggest
+                            </div>
+                            <div className="node-suggestions-empty">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         }
 
         if (isEditing) {
             return (
-                <input
-                    type="text"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyPress}
-                    onClick={handleInputClick}
-                    className="node-input nodrag"
-                    autoFocus
-                />
+                <div className="node-layout">
+                    <div className="node-header">
+                        <div className="node-title">{data.title || "Node"}</div>
+                    </div>
+                    <div className="node-main-content">
+                        <div className="node-summary-section">
+                            <input
+                                type="text"
+                                value={summary}
+                                onChange={(e) => setSummary(e.target.value)}
+                                onBlur={handleSave}
+                                onKeyDown={handleKeyPress}
+                                onClick={handleInputClick}
+                                className="node-input nodrag"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="node-suggestions-section">
+                            <div className="node-suggestions-header">
+                                Suggest
+                            </div>
+                            <div className="node-suggestions-empty">
+                                Editing...
+                            </div>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
         return (
-            <div className="node-content-word">
-                <div onClick={handleClick}>
-                    {tokenElements}
-                    {tokens.length > 5 && !isExpanded && (
-                        <span className="token-truncation">...</span>
-                    )}
+            <div className="node-layout">
+                <div className="node-header">
+                    <div className="node-title">{data.title || "Node"}</div>
+                    {nodeButtons}
                 </div>
-                {nodeButtons}
+                <div className="node-main-content">
+                    <div className="node-summary-section">
+                        <div
+                            className="node-summary-text"
+                            onClick={handleClick}
+                        >
+                            {tokenElements}
+                            {tokens.length > 5 && !isExpanded && (
+                                <span className="token-truncation">...</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="node-suggestions-section">
+                        <div className="node-suggestions-header">Suggest</div>
+                        <div className="node-suggestions-list">
+                            {data.suggestions && data.suggestions.length > 0 ? (
+                                data.suggestions.map((suggestion, index) => (
+                                    <div
+                                        key={index}
+                                        className="node-suggestion-item"
+                                        onClick={() => {
+                                            // Copy suggestion to clipboard or trigger some action
+                                            navigator.clipboard?.writeText(
+                                                suggestion
+                                            );
+                                            // Could add a notification here
+                                        }}
+                                        title={`Click to copy: ${suggestion}`}
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="node-suggestions-empty">
+                                    Click tokens to explore concepts
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }, [

@@ -153,8 +153,10 @@ export const createNewNode = (
         draggable: true, // Explicitly set draggable property
         data: {
             label: label,
+            title: label, // Use label as default title
             summary: summary,
             full_text: full_text,
+            suggestions: [], // Initialize with empty suggestions
             myColor: color, // Changed from color to myColor
             tokenColors: {}, // Initialize empty token colors
             previousNode: previousNodeId, // Track which node created this one

@@ -245,3 +245,45 @@ export const performDataIntegrityCheck = (
         issues,
     };
 };
+
+/**
+ * Ensures node data has all required fields for the new layout
+ * Adds title and suggestions fields if they don't exist
+ */
+export const ensureNodeDataStructure = (node: any): any => {
+    if (!node || !node.data) {
+        return node;
+    }
+
+    const updatedNode = { ...node };
+    const data = { ...node.data };
+
+    // Ensure title exists - use label as fallback
+    if (!data.title) {
+        data.title = data.label || data.summary || "Node";
+    }
+
+    // Ensure suggestions exists as an array
+    if (!data.suggestions) {
+        data.suggestions = [];
+    }
+
+    // Ensure draggable is set (for backward compatibility)
+    if (updatedNode.draggable === undefined) {
+        updatedNode.draggable = true;
+    }
+
+    updatedNode.data = data;
+    return updatedNode;
+};
+
+/**
+ * Processes an array of nodes to ensure they have proper data structure
+ */
+export const processNodesForDataIntegrity = (nodes: any[]): any[] => {
+    if (!Array.isArray(nodes)) {
+        return [];
+    }
+
+    return nodes.map(ensureNodeDataStructure);
+};

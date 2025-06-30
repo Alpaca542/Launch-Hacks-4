@@ -15,6 +15,7 @@ import {
     initialEdges,
     BoardData,
 } from "../services/boardService";
+import { processNodesForDataIntegrity } from "../utils/dataIntegrity";
 import { UseNotificationsReturn } from "./useNotifications";
 
 // Type definitions
@@ -261,7 +262,11 @@ export const useBoardManagement = (
                         fetchEdgesFromBoard(boardId),
                     ]);
 
-                    setNodes(nodesData);
+                    // Process nodes to ensure they have the proper data structure
+                    const processedNodes =
+                        processNodesForDataIntegrity(nodesData);
+
+                    setNodes(processedNodes);
                     setEdges(edgesData as Edge[]);
 
                     if (showSuccess) {

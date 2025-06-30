@@ -155,8 +155,10 @@ export const TokenInteractionProvider: React.FC<
                                     data: {
                                         ...node.data,
                                         label: summary,
+                                        title: token.word, // Use the original token as title
                                         summary: summary,
                                         full_text: full_text,
+                                        suggestions: [], // Could be populated by AI later
                                         isLoading: false,
                                     },
                                 };
@@ -176,8 +178,10 @@ export const TokenInteractionProvider: React.FC<
                                     data: {
                                         ...node.data,
                                         label: token.word,
+                                        title: token.word,
                                         summary: token.word,
                                         full_text: token.word,
+                                        suggestions: [],
                                         isLoading: false,
                                     },
                                 };

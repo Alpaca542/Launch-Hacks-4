@@ -67,6 +67,12 @@ export const initialNodes: NodeData[] = [
         type: "staticEditable",
         data: {
             label: "The _artificial intelligence_ system processes _natural language_ effectively",
+            title: "AI & Natural Language",
+            suggestions: [
+                "Machine Learning",
+                "Neural Networks",
+                "Deep Learning",
+            ],
             tokenColors: {},
             previousNode: null, // Initial node has no previous node
         },

@@ -178,99 +178,180 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         // Show loading spinner if node is loading
         if (data.isLoading) {
             return (
-                <div className="node-loading-content">
-                    <LoadingSpinner
-                        size="small"
-                        color={data.myColor || "#4f86f7"}
-                    />
-                    <span className="loading-text">Loading concept...</span>
+                <div className="node-layout">
+                    <div className="node-header">
+                        <div className="node-title">Loading...</div>
+                    </div>
+                    <div className="node-main-content">
+                        <div className="node-summary-section">
+                            <div className="node-loading-content">
+                                <LoadingSpinner
+                                    size="small"
+                                    color={data.myColor || "#4f86f7"}
+                                />
+                                <span className="loading-text">
+                                    Loading concept...
+                                </span>
+                            </div>
+                        </div>
+                        <div className="node-suggestions-section">
+                            <div className="node-suggestions-header">
+                                Suggest
+                            </div>
+                            <div className="node-suggestions-empty">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         }
 
         if (isEditing) {
             return (
-                <input
-                    type="text"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyPress}
-                    onClick={handleInputClick}
-                    className="node-input nodrag"
-                    autoFocus
-                />
+                <div className="node-layout">
+                    <div className="node-header">
+                        <div className="node-title">{data.title || "Node"}</div>
+                    </div>
+                    <div className="node-main-content">
+                        <div className="node-summary-section">
+                            <input
+                                type="text"
+                                value={summary}
+                                onChange={(e) => setSummary(e.target.value)}
+                                onBlur={handleSave}
+                                onKeyDown={handleKeyPress}
+                                onClick={handleInputClick}
+                                className="node-input nodrag"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="node-suggestions-section">
+                            <div className="node-suggestions-header">
+                                Suggest
+                            </div>
+                            <div className="node-suggestions-empty">
+                                Editing...
+                            </div>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
         return (
-            <div className="node-content-word">
-                <div onClick={handleClick}>
-                    {displayTokens.map((token, index) => {
-                        const tokenColors = data.tokenColors || {};
-                        const tokenKey = token.myConcept || token.word;
-                        const tokenColor = tokenColors[tokenKey];
-                        const isClickable = isTokenClickable() && !tokenColor; // Not clickable if already colored
-
-                        return (
-                            <span
-                                key={index}
-                                className={`word-token ${
-                                    !isClickable ? "disabled" : ""
-                                } ${
-                                    token.myConcept ? "concept-highlight" : ""
-                                }`}
-                                style={{
-                                    backgroundColor:
-                                        tokenColor || "transparent",
-                                    color: tokenColor
-                                        ? data.myColor || "#ffffff"
-                                        : "inherit",
-                                    border: tokenColor
-                                        ? `1px solid ${tokenColor}`
-                                        : "",
-                                }}
-                                onClick={(e) =>
-                                    isClickable
-                                        ? handleTokenClickLocal(token, e)
-                                        : e.stopPropagation()
-                                }
+            <div className="node-layout">
+                <div className="node-header">
+                    <div className="node-title">{data.title || "Node"}</div>
+                    <div className="node-buttons">
+                        {data.previousNode && (
+                            <button
+                                className="node-expand-btn previous-node-btn"
+                                onClick={navigateToPreviousNode}
+                                title="Go to previous node"
                             >
-                                {token.word}
-                                {index < displayTokens.length - 1 ? " " : ""}
-                            </span>
-                        );
-                    })}
-                    {tokens.length > 5 && !isExpanded && (
-                        <span className="token-truncation">...</span>
-                    )}
+                                ←
+                            </button>
+                        )}
+                        {tokens.length > 5 && (
+                            <button
+                                className="node-expand-btn"
+                                onClick={toggleExpansion}
+                                title={isExpanded ? "Show less" : "Show more"}
+                            >
+                                {isExpanded ? "−" : "+"}
+                            </button>
+                        )}
+                        <button
+                            className="node-expand-btn explanation-btn-icon"
+                            onClick={handleShowExplanation}
+                            title="Show full text"
+                        >
+                            📄
+                        </button>
+                    </div>
                 </div>
-                <div className="node-buttons">
-                    {data.previousNode && (
-                        <button
-                            className="node-expand-btn previous-node-btn"
-                            onClick={navigateToPreviousNode}
-                            title="Go to previous node"
+                <div className="node-main-content">
+                    <div className="node-summary-section">
+                        <div
+                            className="node-summary-text"
+                            onClick={handleClick}
                         >
-                            ←
-                        </button>
-                    )}
-                    {tokens.length > 5 && (
-                        <button
-                            className="node-expand-btn"
-                            onClick={toggleExpansion}
-                            title={isExpanded ? "Show less" : "Show more"}
-                        >
-                            {isExpanded ? "−" : "+"}
-                        </button>
-                    )}
-                    <button
-                        className="node-expand-btn explanation-btn-icon"
-                        onClick={handleShowExplanation}
-                        title="Show full text"
-                    >
-                        📄
-                    </button>
+                            {displayTokens.map((token, index) => {
+                                const tokenColors = data.tokenColors || {};
+                                const tokenKey = token.myConcept || token.word;
+                                const tokenColor = tokenColors[tokenKey];
+                                const isClickable =
+                                    isTokenClickable() && !tokenColor; // Not clickable if already colored
+
+                                return (
+                                    <span
+                                        key={index}
+                                        className={`word-token ${
+                                            !isClickable ? "disabled" : ""
+                                        } ${
+                                            token.myConcept
+                                                ? "concept-highlight"
+                                                : ""
+                                        }`}
+                                        style={{
+                                            backgroundColor:
+                                                tokenColor || "transparent",
+                                            color: tokenColor
+                                                ? data.myColor || "#ffffff"
+                                                : "inherit",
+                                            border: tokenColor
+                                                ? `1px solid ${tokenColor}`
+                                                : "",
+                                        }}
+                                        onClick={(e) =>
+                                            isClickable
+                                                ? handleTokenClickLocal(
+                                                      token,
+                                                      e
+                                                  )
+                                                : e.stopPropagation()
+                                        }
+                                    >
+                                        {token.word}
+                                        {index < displayTokens.length - 1
+                                            ? " "
+                                            : ""}
+                                    </span>
+                                );
+                            })}
+                            {tokens.length > 5 && !isExpanded && (
+                                <span className="token-truncation">...</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="node-suggestions-section">
+                        <div className="node-suggestions-header">Suggest</div>
+                        <div className="node-suggestions-list">
+                            {data.suggestions && data.suggestions.length > 0 ? (
+                                data.suggestions.map((suggestion, index) => (
+                                    <div
+                                        key={index}
+                                        className="node-suggestion-item"
+                                        onClick={() => {
+                                            // Copy suggestion to clipboard or trigger some action
+                                            navigator.clipboard?.writeText(
+                                                suggestion
+                                            );
+                                            // Could add a notification here
+                                        }}
+                                        title={`Click to copy: ${suggestion}`}
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="node-suggestions-empty">
+                                    Click tokens to explore concepts
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
