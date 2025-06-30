@@ -3276,15 +3276,18 @@ This typically indicates that your device does not have a healthy Internet conne
         - Highlight EVERY important concept or term using [square-braces], e.g., [algorithm], [variable].
         - Use simple language and break down complex ideas.
         - Provide at least one practical example or analogy.
-        - Emphasize key points using markdown formatting (bold, italics, headings, lists, tables, etc.).
+        - Emphasize key points using HTML formatting (bold, italics, headings, lists, tables, etc.).
         - Organize the explanation with headings, lists, and tables where appropriate.
-        - Use ONLY CORRECT MARKDOWN AND HTML formatting for all content (including tables, lists, images, and code blocks).
-        - You NEED TO embed relevant IMAGES or GIFS from the web using embeded HTML IMGS.
-        - You MAY embed relevant youtube videos from the web using embeded HTML.
+        - Use ONLY CORRECT HTML formatting for all content (including tables, lists, images, and code blocks).
+        - You NEED TO embed relevant IMAGES or GIFS from the web using embedded HTML <img> tags. Example: <img src="IMAGE_URL" alt="description" style="max-width:100%;border-radius:8px;">
+        - You MAY embed relevant YouTube videos using HTML <iframe> tags. Example: <iframe width="420" height="315" src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allowfullscreen></iframe>
+        - For code, use <pre><code> blocks. Example: <pre><code>console.log("Hello World");</code></pre>
+        - For tables, use <table>, <tr>, <th>, and <td> tags. Example: <table><tr><th>Header</th></tr><tr><td>Data</td></tr></table>
+        - For lists, use <ul> or <ol> and <li> tags. Example: <ul><li>Item 1</li><li>Item 2</li></ul>
+        - You CAN use inline CSS for styling, but stick to a dark theme (e.g., background:#222; color:#fff;).
         - Do NOT include introductions, conclusions, or meta-commentary.
         - Start immediately with the explanation content.
         - Do NOT include any text outside the explanation.
-        - If you want to add a table use ONLY HTML TABLES, not markdown tables.
         - Generally stick to using HTML rather than markdown for formatting.
 
         Concept to explain: `,r=`Summarize in exactly 40 words or less.

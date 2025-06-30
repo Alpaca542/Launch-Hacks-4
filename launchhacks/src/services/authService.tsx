@@ -40,26 +40,24 @@ export const askAITwice = async (
     thirdResponse: any;
 }> => {
     try {
-        const constantPromptOrig = `You are an expert educator and technical writer. Your task is to teach the following concept to a beginner, using clear, concise, and engaging explanations.
+        const constantPromptOrig = `You are an expert educator. Explain the following concept to a beginner.
 
         Context: ${context}
 
         Instructions:
-        - Highlight EVERY important concept or term using [square-braces], e.g., [algorithm], [variable].
-        - Use simple language and break down complex ideas.
-        - Provide at least one practical example or analogy.
-        - Emphasize key points using markdown formatting (bold, italics, headings, lists, tables, etc.).
-        - Organize the explanation with headings, lists, and tables where appropriate.
-        - Use ONLY CORRECT MARKDOWN AND HTML formatting for all content (including tables, lists, images, and code blocks).
-        - You NEED TO embed relevant IMAGES or GIFS from the web using embeded HTML IMGS.
-        - You MAY embed relevant youtube videos from the web using embeded HTML.
-        - Do NOT include introductions, conclusions, or meta-commentary.
-        - Start immediately with the explanation content.
-        - Do NOT include any text outside the explanation.
-        - If you want to add a table use ONLY HTML TABLES, not markdown tables.
-        - Generally stick to using HTML rather than markdown for formatting.
+        - Highlight every key term with [square-braces], e.g., [variable].
+        - Use simple language and practical examples or analogies.
+        - Use only correct HTML for all formatting (headings, lists, tables, images, code).
+        - All HTML elements (including headings, lists, tables, images, code) MUST use inline CSS for styling.
+        - For inline CSS, use: <span style="color:#fff;background:#222;padding:4px;border-radius:4px;">example</span>
+        - For images: <img src="IMAGE_URL" alt="desc" style="max-width:100%;border-radius:8px;">
+        - For code: <pre style="background:#222;color:#fff;padding:8px;border-radius:6px;"><code>console.log("Hello World");</code></pre>
+        - For tables: <table style="border-collapse:collapse;width:100%;"><tr><th style="background:#222;color:#fff;padding:6px;">Header</th></tr><tr><td style="padding:6px;">Data</td></tr></table>
+        - For lists: <ul style="padding-left:20px;"><li style="margin-bottom:4px;">Item 1</li></ul>
+        - No introductions, conclusions, or extra commentary.
+        - Start directly with the explanation.
 
-        Concept to explain: `;
+        Concept: `;
 
         const constantPromptSum = `Summarize in exactly 40 words or less.
 
