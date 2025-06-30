@@ -141,7 +141,8 @@ export const createNewNode = (
     full_text: string,
     summary: string,
     color: string,
-    _sourceNodeType: string // Prefix with underscore to indicate unused
+    _sourceNodeType: string, // Prefix with underscore to indicate unused
+    previousNodeId: string // ID of the node that created this one
 ): Node => {
     const nodeId = generateNodeId();
 
@@ -149,11 +150,14 @@ export const createNewNode = (
         id: nodeId,
         type: "draggableEditable", // Always create draggable nodes
         position,
+        draggable: true, // Explicitly set draggable property
         data: {
             label: label,
             summary: summary,
             full_text: full_text,
             myColor: color, // Changed from color to myColor
+            tokenColors: {}, // Initialize empty token colors
+            previousNode: previousNodeId, // Track which node created this one
         },
     };
 };
@@ -167,6 +171,8 @@ export const createNewEdge = (
         id: generateEdgeId(sourceId, targetId),
         source: sourceId,
         target: targetId,
+        sourceHandle: null, // Explicitly set to null instead of undefined
+        targetHandle: null, // Explicitly set to null instead of undefined
         style: {
             stroke: color,
             strokeWidth: 3,

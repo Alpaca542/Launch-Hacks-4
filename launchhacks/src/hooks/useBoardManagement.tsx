@@ -28,6 +28,7 @@ export interface UseBoardManagementReturn {
     isSaving: boolean;
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
+    setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
     switchToBoard: (boardId: string) => Promise<void>;
     createNewBoard: (boardName?: string) => Promise<BoardData | null>;
     deleteBoard: (boardId: string) => Promise<void>;
@@ -343,6 +344,7 @@ export const useBoardManagement = (
                                 label: boardName || "New Board",
                             },
                             position: { x: 250, y: 25 },
+                            draggable: false, // Static nodes should not be draggable
                         },
                     ]);
                     setEdges(initialEdges as Edge[]);
@@ -502,6 +504,7 @@ export const useBoardManagement = (
         // Actions
         onNodesChange,
         onEdgesChange,
+        setNodes,
         switchToBoard,
         createNewBoard,
         deleteBoard,

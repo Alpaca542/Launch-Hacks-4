@@ -30,6 +30,8 @@ export interface NodeData {
     type: string;
     data: {
         label: string;
+        title?: string;
+        suggestions?: string[];
         [key: string]: any;
     };
     position: {
@@ -62,11 +64,14 @@ export interface EdgeData {
 export const initialNodes: NodeData[] = [
     {
         id: "1",
-        type: "draggableEditable",
+        type: "staticEditable",
         data: {
             label: "The _artificial intelligence_ system processes _natural language_ effectively",
+            tokenColors: {},
+            previousNode: null, // Initial node has no previous node
         },
         position: { x: 250, y: 25 },
+        draggable: false, // Static nodes are not draggable
     },
 ];
 
@@ -181,6 +186,10 @@ export const fetchNodesFromBoard = async (
             // Ensure data has all required properties
             const nodeData = {
                 ...docData.data,
+                // Ensure tokenColors exists for backward compatibility
+                tokenColors: docData.data?.tokenColors || {},
+                // Ensure previousNode exists for backward compatibility
+                previousNode: docData.data?.previousNode || null,
             };
 
             const node = {
@@ -264,7 +273,7 @@ export const saveNodesToBoard = async (
                 node.id
             );
 
-            // Filter out undefined values to prevent Firestore errors
+            // Filter out null values to prevent Firestore errors
             const nodeData: any = {
                 type: node.type,
                 data: node.data,
@@ -272,13 +281,13 @@ export const saveNodesToBoard = async (
                 updatedAt: Timestamp.now(),
             };
 
-            // Only include draggable if it's not undefined
-            if (node.draggable !== undefined) {
+            // Only include draggable if it's not null or undefined
+            if (node.draggable != null) {
                 nodeData.draggable = node.draggable;
             }
 
             // Include style if it exists
-            if (node.style !== undefined) {
+            if (node.style != null) {
                 nodeData.style = node.style;
             }
 
@@ -318,28 +327,28 @@ export const saveEdgesToBoard = async (
                 edge.id
             );
 
-            // Filter out undefined values to prevent Firestore errors
+            // Filter out null values to prevent Firestore errors
             const edgeData: any = {
                 source: edge.source,
                 target: edge.target,
                 updatedAt: Timestamp.now(),
             };
 
-            // Only include sourceHandle and targetHandle if they're not undefined
-            if (edge.sourceHandle !== undefined) {
+            // Only include sourceHandle and targetHandle if they're not null or undefined
+            if (edge.sourceHandle != null) {
                 edgeData.sourceHandle = edge.sourceHandle;
             }
-            if (edge.targetHandle !== undefined) {
+            if (edge.targetHandle != null) {
                 edgeData.targetHandle = edge.targetHandle;
             }
 
             // Include style if it exists (for edge colors)
-            if (edge.style !== undefined) {
+            if (edge.style != null) {
                 edgeData.style = edge.style;
             }
 
             // Include markerEnd if it exists (for arrow colors)
-            if (edge.markerEnd !== undefined) {
+            if (edge.markerEnd != null) {
                 edgeData.markerEnd = edge.markerEnd;
             }
 

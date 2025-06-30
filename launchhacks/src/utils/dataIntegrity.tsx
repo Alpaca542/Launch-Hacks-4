@@ -48,7 +48,7 @@ export const validateBoardData = (board: any): ValidationResult => {
     const errors: string[] = [];
 
     if (!board) {
-        errors.push("Board data is null or undefined");
+        errors.push("Board data is null or null");
         return { isValid: false, errors };
     }
 
@@ -90,7 +90,7 @@ export const validateNodeData = (node: any): ValidationResult => {
     const errors: string[] = [];
 
     if (!node) {
-        errors.push("Node data is null or undefined");
+        errors.push("Node data is null or null");
         return { isValid: false, errors };
     }
 
@@ -127,7 +127,7 @@ export const validateEdgeData = (edge: any): ValidationResult => {
     const errors: string[] = [];
 
     if (!edge) {
-        errors.push("Edge data is null or undefined");
+        errors.push("Edge data is null or null");
         return { isValid: false, errors };
     }
 

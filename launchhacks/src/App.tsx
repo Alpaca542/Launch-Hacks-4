@@ -7,6 +7,8 @@ import ReactFlow, {
     BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { Allotment } from "allotment";
+import "allotment/dist/style.css";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -28,7 +30,13 @@ import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 
 function AppContent() {
     // Sidebar state
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarMode, setSidebarMode] = useState<"boards" | "explanation">(
+        "boards"
+    );
+    const [currentExplanation, setCurrentExplanation] = useState<{
+        title: string;
+        text: string;
+    } | null>(null);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -52,6 +60,7 @@ function AppContent() {
         isSaving,
         onNodesChange,
         onEdgesChange,
+        setNodes,
         switchToBoard,
         createNewBoard,
         deleteBoard,
@@ -74,9 +83,21 @@ function AppContent() {
     };
 
     // Toggle sidebar
-    const toggleSidebar = () => {
-        setSidebarCollapsed(!sidebarCollapsed);
-    };
+    // No longer needed - using split pane
+
+    // Handle explanation display
+    const showExplanation = useCallback((title: string, text: string) => {
+        setCurrentExplanation({ title, text });
+        setSidebarMode("explanation");
+    }, []);
+
+    // Handle sidebar mode change
+    const handleSidebarModeChange = useCallback(
+        (mode: "boards" | "explanation") => {
+            setSidebarMode(mode);
+        },
+        []
+    );
 
     // ReactFlow connection handler
     const onConnect = useCallback(
@@ -101,63 +122,77 @@ function AppContent() {
 
     // Main application interface
     return (
-        <>
-            <SideBar
-                allBoards={allBoards}
-                currentBoard={currentBoard}
-                onSwitchBoard={switchToBoard}
-                onCreateBoard={async (boardName?: string) => {
-                    await createNewBoard(boardName);
-                }}
-                onDeleteBoard={deleteBoard}
-                onSignOut={handleSignOut}
-                isLoading={isSwitchingBoard}
-                isCollapsed={sidebarCollapsed}
-                onToggleSidebar={toggleSidebar}
-            />
-            <TopBar
-                name={currentBoard?.name || "Loading..."}
-                onSetName={updateBoardName}
-                user={user}
-                isSaving={isSaving}
-                sidebarCollapsed={sidebarCollapsed}
-            />
+        <div className="app-layout">
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-            <div
-                className={`reactflow-board-container ${
-                    sidebarCollapsed ? "sidebar-collapsed" : "with-sidebar"
-                }`}
-            >
-                <TokenInteractionProvider
-                    nodes={nodes}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                >
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
-                        nodeTypes={nodeTypes}
-                        connectionMode={ConnectionMode.Loose}
-                        fitView
-                    >
-                        <Controls />
-                        <Background
-                            variant={BackgroundVariant.Cross}
-                            gap={30}
-                            size={10}
-                            lineWidth={0.5}
-                            color="#616161"
+            <Allotment defaultSizes={[420, 1000]} minSize={240} maxSize={860}>
+                {/* Left Pane - Sidebar */}
+                <Allotment.Pane minSize={240} maxSize={860}>
+                    <div className="sidebar-pane">
+                        <SideBar
+                            allBoards={allBoards}
+                            currentBoard={currentBoard}
+                            onSwitchBoard={switchToBoard}
+                            onCreateBoard={async (boardName?: string) => {
+                                await createNewBoard(boardName);
+                            }}
+                            onDeleteBoard={deleteBoard}
+                            onSignOut={handleSignOut}
+                            isLoading={isSwitchingBoard}
+                            isCollapsed={false} // Always visible in split pane
+                            onToggleSidebar={() => {}} // No toggle needed
+                            mode={sidebarMode}
+                            onModeChange={handleSidebarModeChange}
+                            explanation={currentExplanation}
                         />
-                    </ReactFlow>
-                </TokenInteractionProvider>
-            </div>
-        </>
+                    </div>
+                </Allotment.Pane>
+
+                {/* Right Pane - Main Content */}
+                <Allotment.Pane>
+                    <div className="main-content-pane">
+                        <TopBar
+                            name={currentBoard?.name || "Loading..."}
+                            onSetName={updateBoardName}
+                            user={user}
+                            isSaving={isSaving}
+                            sidebarCollapsed={false} // Always visible in split pane
+                        />
+                        <div className="reactflow-container">
+                            <TokenInteractionProvider
+                                nodes={nodes}
+                                onNodesChange={onNodesChange}
+                                onEdgesChange={onEdgesChange}
+                                setNodes={setNodes}
+                                showExplanation={showExplanation}
+                            >
+                                <ReactFlow
+                                    nodes={nodes}
+                                    edges={edges}
+                                    onNodesChange={onNodesChange}
+                                    onEdgesChange={onEdgesChange}
+                                    onConnect={onConnect}
+                                    nodeTypes={nodeTypes}
+                                    connectionMode={ConnectionMode.Loose}
+                                    fitView
+                                >
+                                    <Controls />
+                                    <Background
+                                        variant={BackgroundVariant.Cross}
+                                        gap={30}
+                                        size={10}
+                                        lineWidth={0.5}
+                                        color="#616161"
+                                    />
+                                </ReactFlow>
+                            </TokenInteractionProvider>
+                        </div>
+                    </div>
+                </Allotment.Pane>
+            </Allotment>
+        </div>
     );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import BoardNameModal from "./BoardNameModal";
+import Markdown from "react-markdown";
 
 interface BoardData {
     id: string;
@@ -20,6 +21,13 @@ interface SideBarProps {
     isLoading: boolean;
     isCollapsed?: boolean;
     onToggleSidebar?: () => void;
+    // Explanation mode props
+    mode?: "boards" | "explanation";
+    onModeChange?: (mode: "boards" | "explanation") => void;
+    explanation?: {
+        title: string;
+        text: string;
+    } | null;
 }
 
 function SideBar({
@@ -32,6 +40,9 @@ function SideBar({
     isLoading,
     isCollapsed = false,
     onToggleSidebar,
+    mode = "boards",
+    onModeChange,
+    explanation,
 }: SideBarProps) {
     const [isCreatingBoard, setIsCreatingBoard] = useState(false);
     const [showBoardNameModal, setShowBoardNameModal] = useState(false);
@@ -65,83 +76,121 @@ function SideBar({
 
     return (
         <>
-            {/* Toggle button - always visible */}
-            <button
-                className={`sidebar-toggle ${
-                    isCollapsed ? "sidebar-collapsed" : ""
-                }`}
-                onClick={onToggleSidebar}
-                title={isCollapsed ? "Show Sidebar" : "Hide Sidebar"}
-            >
-                {isCollapsed ? "►" : "◄"}
-            </button>
-
-            <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
+            <div className="sidebar split-pane-sidebar">
                 <div className="sidebar-header">
-                    <h2>Boards</h2>
-                    <button
-                        onClick={handleShowModal}
-                        disabled={isLoading || isCreatingBoard}
-                        className="new-board-btn"
-                    >
-                        {isCreatingBoard ? "Creating..." : "+ New Board"}
-                    </button>
+                    <div className="sidebar-mode-switch">
+                        <button
+                            className={`mode-switch-btn ${
+                                mode === "boards" ? "active" : ""
+                            }`}
+                            onClick={() =>
+                                onModeChange && onModeChange("boards")
+                            }
+                        >
+                            📋 Boards
+                        </button>
+                        <button
+                            className={`mode-switch-btn ${
+                                mode === "explanation" ? "active" : ""
+                            }`}
+                            onClick={() =>
+                                onModeChange && onModeChange("explanation")
+                            }
+                        >
+                            📄 Explanation
+                        </button>
+                    </div>
                 </div>
                 <div className="sidebar-content">
-                    <ul>
-                        {allBoards?.map((board) => {
-                            return (
-                                <li
-                                    key={board.id}
-                                    onClick={() =>
-                                        !isLoading && onSwitchBoard(board.id)
-                                    }
-                                    className={
-                                        currentBoard?.id === board.id
-                                            ? "active"
-                                            : ""
-                                    }
+                    {mode === "boards" ? (
+                        // Board management mode
+                        <>
+                            <div className="boards-section-header">
+                                <button
+                                    onClick={handleShowModal}
+                                    disabled={isLoading || isCreatingBoard}
+                                    className="new-board-btn"
                                 >
-                                    <span className="board-name">
-                                        {board.name}
-                                    </span>
-                                    <div className="board-actions">
-                                        {board.isOpen && (
-                                            <span 
-                                                className="open-indicator"
-                                                title="This board is currently open"
-                                                aria-label="Board is open"
-                                            >
-                                                ●
+                                    {isCreatingBoard
+                                        ? "Creating..."
+                                        : "+ New Board"}
+                                </button>
+                            </div>
+                            <ul>
+                                {allBoards?.map((board) => {
+                                    return (
+                                        <li
+                                            key={board.id}
+                                            onClick={() =>
+                                                !isLoading &&
+                                                onSwitchBoard(board.id)
+                                            }
+                                            className={
+                                                currentBoard?.id === board.id
+                                                    ? "active"
+                                                    : ""
+                                            }
+                                        >
+                                            <span className="board-name">
+                                                {board.name}
                                             </span>
-                                        )}
-                                        {allBoards.length > 1 && (
-                                            <button
-                                                className="delete-btn"
-                                                onClick={(e) =>
-                                                    handleDeleteBoard(
-                                                        e,
-                                                        board.id
-                                                    )
-                                                }
-                                                title="Delete board"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
+                                            <div className="board-actions">
+                                                {board.isOpen && (
+                                                    <span className="open-indicator">
+                                                        ●
+                                                    </span>
+                                                )}
+                                                {allBoards.length > 1 && (
+                                                    <button
+                                                        className="delete-btn"
+                                                        onClick={(e) =>
+                                                            handleDeleteBoard(
+                                                                e,
+                                                                board.id
+                                                            )
+                                                        }
+                                                        title="Delete board"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                            {isLoading && (
+                                <div className="loading-indicator">
+                                    Loading boards...
+                                </div>
+                            )}
+                            <div className="sidebar-footer">
+                                <button onClick={onSignOut}>Sign Out</button>
+                            </div>
+                        </>
+                    ) : (
+                        // Explanation mode
+                        <div className="explanation-content">
+                            {explanation ? (
+                                <>
+                                    <div className="explanation-header">
+                                        <h3>{explanation.title}</h3>
                                     </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                    {isLoading && (
-                        <div className="loading-indicator">
-                            Loading boards...
+                                    <div className="explanation-text">
+                                        <Markdown>{explanation.text}</Markdown>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="explanation-placeholder">
+                                    <p>
+                                        Click on a node's explanation button
+                                        (📄) to view its detailed information
+                                        here.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
-                </div>
-                <div className="sidebar-footer">
-                    <button onClick={onSignOut}>Sign Out</button>
                 </div>
             </div>
             <BoardNameModal

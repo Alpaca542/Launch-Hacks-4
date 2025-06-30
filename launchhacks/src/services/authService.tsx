@@ -3,7 +3,7 @@ import { auth } from "../firebase";
 
 // Type definitions
 export interface AIResponse {
-    message?: string;
+    response?: string;
     data?: any;
     error?: string;
 }
@@ -38,23 +38,60 @@ const askAI = async (message: string): Promise<AIResponse> => {
 };
 
 export const askAITwice = async (
-    message: string
+    message: string,
+    context: string
 ): Promise<{ firstResponse: AIResponse; secondResponse: AIResponse }> => {
     try {
-        const constantPromptOrig =
-            "Please explain the following text in detail, using the same format and structure as the original text. Key concept in the explanation should be marked as _concept_: ";
-        const constantPromptSum =
-            "Here is a long explanation. Please summarize it in such a way that key concepts(marked as_concept_) are used and highlighted in the exact same way as they are in the original text. Do not change the meaning of the text, just summarize it: ";
-        const firstPrompt = constantPromptOrig + message;
+        const constantPromptOrig = `You are an expert educator. Explain the following concept clearly and comprehensively. 
 
-        const firstResponse = await askAI(firstPrompt);
+        Context: ${context}
 
-        const secondPrompt = constantPromptSum + firstResponse.message!;
-        const secondResponse = await askAI(secondPrompt);
+        Instructions:
+        - Provide a detailed explanation suitable for learning
+        - Mark ALL key concepts with curly-braces tags like {concept} (e.g., {algorithm}, {variable})
+        - Use examples where appropriate
+        - Structure your response logically
+        - CRITICAL: Every important concept MUST be put in currly braces like {concept} (e.g., {algorithm}, {variable})
+        - Do not include any meta-commentary, introductions, or conclusions
+        - Only provide the educational content requested
+        - Start directly with the explanation
+
+        Concept to explain: `;
+
+        const constantPromptSum = `Create a concise summary of the following explanation in exactly 40 words or less.
+
+        CRITICAL REQUIREMENTS:
+        - Preserve ALL concepts marked with curly-braces exactly as {concept}
+        - EVERY key concept MUST be put in currly braces like {concept} (e.g., {algorithm}, {variable})
+        - Do not add any introductory text like "Here is a summary" or "The summary is"
+        - Do not add any concluding remarks
+        - Start directly with the summary content
+        - Use simple language
+        - Maintain technical accuracy
+        - Do not use bullet points, lists, or any formatting except curly-braces tags
+        - Respond ONLY with the summary text
+
+        Text to summarize: `;
+
+        const firstResponse = await askAI(constantPromptOrig + message);
+
+        const secondResponse = await askAI(
+            constantPromptSum + firstResponse.response
+        );
 
         return {
-            firstResponse,
-            secondResponse,
+            firstResponse: {
+                ...firstResponse,
+                response: firstResponse.response
+                    ?.replace(/\{/g, "_")
+                    .replace(/\}/g, "_"),
+            },
+            secondResponse: {
+                ...secondResponse,
+                response: secondResponse.response
+                    ?.replace(/\{/g, "_")
+                    .replace(/\}/g, "_"),
+            },
         };
     } catch (error) {
         console.error("Error in askAITwice:", error);

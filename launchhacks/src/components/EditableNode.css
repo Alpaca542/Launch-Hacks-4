@@ -1,5 +1,7 @@
-/* Performance optimized CSS - Reduce INP */
+/* Performance optimized CSS with consistent fonts */
 * {
+    /* Set consistent font family for everything */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
     /* Disable subpixel rendering for better performance */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -37,7 +39,7 @@
     max-width: 380px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     font-weight: 400;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     position: relative;
     cursor: grab;
@@ -50,14 +52,14 @@
 
 .draggable-editable-node:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
     border-color: rgba(255, 255, 255, 0.15);
     background: #252525;
 }
 
 .draggable-editable-node.selected {
     border-color: #4f86f7;
-    box-shadow: 0 0 0 2px rgba(79, 134, 247, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 2px rgba(79, 134, 247, 0.3), 0 2px 8px rgba(0, 0, 0, 0.4);
     background: #2a3441;
 }
 
@@ -76,7 +78,7 @@
     max-width: 420px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     font-weight: 500;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     transition: transform 0.1s ease, background 0.1s ease;
     position: relative;
     opacity: 0.95;
@@ -97,12 +99,12 @@
     background: #222222;
     border-color: rgba(255, 255, 255, 0.15);
     transform: scale(1.02);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
 .static-editable-node.selected {
     border-color: rgba(79, 134, 247, 0.8);
-    box-shadow: 0 0 0 3px rgba(79, 134, 247, 0.3), 0 12px 32px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 0 3px rgba(79, 134, 247, 0.3), 0 6px 20px rgba(0, 0, 0, 0.6);
     background: #243147;
     transform: scale(1.02);
 }
@@ -114,26 +116,31 @@
 }
 
 .node-text {
-    color: #f1f5f9;
-    font-size: 15px;
+    color: #f8fafc;
+    /* Better contrast */
+    font-size: 16px;
+    /* Increased for better readability */
     line-height: 1.6;
     margin-bottom: 16px;
     word-wrap: break-word;
-    font-weight: 400;
+    font-weight: 500;
+    /* Increased weight */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     text-align: left;
     min-height: 24px;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.005em;
 }
 
 .static-editable-node .node-text {
-    color: #e2e8f0;
-    font-size: 16px;
-    font-weight: 500;
+    color: #f1f5f9;
+    font-size: 17px;
+    /* Slightly larger for static nodes */
+    font-weight: 600;
     line-height: 1.6;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
 }
 
 /* Input Field - Professional styling */
@@ -269,7 +276,6 @@
     gap: 4px;
     align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
 }
 
 .tooltip-content::after {
@@ -283,19 +289,18 @@
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
-/* Professional Dark Sliding Sidebar */
+/* Professional Dark Sliding Sidebar - Performance Optimized */
 .sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    width: 280px;
+    width: 420px;
     height: 100vh;
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
     z-index: 1001;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -352,12 +357,18 @@
     background: #2a2a2a;
     color: #f1f5f9;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 10px 16px;
-    border-radius: 6px;
+    padding: 8px 14px;
+    /* Reduced padding */
+    border-radius: 5px;
+    /* Slightly smaller radius */
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    /* Reduced font size */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
 }
 
 .sidebar-header button:hover,
@@ -437,9 +448,12 @@
     flex: 1;
     text-align: left;
     color: #e2e8f0;
-    font-weight: 400;
-    font-size: 13px;
-    letter-spacing: -0.005em;
+    font-weight: 500;
+    font-size: 14px;
+    /* Increased for better readability */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
 }
 
 .sidebar-content li.active .board-name {
@@ -518,6 +532,7 @@
     padding: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(0, 0, 0, 0.1);
+    margin-top: auto;
 }
 
 .react-flow__handle {
@@ -550,7 +565,8 @@
 .name {
     position: fixed;
     top: 0;
-    left: 280px;
+    left: 360px;
+    /* Updated to match new sidebar width */
     right: 0;
     height: 60px;
     background: #1a1a1a;
@@ -586,10 +602,17 @@
 
 .app-header h1 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #f1f5f9;
-    letter-spacing: -0.01em;
+    font-size: 18px;
+    /* Increased */
+    font-weight: 800;
+    /* Bolder */
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    letter-spacing: -0.025em;
+    background: linear-gradient(135deg, #4f86f7 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .user-info {
@@ -699,53 +722,37 @@ div[style*="width: 100vw"] {
     background: linear-gradient(145deg, #1e1e1e 0%, #2a2a2a 100%);
     border-radius: 16px;
     padding: 20px;
-    box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.6),
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: space-between;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 4px solid #4b5563;
-    backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .notification-success {
     border-left-color: #10b981;
     background: linear-gradient(145deg, #064e3b 0%, #065f46 100%);
-    box-shadow:
-        0 20px 40px rgba(16, 185, 129, 0.2),
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .notification-error {
     border-left-color: #ef4444;
     background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%);
-    box-shadow:
-        0 20px 40px rgba(239, 68, 68, 0.2),
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .notification-warning {
     border-left-color: #f59e0b;
     background: linear-gradient(145deg, #78350f 0%, #92400e 100%);
-    box-shadow:
-        0 20px 40px rgba(245, 158, 11, 0.2),
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .notification-info {
     border-left-color: #3b82f6;
     background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 100%);
-    box-shadow:
-        0 20px 40px rgba(59, 130, 246, 0.2),
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .notification-content {
@@ -915,16 +922,50 @@ div[style*="width: 100vw"] {
 /* Professional word token styling */
 .word-token {
     display: inline-block;
-    margin: 1px 2px;
-    padding: 4px 8px;
+    margin: 0.5px 0.5px;
+    padding: 3px 5px;
+    /* Slightly more padding */
     border-radius: 4px;
     transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
     cursor: pointer;
     position: relative;
     background: transparent;
-    font-weight: 400;
+    font-weight: 500;
+    /* Increased weight for better readability */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     border: 1px solid transparent;
     color: inherit;
+    font-size: inherit;
+    letter-spacing: 0.01em;
+}
+
+/* Colored tokens (when they have been clicked) */
+.word-token[style*="background-color"]:not([style*="transparent"]) {
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: default;
+}
+
+.word-token[style*="background-color"]:not([style*="transparent"]):hover {
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.auth-switch-btn {
+    background: transparent;
+    border: none;
+    color: #4f86f7;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.auth-switch-btn:hover {
+    color: #60a5fa;
+    background: rgba(79, 134, 247, 0.1);
 }
 
 .word-token:hover {
@@ -964,7 +1005,6 @@ div[style*="width: 100vw"] {
     margin: 4px !important;
     background-color: rgba(79, 134, 247, 0.1) !important;
     transition: all 0.3s ease;
-    backdrop-filter: blur(8px);
 }
 
 .multi-token-concept:hover {
@@ -991,9 +1031,15 @@ div[style*="width: 100vw"] {
     word-wrap: break-word;
     line-height: 1.6;
     text-align: left;
-    color: #e2e8f0;
-    font-size: 15px;
+    color: #f8fafc;
+    /* Better contrast */
+    font-size: 16px;
+    /* Increased */
+    font-weight: 500;
+    /* Increased weight */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     min-height: 20px;
+    letter-spacing: 0.005em;
 }
 
 .node-content-concept {
@@ -1008,27 +1054,38 @@ div[style*="width: 100vw"] {
     word-wrap: break-word;
     line-height: 1.6;
     text-align: left;
-    color: #e2e8f0;
-    font-size: 15px;
+    color: #f8fafc;
+    /* Better contrast */
+    font-size: 16px;
+    /* Increased */
+    font-weight: 500;
+    /* Increased weight */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
     min-height: 20px;
+    letter-spacing: 0.005em;
 }
 
 /* Professional expand buttons - Performance optimized */
 .node-expand-btn {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 6px;
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    border-radius: 4px;
+    /* Smaller radius */
+    width: 28px;
+    /* Smaller width */
+    height: 28px;
+    /* Smaller height */
+    font-size: 12px;
+    /* Smaller font */
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #cbd5e1;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .node-expand-btn:hover {
@@ -1041,7 +1098,25 @@ div[style*="width: 100vw"] {
 
 /* Special styling for explanation button */
 .node-expand-btn.explanation-btn-icon {
-    font-size: 16px;
+    font-size: 14px;
+    /* Slightly reduced */
+}
+
+/* Special styling for previous node button */
+.node-expand-btn.previous-node-btn {
+    background: rgba(79, 134, 247, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(79, 134, 247, 0.3);
+    font-size: 14px;
+    /* Slightly reduced */
+    font-weight: 700;
+}
+
+.node-expand-btn.previous-node-btn:hover {
+    background: rgba(79, 134, 247, 0.25);
+    border-color: rgba(79, 134, 247, 0.5);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(79, 134, 247, 0.3);
 }
 
 /* Truncation indicator */
@@ -1265,4 +1340,471 @@ div[style*="width: 100vw"] {
     font-size: 14px;
     margin: 0;
     opacity: 0.8;
+}
+
+/* Loading content styles */
+.node-loading-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+}
+
+/* Sidebar Mode Switch */
+.sidebar-mode-switch {
+    display: flex;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 1px;
+}
+
+.mode-switch-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    padding: 6px 10px;
+    /* Reduced padding */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    /* Reduced font size */
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    /* Reduced gap */
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.mode-switch-btn:hover {
+    background-color: #374151;
+    color: #ffffff;
+}
+
+.mode-switch-btn.active {
+    background-color: #4f86f7;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(79, 134, 247, 0.4);
+    font-weight: 700;
+}
+
+.mode-switch-btn.active:hover {
+    background-color: #3b7ae6;
+}
+
+/* Boards Section Header */
+.boards-section-header {
+    margin-bottom: 15px;
+}
+
+/* Explanation Content */
+.explanation-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.explanation-header {
+    border-bottom: 1px solid #374151;
+    padding-bottom: 12px;
+}
+
+.explanation-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 20px;
+    /* Increased for better readability */
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+.explanation-text {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.explanation-text p {
+    margin: 0 0 18px 0;
+    /* Increased margin for better spacing */
+    color: #e2e8f0;
+    /* Improved contrast */
+    font-size: 15px;
+    /* Increased for better readability */
+    line-height: 1.7;
+    /* Improved line height */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    font-weight: 400;
+}
+
+.explanation-text p:last-child {
+    margin-bottom: 0;
+}
+
+.explanation-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 20px;
+}
+
+.explanation-placeholder p {
+    color: #9ca3af;
+    font-style: italic;
+    margin: 0;
+    font-size: 15px;
+    /* Increased for better readability */
+    line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    font-weight: 400;
+}
+
+/* Scrollbar for explanation text */
+.explanation-text::-webkit-scrollbar {
+    width: 6px;
+}
+
+.explanation-text::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 3px;
+}
+
+.explanation-text::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
+}
+
+.explanation-text::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Responsive adjustments for sidebar modes */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 320px;
+        /* Slightly smaller on mobile but still wider than before */
+    }
+
+    .name {
+        left: 320px;
+    }
+
+    .name.sidebar-collapsed {
+        left: 0;
+    }
+
+    .mode-switch-btn {
+        font-size: 11px;
+        padding: 5px 8px;
+        gap: 3px;
+    }
+
+    .explanation-header h3 {
+        font-size: 18px;
+    }
+
+    .explanation-text p {
+        font-size: 14px;
+    }
+
+    .node-expand-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+    }
+}
+
+/* Split Pane Layout Styles */
+.app-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #0f0f0f;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Allotment Split Pane Container */
+.allotment {
+    flex: 1;
+    height: 100vh;
+}
+
+/* Sidebar in Split Pane */
+.sidebar-pane {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar.split-pane-sidebar {
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    background: #1a1a1a;
+    border-right: none;
+    /* Remove border since allotment handles separation */
+    display: flex;
+    flex-direction: column;
+    z-index: auto;
+    transform: none;
+    transition: none;
+}
+
+/* Main Content in Split Pane */
+.main-content-pane {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #0f0f0f;
+}
+
+.main-content-pane .reactflow-container {
+    flex: 1;
+    position: relative;
+    background: #0f0f0f;
+}
+
+/* TopBar in Split Pane Layout */
+.main-content-pane .name {
+    position: relative;
+    left: 0;
+    top: 0;
+    right: 0;
+    height: 60px;
+    background: #1a1a1a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    transition: none;
+    z-index: 998;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ReactFlow in Split Pane */
+.main-content-pane .reactflow-container .react-flow {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Allotment Pane Overrides */
+.allotment-pane {
+    overflow: hidden;
+}
+
+/* Custom Allotment Resizer Styling */
+.allotment-separator {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    width: 4px !important;
+    border: none !important;
+    cursor: col-resize !important;
+    transition: background-color 0.2s ease;
+}
+
+.allotment-separator:hover {
+    background-color: rgba(79, 134, 247, 0.3) !important;
+}
+
+.allotment-separator:active {
+    background-color: rgba(79, 134, 247, 0.5) !important;
+}
+
+/* Remove old sidebar toggle and positioning */
+.sidebar-toggle {
+    display: none !important;
+}
+
+/* Notifications positioning for split pane */
+.notifications-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 3000;
+    /* Higher than split panes */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 420px;
+}
+
+/* Node Layout Redesign - Title, Summary, and Suggestions */
+.node-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-height: 120px;
+}
+
+.node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.node-title {
+    color: #60a5fa;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 0;
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 80px;
+    max-width: 120px;
+    word-wrap: break-word;
+}
+
+.node-main-content {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+}
+
+.node-summary-section {
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
+}
+
+.node-summary-text {
+    color: #f8fafc;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    word-wrap: break-word;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    text-align: left;
+    letter-spacing: 0.005em;
+}
+
+.node-suggestions-section {
+    width: 100px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 12px;
+}
+
+.node-suggestions-header {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+}
+
+.node-suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.node-suggestion-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 10px;
+    color: #cbd5e1;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+}
+
+.node-suggestion-item:hover {
+    background: rgba(79, 134, 247, 0.15);
+    border-color: rgba(79, 134, 247, 0.3);
+    color: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.node-suggestions-empty {
+    color: #64748b;
+    font-size: 10px;
+    font-style: italic;
+    text-align: center;
+    padding: 8px;
+    opacity: 0.6;
+}
+
+/* Static Node Variations */
+.static-editable-node .node-title {
+    color: #7c3aed;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.static-editable-node .node-summary-text {
+    color: #f1f5f9;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.static-editable-node .node-suggestions-section {
+    width: 110px;
+    border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Responsive adjustments for smaller nodes */
+@media (max-width: 480px) {
+    .node-main-content {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .node-suggestions-section {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 0;
+        padding-top: 12px;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .node-suggestions-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .node-suggestion-item {
+        flex: 1;
+        min-width: 60px;
+    }
 }

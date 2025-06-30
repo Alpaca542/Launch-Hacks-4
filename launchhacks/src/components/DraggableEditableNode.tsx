@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
-import ExplanationWindow from "./ExplanationWindow";
+import LoadingSpinner from "./LoadingSpinner";
 import {
     getContrastColor,
     darkenColor,
@@ -12,11 +12,17 @@ import {
 
 interface NodeData {
     label?: string;
+    title?: string;
+    suggestions?: string[];
     myColor?: string;
     summary?: string;
     full_text?: string;
     onExpand?: () => void;
     expanded?: boolean;
+    isLoading?: boolean;
+    loadingElement?: React.ReactElement;
+    tokenColors?: { [key: string]: string };
+    previousNode?: string; // ID of the node that created this one
 }
 
 interface DraggableEditableNodeProps {
@@ -32,10 +38,16 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [isExpanded, setIsExpanded] = useState<boolean>(
         data.expanded || false
     );
-    const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
-    const { getNodes } = useReactFlow();
-    const { handleTokenClick } = useTokenInteraction();
+    const { getNodes, getNode, setViewport } = useReactFlow();
+    const { handleTokenClick, showExplanation } = useTokenInteraction();
+
+    // Sync local state with prop changes (e.g., when AI response updates data)
+    useEffect(() => {
+        if (!isEditing) {
+            setSummary(data.summary || data.label || "Draggable Node");
+        }
+    }, [data.summary, data.label, isEditing]);
 
     // Parse text into tokens
     const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
@@ -66,14 +78,15 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             }
 
             // Use the context handler
-            let color: string = handleTokenClick(
+            const color = handleTokenClick(
                 token,
                 id,
                 currentNode.position,
                 currentNode.type || "draggableEditable",
-                data.myColor
+                data.myColor,
+                data.summary || data.label || "Draggable Node"
             );
-            return color;
+            return color; // Can be null if token is already colored
         },
         [id, getNodes, handleTokenClick, data.myColor]
     );
@@ -116,14 +129,37 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         [isExpanded, data.onExpand]
     );
 
-    const handleShowExplanation = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        setShowExplanation(true);
-    }, []);
+    const handleShowExplanation = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (showExplanation) {
+                showExplanation(
+                    summary,
+                    data.full_text || "No detailed information available."
+                );
+            }
+        },
+        [showExplanation, summary, data.full_text]
+    );
 
-    const handleHideExplanation = useCallback(() => {
-        setShowExplanation(false);
-    }, []);
+    // Navigate to previous node
+    const navigateToPreviousNode = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (data.previousNode) {
+                const previousNode = getNode(data.previousNode);
+                if (previousNode) {
+                    const { x, y } = previousNode.position;
+                    // Center the viewport on the previous node with smooth animation
+                    setViewport(
+                        { x: -x + 200, y: -y + 100, zoom: 1 },
+                        { duration: 500 }
+                    );
+                }
+            }
+        },
+        [data.previousNode, getNode, setViewport]
+    );
 
     // Group tokens by concept for blue outline
     const groupedTokens = useMemo(() => {
@@ -139,6 +175,19 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }, [displayTokens]);
 
     const renderContent = useMemo(() => {
+        // Show loading spinner if node is loading
+        if (data.isLoading) {
+            return (
+                <div className="node-loading-content">
+                    <LoadingSpinner
+                        size="small"
+                        color={data.myColor || "#4f86f7"}
+                    />
+                    <span className="loading-text">Loading concept...</span>
+                </div>
+            );
+        }
+
         if (isEditing) {
             return (
                 <input
@@ -158,7 +207,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             <div className="node-content-word">
                 <div onClick={handleClick}>
                     {displayTokens.map((token, index) => {
-                        const isClickable = isTokenClickable();
+                        const tokenColors = data.tokenColors || {};
+                        const tokenKey = token.myConcept || token.word;
+                        const tokenColor = tokenColors[tokenKey];
+                        const isClickable = isTokenClickable() && !tokenColor; // Not clickable if already colored
 
                         return (
                             <span
@@ -168,6 +220,16 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 } ${
                                     token.myConcept ? "concept-highlight" : ""
                                 }`}
+                                style={{
+                                    backgroundColor:
+                                        tokenColor || "transparent",
+                                    color: tokenColor
+                                        ? data.myColor || "#ffffff"
+                                        : "inherit",
+                                    border: tokenColor
+                                        ? `1px solid ${tokenColor}`
+                                        : "",
+                                }}
                                 onClick={(e) =>
                                     isClickable
                                         ? handleTokenClickLocal(token, e)
@@ -184,6 +246,15 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                     )}
                 </div>
                 <div className="node-buttons">
+                    {data.previousNode && (
+                        <button
+                            className="node-expand-btn previous-node-btn"
+                            onClick={navigateToPreviousNode}
+                            title="Go to previous node"
+                        >
+                            ←
+                        </button>
+                    )}
                     {tokens.length > 5 && (
                         <button
                             className="node-expand-btn"
@@ -218,6 +289,11 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         handleShowExplanation,
         handleTokenClickLocal,
         isTokenClickable,
+        data.previousNode,
+        navigateToPreviousNode,
+        data.tokenColors,
+        data.myColor,
+        data.isLoading,
     ]);
 
     return (
@@ -225,12 +301,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             className="draggable-editable-node"
             style={{
                 background: data.myColor,
-                color: data.myColor
-                    ? getContrastColor(data.myColor)
-                    : undefined,
+                color: data.myColor ? getContrastColor(data.myColor) : "",
                 border: data.myColor
                     ? `2px solid ${darkenColor(data.myColor, 20)}`
-                    : undefined,
+                    : "",
             }}
         >
             <div className="node-content">{renderContent}</div>
@@ -244,16 +318,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 position={Position.Bottom}
                 id="bottom-target"
             />
-            {
-                <ExplanationWindow
-                    show={showExplanation}
-                    title={summary}
-                    text={
-                        data.full_text || "No detailed information available."
-                    }
-                    onHide={handleHideExplanation}
-                />
-            }
         </div>
     );
 }

@@ -65,6 +65,8 @@ function BoardNameModal({
             centered
             backdrop="static"
             keyboard={false}
+            className="board-name-modal"
+            style={{ zIndex: 2001 }}
         >
             <Modal.Header closeButton>
                 <Modal.Title>Create New Board</Modal.Title>
@@ -77,16 +79,25 @@ function BoardNameModal({
                             type="text"
                             value={boardName}
                             onChange={handleInputChange}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={handleKeyPress}
                             placeholder="Enter board name..."
                             isInvalid={!isValid}
                             maxLength={50}
                             autoFocus
                         />
-                        <Form.Control.Feedback type="invalid">
+                        <Form.Control.Feedback
+                            type="invalid"
+                            className="text-muted"
+                        >
                             Board name must be between 1 and 50 characters long.
                         </Form.Control.Feedback>
-                        <Form.Text className="text-muted">
+                        <Form.Text
+                            className={
+                                boardName.length === 50
+                                    ? "text-danger"
+                                    : "text-muted"
+                            }
+                        >
                             {boardName.length}/50 characters
                         </Form.Text>
                     </Form.Group>

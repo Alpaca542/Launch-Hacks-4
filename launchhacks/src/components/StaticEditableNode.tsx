@@ -1,19 +1,25 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
-import ExplanationWindow from "./ExplanationWindow";
+import LoadingSpinner from "./LoadingSpinner";
+import { useReactFlow, Handle, Position } from "reactflow";
 import {
     getContrastColor,
     darkenColor,
     parseTextIntoTokens,
     Token,
 } from "../utils/nodeHelpers";
-import { Handle, Position } from "reactflow";
+
 interface NodeData {
     label?: string;
+    title?: string;
+    suggestions?: string[];
     myColor?: string;
     summary?: string;
     full_text?: string;
+    isLoading?: boolean;
+    tokenColors?: { [key: string]: string };
+    previousNode?: string; // ID of the node that created this one
 }
 
 interface StaticEditableNodeProps {
@@ -27,9 +33,16 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         data.summary || data.label || "Static Node"
     );
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
-    const [showExplanation, setShowExplanation] = useState<boolean>(false);
 
-    const { handleTokenClick } = useTokenInteraction();
+    const { handleTokenClick, showExplanation } = useTokenInteraction();
+    const { getNode, setViewport } = useReactFlow();
+
+    // Sync local state with prop changes (e.g., when AI response updates data)
+    useEffect(() => {
+        if (!isEditing) {
+            setSummary(data.summary || data.label || "Static Node");
+        }
+    }, [data.summary, data.label, isEditing]);
 
     // Parse text into tokens
     const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
@@ -48,7 +61,8 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 id,
                 { x: 0, y: 0 }, // Position will be updated by the context handler
                 "staticEditable",
-                data.myColor
+                data.myColor,
+                data.summary || data.label || "Draggable Node"
             );
         },
         [id, handleTokenClick, data.myColor]
@@ -89,19 +103,46 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         [isExpanded]
     );
 
-    const handleShowExplanation = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        setShowExplanation(true);
-    }, []);
+    const handleShowExplanation = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (showExplanation) {
+                showExplanation(
+                    summary,
+                    data.full_text || "No detailed information available."
+                );
+            }
+        },
+        [showExplanation, summary, data.full_text]
+    );
 
-    const handleHideExplanation = useCallback(() => {
-        setShowExplanation(false);
-    }, []);
+    // Navigate to previous node
+    const navigateToPreviousNode = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (data.previousNode) {
+                const previousNode = getNode(data.previousNode);
+                if (previousNode) {
+                    const { x, y } = previousNode.position;
+                    // Center the viewport on the previous node with smooth animation
+                    setViewport(
+                        { x: -x + 200, y: -y + 100, zoom: 1 },
+                        { duration: 500 }
+                    );
+                }
+            }
+        },
+        [data.previousNode, getNode, setViewport]
+    );
 
     // Memoize token rendering separately for better performance
     const tokenElements = useMemo(() => {
+        const tokenColors = data.tokenColors || {};
+
         return tokens.map((token, index) => {
-            const isClickable = true; // All tokens are clickable
+            const tokenKey = token.myConcept || token.word;
+            const tokenColor = tokenColors[tokenKey];
+            const isClickable = !tokenColor; // Not clickable if already colored
 
             return (
                 <span
@@ -109,6 +150,13 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     className={`word-token ${!isClickable ? "disabled" : ""} ${
                         token.myConcept ? "concept-highlight" : ""
                     }`}
+                    style={{
+                        backgroundColor: tokenColor || "transparent",
+                        color: tokenColor
+                            ? data.myColor || "#ffffff"
+                            : "inherit",
+                        border: tokenColor ? `1px solid ${tokenColor}` : "",
+                    }}
                     onClick={(e) =>
                         isClickable
                             ? handleTokenClickLocal(token, e)
@@ -120,12 +168,21 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 </span>
             );
         });
-    }, [tokens, handleTokenClickLocal]);
+    }, [tokens, handleTokenClickLocal, data.tokenColors, data.myColor]);
 
     // Memoize node buttons separately
     const nodeButtons = useMemo(
         () => (
             <div className="node-buttons">
+                {data.previousNode && (
+                    <button
+                        className="node-expand-btn previous-node-btn"
+                        onClick={navigateToPreviousNode}
+                        title="Go to previous node"
+                    >
+                        ←
+                    </button>
+                )}
                 {tokens.length > 5 && (
                     <button
                         className="node-expand-btn"
@@ -144,10 +201,30 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 </button>
             </div>
         ),
-        [tokens.length, toggleExpansion, isExpanded, handleShowExplanation]
+        [
+            tokens.length,
+            toggleExpansion,
+            isExpanded,
+            handleShowExplanation,
+            data.previousNode,
+            navigateToPreviousNode,
+        ]
     );
 
     const renderContent = useMemo(() => {
+        // Show loading spinner if node is loading
+        if (data.isLoading) {
+            return (
+                <div className="node-loading-content">
+                    <LoadingSpinner
+                        size="small"
+                        color={data.myColor || "#4f86f7"}
+                    />
+                    <span className="loading-text">Loading concept...</span>
+                </div>
+            );
+        }
+
         if (isEditing) {
             return (
                 <input
@@ -192,12 +269,10 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             className="static-editable-node nodrag"
             style={{
                 backgroundColor: data.myColor,
-                color: data.myColor
-                    ? getContrastColor(data.myColor)
-                    : undefined,
+                color: data.myColor ? getContrastColor(data.myColor) : "",
                 border: data.myColor
                     ? `2px solid ${darkenColor(data.myColor, 20)}`
-                    : undefined,
+                    : "",
             }}
         >
             <div className="node-content">{renderContent}</div>
@@ -211,17 +286,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 position={Position.Bottom}
                 id="bottom-target"
             />
-
-            {
-                <ExplanationWindow
-                    show={showExplanation}
-                    title={summary}
-                    text={
-                        data.full_text || "No detailed information available."
-                    }
-                    onHide={handleHideExplanation}
-                />
-            }
         </div>
     );
 }

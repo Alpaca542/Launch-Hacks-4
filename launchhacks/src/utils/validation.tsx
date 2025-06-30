@@ -39,6 +39,6 @@ export const validateEdge = (edge: EdgeData | null): boolean => {
     return !!(edge && edge.id && edge.source && edge.target);
 };
 
-export const sanitizeBoardName = (name: string | undefined | null): string => {
+export const sanitizeBoardName = (name: string | null | null): string => {
     return name?.trim()?.substring(0, UI_CONSTANTS.MAX_BOARD_NAME_LENGTH) || "";
 };
