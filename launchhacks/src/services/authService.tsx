@@ -1,12 +1,6 @@
+import { GoogleGenAI } from "@google/genai";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
-
-// Type definitions
-export interface AIResponse {
-    response?: string;
-    data?: any;
-    error?: string;
-}
 
 export const handleSignOut = async (): Promise<void> => {
     try {
@@ -18,7 +12,7 @@ export const handleSignOut = async (): Promise<void> => {
     }
 };
 
-const askAI = async (message: string): Promise<AIResponse> => {
+const askAI = async (message: string): Promise<any> => {
     try {
         const response = await fetch(
             `https://groqchat-zm2y2mo6eq-uc.a.run.app?message=${encodeURIComponent(
@@ -28,7 +22,7 @@ const askAI = async (message: string): Promise<AIResponse> => {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data: AIResponse = await response.json();
+        const data: any = await response.json();
         console.log(data);
         return data;
     } catch (err) {
@@ -40,57 +34,91 @@ const askAI = async (message: string): Promise<AIResponse> => {
 export const askAITwice = async (
     message: string,
     context: string
-): Promise<{ firstResponse: AIResponse; secondResponse: AIResponse }> => {
+): Promise<{
+    firstResponse: any;
+    secondResponse: any;
+    thirdResponse: any;
+}> => {
     try {
-        const constantPromptOrig = `You are an expert educator. Explain the following concept clearly and comprehensively. 
+        const constantPromptOrig = `You are an expert educator and technical writer. Your task is to teach the following concept to a beginner, using clear, concise, and engaging explanations.
 
         Context: ${context}
 
         Instructions:
-        - Provide a detailed explanation suitable for learning
-        - Mark ALL key concepts with curly-braces tags like {concept} (e.g., {algorithm}, {variable})
-        - Use examples where appropriate
-        - Structure your response logically
-        - CRITICAL: Every important concept MUST be put in currly braces like {concept} (e.g., {algorithm}, {variable})
-        - Do not include any meta-commentary, introductions, or conclusions
-        - Only provide the educational content requested
-        - Start directly with the explanation
+        - Highlight EVERY important concept or term using [square-braces], e.g., [algorithm], [variable].
+        - Use simple language and break down complex ideas.
+        - Provide at least one practical example or analogy.
+        - Emphasize key points using markdown formatting (bold, italics, headings, lists, tables, etc.).
+        - Organize the explanation with headings, lists, and tables where appropriate.
+        - Use ONLY CORRECT MARKDOWN AND HTML formatting for all content (including tables, lists, images, and code blocks).
+        - You NEED TO embed relevant IMAGES or GIFS from the web using embeded HTML IMGS.
+        - You MAY embed relevant youtube videos from the web using embeded HTML.
+        - Do NOT include introductions, conclusions, or meta-commentary.
+        - Start immediately with the explanation content.
+        - Do NOT include any text outside the explanation.
 
         Concept to explain: `;
 
-        const constantPromptSum = `Create a concise summary of the following explanation in exactly 40 words or less.
+        const constantPromptSum = `Summarize in exactly 40 words or less.
 
-        CRITICAL REQUIREMENTS:
-        - Preserve ALL concepts marked with curly-braces exactly as {concept}
-        - EVERY key concept MUST be put in currly braces like {concept} (e.g., {algorithm}, {variable})
-        - Do not add any introductory text like "Here is a summary" or "The summary is"
-        - Do not add any concluding remarks
-        - Start directly with the summary content
-        - Use simple language
-        - Maintain technical accuracy
-        - Do not use bullet points, lists, or any formatting except curly-braces tags
-        - Respond ONLY with the summary text
+        CRITICAL:
+        - Preserve ALL [square-braces] concepts exactly
+        - Every key concept MUST use [square-braces]
+        - NO introductory phrases like "Here is..." or "Summary..."
+        - NO bullet points or formatting except [square-braces]
+        - Start immediately with summary content
+        - ONLY the summary text
 
         Text to summarize: `;
-
+        const constantPromptSuggestions = `You are an expert educator. You answer only in json: {[concept1], [concept2]...}. Suggest 3 topics(each not more than 5 words, each topic is encased in [square-braces]) that are a good next step at learning the following concept:`;
         const firstResponse = await askAI(constantPromptOrig + message);
 
         const secondResponse = await askAI(
             constantPromptSum + firstResponse.response
         );
+        const thirdResponse = await askAI(
+            constantPromptSuggestions + secondResponse.response
+        );
+        // Remove leading/trailing ```json or ``` from thirdResponse.response before parsing
+        let cleanedThirdResponse = thirdResponse.response ?? "";
+        cleanedThirdResponse = cleanedThirdResponse
+            .replace(/^```json\s*/i, "")
+            .replace(/^```\s*/i, "")
+            .replace(/```$/i, "");
+
+        let topicsArray: string[] = [];
+        try {
+            // Try to parse as JSON first
+            let parsedThirdResponse = JSON.parse(cleanedThirdResponse);
+            topicsArray = Array.isArray(parsedThirdResponse.topics)
+                ? parsedThirdResponse.topics
+                : Object.values(parsedThirdResponse);
+        } catch (e) {
+            // If not valid JSON, extract all quoted strings
+            const matches = cleanedThirdResponse.match(/"(.*?)"/g);
+            if (matches) {
+                topicsArray = matches.map((str: string) =>
+                    str.replace(/"/g, "")
+                );
+            }
+        }
 
         return {
             firstResponse: {
-                ...firstResponse,
                 response: firstResponse.response
-                    ?.replace(/\{/g, "_")
-                    .replace(/\}/g, "_"),
+                    ?.replace(/\[/g, "_")
+                    .replace(/\]/g, "_")
+                    .replace(/```/g, "")
+                    .replace(/```/g, "")
+                    .replace(/markdown/g, ""),
             },
             secondResponse: {
-                ...secondResponse,
                 response: secondResponse.response
-                    ?.replace(/\{/g, "_")
-                    .replace(/\}/g, "_"),
+                    ?.replace(/\[/g, "_")
+                    .replace(/\]/g, "_"),
+            },
+            thirdResponse: {
+                response: topicsArray,
             },
         };
     } catch (error) {

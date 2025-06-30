@@ -4,6 +4,7 @@ import { Node, Edge, MarkerType } from "reactflow";
 export interface Token {
     word: string;
     myConcept?: string;
+    suggestionId?: string;
 }
 
 // Parse text into tokens with concept information
@@ -53,6 +54,32 @@ export const generateRandomColor = (): string => {
         "#85C1E9", // Light Blue
     ];
     return colors[Math.floor(Math.random() * colors.length)];
+};
+
+export const getContrastColor = (hexColor: string): string => {
+    if (!hexColor) return "#000000";
+    const r = parseInt(hexColor.substring(1, 3), 16);
+    const g = parseInt(hexColor.substring(3, 5), 16);
+    const b = parseInt(hexColor.substring(5, 7), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? "#000000" : "#ffffff";
+};
+
+export const darkenColor = (hexColor: string, amount: number): string => {
+    if (!hexColor) return "#000000";
+    let color = hexColor.startsWith("#") ? hexColor.substring(1) : hexColor;
+    const f = parseInt(color, 16);
+    const t = amount < 0 ? 0 : 255;
+    const p = amount < 0 ? amount * -1 : amount;
+    const R = f >> 16;
+    const G = (f >> 8) & 0x00ff;
+    const B = f & 0x0000ff;
+    const newR = Math.round((t - R) * p) + R;
+    const newG = Math.round((t - G) * p) + G;
+    const newB = Math.round((t - B) * p) + B;
+    return `#${(0x1000000 + newR * 0x10000 + newG * 0x100 + newB)
+        .toString(16)
+        .slice(1)}`;
 };
 
 export const generateColorVariation = (baseColor: string): string => {
@@ -167,13 +194,14 @@ export const createNewNode = (
 export const createNewEdge = (
     sourceId: string,
     targetId: string,
-    color: string
+    color: string,
+    suggestionId?: string
 ): Edge => {
     return {
         id: generateEdgeId(sourceId, targetId),
         source: sourceId,
         target: targetId,
-        sourceHandle: null, // Explicitly set to null instead of undefined
+        sourceHandle: suggestionId, // Explicitly set to null instead of undefined
         targetHandle: null, // Explicitly set to null instead of undefined
         style: {
             stroke: color,
@@ -184,32 +212,4 @@ export const createNewEdge = (
             color: color,
         },
     };
-};
-
-// Utility functions for color manipulation
-export const getContrastColor = (hexColor: string): string => {
-    const hex = hexColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-
-    // Calculate relative luminance
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-    return luminance > 0.5 ? "#000000" : "#FFFFFF";
-};
-
-export const darkenColor = (hexColor: string, percent: number): string => {
-    const hex = hexColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-
-    const darkerR = Math.max(0, Math.floor(r * (1 - percent / 100)));
-    const darkerG = Math.max(0, Math.floor(g * (1 - percent / 100)));
-    const darkerB = Math.max(0, Math.floor(b * (1 - percent / 100)));
-
-    return `#${darkerR.toString(16).padStart(2, "0")}${darkerG
-        .toString(16)
-        .padStart(2, "0")}${darkerB.toString(16).padStart(2, "0")}`;
 };

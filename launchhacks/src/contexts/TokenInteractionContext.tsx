@@ -21,7 +21,8 @@ interface TokenInteractionContextType {
         sourceNodePosition: { x: number; y: number },
         sourceNodeType: string,
         sourceNodeColor?: string,
-        sourceNodeText?: string
+        sourceNodeText?: string,
+        solutionID?: string
     ) => string | null;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
     showExplanation?: (title: string, text: string) => void;
@@ -56,7 +57,8 @@ export const TokenInteractionProvider: React.FC<
             sourceNodePosition: { x: number; y: number },
             sourceNodeType: string,
             sourceNodeColor?: string,
-            sourceNodeText?: string
+            sourceNodeText?: string,
+            suggestionID?: string
         ) => {
             // Find the source node to check token colors
             const sourceNode = nodes.find((node) => node.id === sourceNodeId);
@@ -131,7 +133,12 @@ export const TokenInteractionProvider: React.FC<
             newNode.data.isLoading = true;
 
             // Create new edge
-            const newEdge = createNewEdge(sourceNodeId, newNode.id, color);
+            const newEdge = createNewEdge(
+                sourceNodeId,
+                newNode.id,
+                color,
+                suggestionID
+            );
 
             // Add the new node and edge immediately
             onNodesChange([{ type: "add", item: newNode }]);
@@ -144,6 +151,7 @@ export const TokenInteractionProvider: React.FC<
                         response.firstResponse?.response || token.word;
                     const summary =
                         response.secondResponse?.response || token.word;
+                    const suggestions = response.thirdResponse?.response || {};
                     // Use setNodes with function to update the specific node
                     // This follows ReactFlow's recommended pattern for updating nodes
                     setNodes((nds) =>
@@ -158,7 +166,7 @@ export const TokenInteractionProvider: React.FC<
                                         title: token.word, // Use the original token as title
                                         summary: summary,
                                         full_text: full_text,
-                                        suggestions: [], // Could be populated by AI later
+                                        suggestions: suggestions, // Could be populated by AI later
                                         isLoading: false,
                                     },
                                 };

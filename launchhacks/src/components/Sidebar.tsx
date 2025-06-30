@@ -1,6 +1,7 @@
 import { useState } from "react";
 import BoardNameModal from "./BoardNameModal";
-import Markdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 
 interface BoardData {
     id: string;
@@ -177,7 +178,11 @@ function SideBar({
                                         <h3>{explanation.title}</h3>
                                     </div>
                                     <div className="explanation-text">
-                                        <Markdown>{explanation.text}</Markdown>
+                                        <ReactMarkdown
+                                            rehypePlugins={[rehypeRaw]}
+                                        >
+                                            {explanation.text}
+                                        </ReactMarkdown>
                                     </div>
                                 </>
                             ) : (

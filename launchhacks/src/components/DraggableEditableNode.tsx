@@ -178,64 +178,28 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         // Show loading spinner if node is loading
         if (data.isLoading) {
             return (
-                <div className="node-layout">
-                    <div className="node-header">
-                        <div className="node-title">Loading...</div>
-                    </div>
-                    <div className="node-main-content">
-                        <div className="node-summary-section">
-                            <div className="node-loading-content">
-                                <LoadingSpinner
-                                    size="small"
-                                    color={data.myColor || "#4f86f7"}
-                                />
-                                <span className="loading-text">
-                                    Loading concept...
-                                </span>
-                            </div>
-                        </div>
-                        <div className="node-suggestions-section">
-                            <div className="node-suggestions-header">
-                                Suggest
-                            </div>
-                            <div className="node-suggestions-empty">
-                                Loading...
-                            </div>
-                        </div>
-                    </div>
+                <div className="node-loading-content">
+                    <LoadingSpinner
+                        size="small"
+                        color={data.myColor || "#4f86f7"}
+                    />
+                    <span className="loading-text">Loading concept...</span>
                 </div>
             );
         }
 
         if (isEditing) {
             return (
-                <div className="node-layout">
-                    <div className="node-header">
-                        <div className="node-title">{data.title || "Node"}</div>
-                    </div>
-                    <div className="node-main-content">
-                        <div className="node-summary-section">
-                            <input
-                                type="text"
-                                value={summary}
-                                onChange={(e) => setSummary(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={handleKeyPress}
-                                onClick={handleInputClick}
-                                className="node-input nodrag"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="node-suggestions-section">
-                            <div className="node-suggestions-header">
-                                Suggest
-                            </div>
-                            <div className="node-suggestions-empty">
-                                Editing...
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <input
+                    type="text"
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyPress}
+                    onClick={handleInputClick}
+                    className="node-input nodrag"
+                    autoFocus
+                />
             );
         }
 
@@ -298,10 +262,13 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                             backgroundColor:
                                                 tokenColor || "transparent",
                                             color: tokenColor
-                                                ? data.myColor || "#ffffff"
+                                                ? getContrastColor(tokenColor)
                                                 : "inherit",
                                             border: tokenColor
-                                                ? `1px solid ${tokenColor}`
+                                                ? `1px solid ${darkenColor(
+                                                      tokenColor,
+                                                      20
+                                                  )}`
                                                 : "",
                                         }}
                                         onClick={(e) =>
@@ -325,32 +292,66 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                             )}
                         </div>
                     </div>
-                    <div className="node-suggestions-section">
-                        <div className="node-suggestions-header">Suggest</div>
-                        <div className="node-suggestions-list">
-                            {data.suggestions && data.suggestions.length > 0 ? (
-                                data.suggestions.map((suggestion, index) => (
-                                    <div
+                </div>
+                <div className="node-suggestions-section">
+                    <div className="node-suggestions-header">Suggestions</div>
+                    <div className="node-suggestions-list">
+                        {data.suggestions && data.suggestions.length > 0 ? (
+                            data.suggestions.map((suggestion, index) => {
+                                const tokenColors = data.tokenColors || {};
+                                const tokenColor = tokenColors[suggestion];
+                                const isClickable =
+                                    isTokenClickable() && !tokenColor;
+
+                                return (
+                                    <span
                                         key={index}
-                                        className="node-suggestion-item"
-                                        onClick={() => {
-                                            // Copy suggestion to clipboard or trigger some action
-                                            navigator.clipboard?.writeText(
-                                                suggestion
-                                            );
-                                            // Could add a notification here
+                                        className={`suggestion-token ${
+                                            !isClickable ? "disabled" : ""
+                                        }`}
+                                        style={{
+                                            backgroundColor:
+                                                tokenColor || "transparent",
+                                            color: tokenColor
+                                                ? getContrastColor(tokenColor)
+                                                : "inherit",
+                                            border: tokenColor
+                                                ? `1px solid ${darkenColor(
+                                                      tokenColor,
+                                                      20
+                                                  )}`
+                                                : "",
                                         }}
-                                        title={`Click to copy: ${suggestion}`}
+                                        onClick={(e) =>
+                                            isClickable
+                                                ? handleTokenClickLocal(
+                                                      {
+                                                          word: suggestion,
+                                                          myConcept: suggestion,
+                                                          suggestionId:
+                                                              data.label +
+                                                              suggestion +
+                                                              index,
+                                                      },
+                                                      e
+                                                  )
+                                                : e.stopPropagation()
+                                        }
                                     >
                                         {suggestion}
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="node-suggestions-empty">
-                                    Click tokens to explore concepts
-                                </div>
-                            )}
-                        </div>
+                                        <Handle
+                                            type="source"
+                                            position={Position.Right}
+                                            id={data.label + suggestion + index}
+                                        />
+                                    </span>
+                                );
+                            })
+                        ) : (
+                            <div className="node-suggestions-empty">
+                                No suggestions
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -399,6 +400,12 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 position={Position.Bottom}
                 id="bottom-target"
             />
+            <Handle type="source" position={Position.Top} id="top-source" />
+            <Handle type="target" position={Position.Top} id="top-target" />
+            <Handle type="source" position={Position.Left} id="left-source" />
+            <Handle type="target" position={Position.Left} id="left-target" />
+            <Handle type="source" position={Position.Right} id="right-source" />
+            <Handle type="target" position={Position.Right} id="right-target" />
         </div>
     );
 }

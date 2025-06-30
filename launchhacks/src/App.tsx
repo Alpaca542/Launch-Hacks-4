@@ -122,15 +122,15 @@ function AppContent() {
 
     // Main application interface
     return (
-        <div className="app-layout">
+        <div className="app-layout" style={{ height: "100vh", width: "100vw" }}>
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-            <Allotment defaultSizes={[420, 1000]} minSize={240} maxSize={860}>
-                {/* Left Pane - Sidebar */}
-                <Allotment.Pane minSize={240} maxSize={860}>
-                    <div className="sidebar-pane">
+            <div style={{ height: "100%" }}>
+                <Allotment defaultSizes={[420, 1000]}>
+                    {/* Left Pane - Sidebar */}
+                    <Allotment.Pane minSize={240} maxSize={860}>
                         <SideBar
                             allBoards={allBoards}
                             currentBoard={currentBoard}
@@ -147,51 +147,57 @@ function AppContent() {
                             onModeChange={handleSidebarModeChange}
                             explanation={currentExplanation}
                         />
-                    </div>
-                </Allotment.Pane>
+                    </Allotment.Pane>
 
-                {/* Right Pane - Main Content */}
-                <Allotment.Pane>
-                    <div className="main-content-pane">
-                        <TopBar
-                            name={currentBoard?.name || "Loading..."}
-                            onSetName={updateBoardName}
-                            user={user}
-                            isSaving={isSaving}
-                            sidebarCollapsed={false} // Always visible in split pane
-                        />
-                        <div className="reactflow-container">
-                            <TokenInteractionProvider
-                                nodes={nodes}
-                                onNodesChange={onNodesChange}
-                                onEdgesChange={onEdgesChange}
-                                setNodes={setNodes}
-                                showExplanation={showExplanation}
+                    {/* Right Pane - Main Content */}
+                    <Allotment.Pane>
+                        <div
+                            className="main-content-pane"
+                            style={{ height: "100%" }}
+                        >
+                            <TopBar
+                                name={currentBoard?.name || "Loading..."}
+                                onSetName={updateBoardName}
+                                user={user}
+                                isSaving={isSaving}
+                                sidebarCollapsed={false} // Always visible in split pane
+                            />
+                            <div
+                                className="reactflow-container"
+                                style={{ height: "calc(100% - 56px)" }}
                             >
-                                <ReactFlow
+                                <TokenInteractionProvider
                                     nodes={nodes}
-                                    edges={edges}
                                     onNodesChange={onNodesChange}
                                     onEdgesChange={onEdgesChange}
-                                    onConnect={onConnect}
-                                    nodeTypes={nodeTypes}
-                                    connectionMode={ConnectionMode.Loose}
-                                    fitView
+                                    setNodes={setNodes}
+                                    showExplanation={showExplanation}
                                 >
-                                    <Controls />
-                                    <Background
-                                        variant={BackgroundVariant.Cross}
-                                        gap={30}
-                                        size={10}
-                                        lineWidth={0.5}
-                                        color="#616161"
-                                    />
-                                </ReactFlow>
-                            </TokenInteractionProvider>
+                                    <ReactFlow
+                                        nodes={nodes}
+                                        edges={edges}
+                                        onNodesChange={onNodesChange}
+                                        onEdgesChange={onEdgesChange}
+                                        onConnect={onConnect}
+                                        nodeTypes={nodeTypes}
+                                        connectionMode={ConnectionMode.Loose}
+                                        fitView
+                                    >
+                                        <Controls />
+                                        <Background
+                                            variant={BackgroundVariant.Cross}
+                                            gap={30}
+                                            size={10}
+                                            lineWidth={0.5}
+                                            color="#616161"
+                                        />
+                                    </ReactFlow>
+                                </TokenInteractionProvider>
+                            </div>
                         </div>
-                    </div>
-                </Allotment.Pane>
-            </Allotment>
+                    </Allotment.Pane>
+                </Allotment>
+            </div>
         </div>
     );
 }

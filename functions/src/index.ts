@@ -1,10 +1,21 @@
 /* eslint-disable */
 import * as v2 from "firebase-functions/v2";
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const groq = new Groq({
-    apiKey: "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",
-});
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+const askAI = async (message: string): Promise<any> => {
+    try {
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const result = await model.generateContent(message);
+        const response = await result.response;
+        const text = response.text();
+        return { response: text };
+    } catch (err) {
+        console.error("Fetch error:", err);
+        throw err;
+    }
+};
 
 export const groqChat = v2.https.onRequest(
     {
@@ -42,16 +53,8 @@ export const groqChat = v2.https.onRequest(
                 return;
             }
 
-            const chatCompletion = await groq.chat.completions.create({
-                messages: [{ role: "user", content: message }],
-                model: "llama3-8b-8192",
-            });
-
-            res.json({
-                response:
-                    chatCompletion.choices[0]?.message?.content ||
-                    "No response generated",
-            });
+            const aiResponse = await askAI(message);
+            res.json(aiResponse);
         } catch (error) {
             console.error("Error:", error);
             res.status(500).json({ error: "Internal server error" });

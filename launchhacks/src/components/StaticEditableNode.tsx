@@ -62,7 +62,8 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 { x: 0, y: 0 }, // Position will be updated by the context handler
                 "staticEditable",
                 data.myColor,
-                data.summary || data.label || "Draggable Node"
+                data.summary || data.label || "Draggable Node",
+                token.suggestionId
             );
         },
         [id, handleTokenClick, data.myColor]
@@ -215,64 +216,28 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         // Show loading spinner if node is loading
         if (data.isLoading) {
             return (
-                <div className="node-layout">
-                    <div className="node-header">
-                        <div className="node-title">Loading...</div>
-                    </div>
-                    <div className="node-main-content">
-                        <div className="node-summary-section">
-                            <div className="node-loading-content">
-                                <LoadingSpinner
-                                    size="small"
-                                    color={data.myColor || "#4f86f7"}
-                                />
-                                <span className="loading-text">
-                                    Loading concept...
-                                </span>
-                            </div>
-                        </div>
-                        <div className="node-suggestions-section">
-                            <div className="node-suggestions-header">
-                                Suggest
-                            </div>
-                            <div className="node-suggestions-empty">
-                                Loading...
-                            </div>
-                        </div>
-                    </div>
+                <div className="node-loading-content">
+                    <LoadingSpinner
+                        size="small"
+                        color={data.myColor || "#4f86f7"}
+                    />
+                    <span className="loading-text">Loading concept...</span>
                 </div>
             );
         }
 
         if (isEditing) {
             return (
-                <div className="node-layout">
-                    <div className="node-header">
-                        <div className="node-title">{data.title || "Node"}</div>
-                    </div>
-                    <div className="node-main-content">
-                        <div className="node-summary-section">
-                            <input
-                                type="text"
-                                value={summary}
-                                onChange={(e) => setSummary(e.target.value)}
-                                onBlur={handleSave}
-                                onKeyDown={handleKeyPress}
-                                onClick={handleInputClick}
-                                className="node-input nodrag"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="node-suggestions-section">
-                            <div className="node-suggestions-header">
-                                Suggest
-                            </div>
-                            <div className="node-suggestions-empty">
-                                Editing...
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <input
+                    type="text"
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyPress}
+                    onClick={handleInputClick}
+                    className="node-input nodrag"
+                    autoFocus
+                />
             );
         }
 
@@ -280,7 +245,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             <div className="node-layout">
                 <div className="node-header">
                     <div className="node-title">{data.title || "Node"}</div>
-                    {nodeButtons}
                 </div>
                 <div className="node-main-content">
                     <div className="node-summary-section">
@@ -294,34 +258,65 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                             )}
                         </div>
                     </div>
-                    <div className="node-suggestions-section">
-                        <div className="node-suggestions-header">Suggest</div>
-                        <div className="node-suggestions-list">
-                            {data.suggestions && data.suggestions.length > 0 ? (
-                                data.suggestions.map((suggestion, index) => (
-                                    <div
+                    <div className="node-suggestions-list">
+                        {data.suggestions && data.suggestions.length > 0 ? (
+                            data.suggestions.map((suggestion, index) => {
+                                const tokenColors = data.tokenColors || {};
+                                const tokenColor = tokenColors[suggestion];
+                                const isClickable = !tokenColor;
+
+                                return (
+                                    <span
                                         key={index}
-                                        className="node-suggestion-item"
-                                        onClick={() => {
-                                            // Copy suggestion to clipboard or trigger some action
-                                            navigator.clipboard?.writeText(
-                                                suggestion
-                                            );
-                                            // Could add a notification here
+                                        className={`word-token ${
+                                            !isClickable ? "disabled" : ""
+                                        }`}
+                                        style={{
+                                            backgroundColor:
+                                                tokenColor || "transparent",
+                                            color: tokenColor
+                                                ? data.myColor || "#ffffff"
+                                                : "inherit",
+                                            border: tokenColor
+                                                ? `1px solid ${tokenColor}`
+                                                : "",
                                         }}
-                                        title={`Click to copy: ${suggestion}`}
+                                        onClick={(e) =>
+                                            isClickable
+                                                ? handleTokenClickLocal(
+                                                      {
+                                                          word: suggestion,
+                                                          myConcept: suggestion,
+                                                          suggestionId:
+                                                              data.label +
+                                                              suggestion +
+                                                              index,
+                                                      },
+                                                      e
+                                                  )
+                                                : e.stopPropagation()
+                                        }
                                     >
                                         {suggestion}
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="node-suggestions-empty">
-                                    Click tokens to explore concepts
-                                </div>
-                            )}
-                        </div>
+                                        {index < data.suggestions!.length - 1
+                                            ? " "
+                                            : ""}
+                                        <Handle
+                                            type="source"
+                                            position={Position.Right}
+                                            id={data.label + suggestion + index}
+                                        />
+                                    </span>
+                                );
+                            })
+                        ) : (
+                            <div className="node-suggestions-empty">
+                                No suggestions
+                            </div>
+                        )}
                     </div>
                 </div>
+                {nodeButtons}
             </div>
         );
     }, [
