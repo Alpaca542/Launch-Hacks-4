@@ -56,6 +56,8 @@ export const askAITwice = async (
         - Do NOT include introductions, conclusions, or meta-commentary.
         - Start immediately with the explanation content.
         - Do NOT include any text outside the explanation.
+        - If you want to add a table use ONLY HTML TABLES, not markdown tables.
+        - Generally stick to using HTML rather than markdown for formatting.
 
         Concept to explain: `;
 
@@ -79,7 +81,7 @@ export const askAITwice = async (
         const thirdResponse = await askAI(
             constantPromptSuggestions + secondResponse.response
         );
-        // Remove leading/trailing ```json or ``` from thirdResponse.response before parsing
+        // Remove leading/trailing ```json or ``` from thirdResponse.response before parsing, but do NOT delete any newlines
         let cleanedThirdResponse = thirdResponse.response ?? "";
         cleanedThirdResponse = cleanedThirdResponse
             .replace(/^```json\s*/i, "")
@@ -103,13 +105,12 @@ export const askAITwice = async (
             }
         }
 
-        return {
+        const newobj = {
             firstResponse: {
                 response: firstResponse.response
                     ?.replace(/\[/g, "_")
                     .replace(/\]/g, "_")
-                    .replace(/```/g, "")
-                    .replace(/```/g, "")
+                    .replace(/```/g, "") // This only removes the backticks, not newlines
                     .replace(/markdown/g, ""),
             },
             secondResponse: {
@@ -121,6 +122,8 @@ export const askAITwice = async (
                 response: topicsArray,
             },
         };
+        console.log("askAITwice response:", newobj);
+        return newobj;
     } catch (error) {
         console.error("Error in askAITwice:", error);
         throw error;

@@ -341,7 +341,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                         {suggestion}
                                         <Handle
                                             type="source"
-                                            position={Position.Right}
+                                            position={Position.Bottom}
                                             id={data.label + suggestion + index}
                                         />
                                     </span>
@@ -395,12 +395,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 position={Position.Bottom}
                 id="bottom-source"
             />
-            <Handle
-                type="target"
-                position={Position.Bottom}
-                id="bottom-target"
-            />
-            <Handle type="source" position={Position.Top} id="top-source" />
             <Handle type="target" position={Position.Top} id="top-target" />
             <Handle type="source" position={Position.Left} id="left-source" />
             <Handle type="target" position={Position.Left} id="left-target" />

@@ -1428,16 +1428,10 @@ div[style*="width: 100vw"] {
 } */
 
 .explanation-text p {
-    margin: 0 0 18px 0;
-    /* Increased margin for better spacing */
     color: #e2e8f0;
-    /* Improved contrast */
     font-size: 15px;
-    /* Increased for better readability */
     line-height: 1.7;
-    /* Improved line height */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
-    font-weight: 400;
 }
 
 .explanation-text p:last-child {
@@ -1464,24 +1458,6 @@ div[style*="width: 100vw"] {
     font-weight: 400;
 }
 
-/* Scrollbar for explanation text */
-.explanation-text::-webkit-scrollbar {
-    width: 6px;
-}
-
-.explanation-text::-webkit-scrollbar-track {
-    background: #1f2937;
-    border-radius: 3px;
-}
-
-.explanation-text::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 3px;
-}
-
-.explanation-text::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-}
 
 /* Responsive adjustments for sidebar modes */
 @media (max-width: 768px) {
