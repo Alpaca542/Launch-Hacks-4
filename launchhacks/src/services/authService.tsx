@@ -1,10 +1,7 @@
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
-const FULL_PROMPT =
-    "Please explain the provided concept in details. Every key concept needs to be showcased by the notation _concept_ The concept: ";
-const SUMMARY_PROMPT =
-    "Please summarise the provided text. Your main goal is to mention in the summary all the key concepts showcased by the notation _concept_. In the returned text, you should keep the same notation. The original text: ";
 
+// Type definitions
 export interface AIResponse {
     message?: string;
     data?: any;
@@ -14,12 +11,14 @@ export interface AIResponse {
 export const handleSignOut = async (): Promise<void> => {
     try {
         await signOut(auth);
+        console.log("User signed out successfully");
     } catch (error) {
+        console.error("Error signing out:", error);
         throw error;
     }
 };
 
-export const askAI = async (message: string): Promise<AIResponse> => {
+const askAI = async (message: string): Promise<AIResponse> => {
     try {
         const response = await fetch(
             `https://groqchat-zm2y2mo6eq-uc.a.run.app?message=${encodeURIComponent(
@@ -30,21 +29,35 @@ export const askAI = async (message: string): Promise<AIResponse> => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: AIResponse = await response.json();
+        console.log(data);
         return data;
     } catch (err) {
+        console.error("Fetch error:", err);
         throw err;
     }
 };
 
-export const getFullResponse = async (concept: string) => {
+export const askAITwice = async (
+    message: string
+): Promise<{ firstResponse: AIResponse; secondResponse: AIResponse }> => {
     try {
-        const full_response = await askAI(FULL_PROMPT + concept);
-        const summary_reponse = await askAI(SUMMARY_PROMPT + concept);
+        const constantPromptOrig =
+            "Please explain the following text in detail, using the same format and structure as the original text. Key concept in the explanation should be marked as _concept_: ";
+        const constantPromptSum =
+            "Here is a long explanation. Please summarize it in such a way that key concepts(marked as_concept_) are used and highlighted in the exact same way as they are in the original text. Do not change the meaning of the text, just summarize it: ";
+        const firstPrompt = constantPromptOrig + message;
+
+        const firstResponse = await askAI(firstPrompt);
+
+        const secondPrompt = constantPromptSum + firstResponse.message!;
+        const secondResponse = await askAI(secondPrompt);
+
         return {
-            full_response,
-            summary_reponse,
+            firstResponse,
+            secondResponse,
         };
-    } catch (err) {
-        throw err;
+    } catch (error) {
+        console.error("Error in askAITwice:", error);
+        throw error;
     }
 };

@@ -7,7 +7,7 @@ import {
     createNewNode,
     createNewEdge,
 } from "../utils/nodeHelpers";
-
+import { askAITwice } from "../services";
 // Token interface with concept support
 export interface Token {
     word: string;
@@ -62,10 +62,13 @@ export const TokenInteractionProvider: React.FC<
             );
 
             // Create new node - use concept if it exists, otherwise use word
-            const nodeLabel = token.myConcept || token.word;
+            // Create initial node with loading state
+            const loadingLabel = "Loading concept...";
             const newNode = createNewNode(
                 newPosition,
-                nodeLabel,
+                loadingLabel,
+                loadingLabel,
+                loadingLabel,
                 color,
                 sourceNodeType
             );
@@ -73,9 +76,44 @@ export const TokenInteractionProvider: React.FC<
             // Create new edge
             const newEdge = createNewEdge(sourceNodeId, newNode.id, color);
 
-            // Add the new node and edge
+            // Add the new node and edge immediately
             onNodesChange([{ type: "add", item: newNode }]);
             onEdgesChange([{ type: "add", item: newEdge }]);
+
+            // Always ask AI for concept and update node when response arrives
+            askAITwice(token.word)
+                .then((response) => {
+                    const concept =
+                        response.secondResponse?.message ||
+                        response.firstResponse?.message ||
+                        token.word;
+                    onNodesChange([
+                        {
+                            type: "change",
+                            id: newNode.id,
+                            item: {
+                                ...newNode,
+                                data: {
+                                    ...newNode.data,
+                                    label: concept,
+                                },
+                            },
+                        },
+                    ]);
+                })
+                .catch(() => {
+                    // Fallback to original word if AI request fails
+                    onNodesChange([
+                        {
+                            type: "change",
+                            id: newNode.id,
+                            item: {
+                                ...newNode,
+                                data: { ...newNode.data, label: token.word },
+                            },
+                        },
+                    ]);
+                });
 
             return color;
         },

@@ -8,7 +8,7 @@ import {
     parseTextIntoTokens,
     Token,
 } from "../utils/nodeHelpers";
-
+import { Handle, Position } from "reactflow";
 interface NodeData {
     label?: string;
     myColor?: string;
@@ -200,9 +200,19 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     : undefined,
             }}
         >
-            {renderContent}
+            <div className="node-content">{renderContent}</div>
+            <Handle
+                type="source"
+                position={Position.Bottom}
+                id="bottom-source"
+            />
+            <Handle
+                type="target"
+                position={Position.Bottom}
+                id="bottom-target"
+            />
 
-            {showExplanation && (
+            {
                 <ExplanationWindow
                     show={showExplanation}
                     title={summary}
@@ -211,7 +221,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     }
                     onHide={handleHideExplanation}
                 />
-            )}
+            }
         </div>
     );
 }

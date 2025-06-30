@@ -520,6 +520,13 @@
     background: rgba(0, 0, 0, 0.1);
 }
 
+.react-flow__handle {
+    cursor: default;
+    width: 1px;
+    height: 1px;
+    visibility: hidden;
+}
+
 .sidebar-footer button {
     width: 100%;
     background: #374151;

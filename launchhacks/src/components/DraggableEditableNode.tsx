@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useReactFlow } from "reactflow";
+import { useReactFlow, Handle, Position } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import ExplanationWindow from "./ExplanationWindow";
@@ -234,8 +234,17 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             }}
         >
             <div className="node-content">{renderContent}</div>
-
-            {showExplanation && (
+            <Handle
+                type="source"
+                position={Position.Bottom}
+                id="bottom-source"
+            />
+            <Handle
+                type="target"
+                position={Position.Bottom}
+                id="bottom-target"
+            />
+            {
                 <ExplanationWindow
                     show={showExplanation}
                     title={summary}
@@ -244,7 +253,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                     }
                     onHide={handleHideExplanation}
                 />
-            )}
+            }
         </div>
     );
 }

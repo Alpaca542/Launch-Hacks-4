@@ -137,7 +137,9 @@ export const generateEdgeId = (sourceId: string, targetId: string): string => {
 // Node creation utilities
 export const createNewNode = (
     position: { x: number; y: number },
-    tokenValue: string,
+    label: string,
+    full_text: string,
+    summary: string,
     color: string,
     _sourceNodeType: string // Prefix with underscore to indicate unused
 ): Node => {
@@ -148,9 +150,9 @@ export const createNewNode = (
         type: "draggableEditable", // Always create draggable nodes
         position,
         data: {
-            label: tokenValue,
-            summary: tokenValue,
-            full_text: "",
+            label: label,
+            summary: summary,
+            full_text: full_text,
             myColor: color, // Changed from color to myColor
         },
     };

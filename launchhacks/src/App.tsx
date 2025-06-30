@@ -149,8 +149,10 @@ function AppContent() {
                         <Controls />
                         <Background
                             variant={BackgroundVariant.Cross}
-                            gap={12}
-                            size={1}
+                            gap={30}
+                            size={10}
+                            lineWidth={0.5}
+                            color="#616161"
                         />
                     </ReactFlow>
                 </TokenInteractionProvider>

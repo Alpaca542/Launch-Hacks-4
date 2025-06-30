@@ -107,7 +107,11 @@ function SideBar({
                                     </span>
                                     <div className="board-actions">
                                         {board.isOpen && (
-                                            <span className="open-indicator">
+                                            <span 
+                                                className="open-indicator"
+                                                title="This board is currently open"
+                                                aria-label="Board is open"
+                                            >
                                                 ●
                                             </span>
                                         )}
