@@ -915,9 +915,10 @@ div[style*="width: 100vw"] {
 .word-token {
     display: inline-block;
     margin: 0.5px 0.5px;
-    padding: 2px 4px;
+    padding: 1px 2px;
     /* Slightly more padding */
     border-radius: 5px;
+    color: rgb(56, 53, 73) !important;
     transition: background 0.15s ease, transform 0.1s ease,
         box-shadow 0.15s ease;
     cursor: pointer;
@@ -1065,6 +1066,7 @@ div[style*="width: 100vw"] {
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     width: 30px;
+    color: #0f0f0f !important;
     height: 30px;
     font-size: 14px;
     cursor: pointer;
@@ -1632,7 +1634,7 @@ div[style*="width: 100vw"] {
 }
 
 .node-title {
-    color: #a5b4fc;
+    color: #141727;
     /* Brighter, more distinct color */
     font-size: 13px;
     /* Slightly larger */
@@ -1683,8 +1685,9 @@ div[style*="width: 100vw"] {
 }
 
 .node-suggestions-header {
-    color: #94a3b8;
-    font-size: 11px;
+    color: #303c4b;
+    font-size: 12px;
+    margin-top: 3px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1705,7 +1708,7 @@ div[style*="width: 100vw"] {
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
-    color: #d1d5db;
+    color: #1e232b !important;
     /* Brighter suggestion text */
     font-weight: 500;
     transition: all 0.15s ease;
