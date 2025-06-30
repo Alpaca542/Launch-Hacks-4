@@ -134,7 +134,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             e.stopPropagation();
             if (showExplanation) {
                 showExplanation(
-                    summary,
+                    data.title!,
                     data.full_text || "No detailed information available."
                 );
             }
