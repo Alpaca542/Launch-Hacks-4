@@ -47,6 +47,7 @@ function SideBar({
 }: SideBarProps) {
     const [isCreatingBoard, setIsCreatingBoard] = useState(false);
     const [showBoardNameModal, setShowBoardNameModal] = useState(false);
+    const [hoveredBoardId, setHoveredBoardId] = useState<string | null>(null);
 
     const handleCreateBoard = async (boardName: string) => {
         try {
@@ -117,49 +118,147 @@ function SideBar({
                                         : "+ New Board"}
                                 </button>
                             </div>
-                            <ul>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 8,
+                                    marginTop: 8,
+                                }}
+                            >
                                 {allBoards?.map((board) => {
+                                    const isActive =
+                                        currentBoard?.id === board.id;
+                                    const isHovered =
+                                        hoveredBoardId === board.id;
                                     return (
-                                        <li
+                                        <div
                                             key={board.id}
                                             onClick={() =>
                                                 !isLoading &&
                                                 onSwitchBoard(board.id)
                                             }
-                                            className={
-                                                currentBoard?.id === board.id
-                                                    ? "active"
-                                                    : ""
+                                            className={isActive ? "active" : ""}
+                                            style={{
+                                                minHeight: "54px",
+                                                padding: "14px 20px",
+                                                margin: "0 8px",
+                                                borderRadius: 10,
+                                                cursor: isLoading
+                                                    ? "not-allowed"
+                                                    : "pointer",
+                                                border: isActive
+                                                    ? "2px solid #4f8cff"
+                                                    : isHovered
+                                                    ? "1px solid #555"
+                                                    : "1px solid #333",
+                                                background: isActive
+                                                    ? "#25304a"
+                                                    : isHovered
+                                                    ? "#23293a"
+                                                    : "#181c24",
+                                                color: isActive
+                                                    ? "#fff"
+                                                    : "#cfd8dc",
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                boxShadow: isActive
+                                                    ? "0 2px 8px 0 #4f8cff22"
+                                                    : isHovered
+                                                    ? "0 1px 4px 0 #00000033"
+                                                    : "none",
+                                                fontWeight: isActive
+                                                    ? 600
+                                                    : 400,
+                                                transform: isHovered
+                                                    ? "translateY(-1px)"
+                                                    : "none",
+                                                transition:
+                                                    "background 0.15s, border 0.15s, box-shadow 0.15s, transform 0.15s",
+                                            }}
+                                            onMouseEnter={() =>
+                                                setHoveredBoardId(board.id)
+                                            }
+                                            onMouseLeave={() =>
+                                                setHoveredBoardId(null)
                                             }
                                         >
-                                            <span className="board-name">
+                                            <span
+                                                className="board-name"
+                                                style={{
+                                                    fontWeight: isActive
+                                                        ? 700
+                                                        : 500,
+                                                    fontSize: "1.1em",
+                                                    flex: 1,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    letterSpacing: "0.2px",
+                                                    lineHeight: 1.3,
+                                                }}
+                                            >
                                                 {board.name}
                                             </span>
-                                            <div className="board-actions">
+                                            <div
+                                                className="board-actions"
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 8,
+                                                }}
+                                            >
                                                 {board.isOpen && (
-                                                    <span className="open-indicator">
+                                                    <span
+                                                        className="open-indicator"
+                                                        style={{
+                                                            color: "#4f8cff",
+                                                            fontSize: "1.1em",
+                                                            marginRight: 2,
+                                                        }}
+                                                    >
                                                         ●
                                                     </span>
                                                 )}
                                                 {allBoards.length > 1 && (
                                                     <button
                                                         className="delete-btn"
-                                                        onClick={(e) =>
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             handleDeleteBoard(
                                                                 e,
                                                                 board.id
-                                                            )
-                                                        }
+                                                            );
+                                                        }}
                                                         title="Delete board"
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            color: "#ff4d4d",
+                                                            cursor: "pointer",
+                                                            fontSize: "1.2em",
+                                                            lineHeight: "1",
+                                                            padding: "0 5px",
+                                                            opacity: isHovered
+                                                                ? 1
+                                                                : 0,
+                                                            transition:
+                                                                "opacity 0.15s",
+                                                            visibility:
+                                                                isHovered
+                                                                    ? "visible"
+                                                                    : "hidden",
+                                                        }}
                                                     >
                                                         ×
                                                     </button>
                                                 )}
                                             </div>
-                                        </li>
+                                        </div>
                                     );
                                 })}
-                            </ul>
+                            </div>
                             {isLoading && (
                                 <div className="loading-indicator">
                                     Loading boards...
