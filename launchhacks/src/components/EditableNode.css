@@ -963,6 +963,10 @@ div[style*="width: 100vw"] {
     background: rgba(79, 134, 247, 0.1);
 }
 
+.auth-switch {
+    margin-top: 6px;
+}
+
 .word-token:hover {
     background: rgba(255, 255, 255, 0.08);
     transform: translateY(-1px);
