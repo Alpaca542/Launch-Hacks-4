@@ -47,7 +47,7 @@ export const askAITwice = async (
         Instructions:
         - Highlight every key term with [square-braces], e.g., [variable].
         - Use simple language and practical examples or analogies.
-        - Use only correct HTML for all formatting (headings, lists, tables, images, code).
+        - Use only correct HTML or MARKDOWN for all formatting (headings, lists, tables, images, code).
         - All HTML elements (including headings, lists, tables, images, code) MUST use inline CSS for styling.
         - For inline CSS, use: <span style="color:#fff;background:#222;padding:4px;border-radius:4px;">example</span>
         - For images: <img src="IMAGE_URL" alt="desc" style="max-width:100%;border-radius:8px;">

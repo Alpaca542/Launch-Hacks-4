@@ -6,7 +6,9 @@ const ai = new GoogleGenerativeAI("AIzaSyBNVsITc9ceoJEdKu5dIUZYehPT_7i2MMM");
 
 const askAI = async (message: string): Promise<any> => {
     try {
-        const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
+        const model = ai.getGenerativeModel({
+            model: "gemini-2.5-flash-lite-preview-06-17",
+        });
         const result = await model.generateContent(message);
         const response = await result.response;
         const text = response.text();
