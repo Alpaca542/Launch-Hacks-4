@@ -109,12 +109,12 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             e.stopPropagation();
             if (showExplanation) {
                 showExplanation(
-                    summary,
+                    data.title || "Explanation",
                     data.full_text || "No detailed information available."
                 );
             }
         },
-        [showExplanation, summary, data.full_text]
+        [showExplanation, data.title, data.full_text]
     );
 
     // Navigate to previous node
@@ -245,6 +245,33 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             <div className="node-layout">
                 <div className="node-header">
                     <div className="node-title">{data.title || "Node"}</div>
+                    <div className="node-buttons">
+                        {data.previousNode && (
+                            <button
+                                className="node-expand-btn previous-node-btn"
+                                onClick={navigateToPreviousNode}
+                                title="Go to previous node"
+                            >
+                                ←
+                            </button>
+                        )}
+                        {tokens.length > 5 && (
+                            <button
+                                className="node-expand-btn"
+                                onClick={toggleExpansion}
+                                title={isExpanded ? "Show less" : "Show more"}
+                            >
+                                {isExpanded ? "−" : "+"}
+                            </button>
+                        )}
+                        <button
+                            className="node-expand-btn explanation-btn-icon"
+                            onClick={handleShowExplanation}
+                            title="Show full text"
+                        >
+                            📄
+                        </button>
+                    </div>
                 </div>
                 <div className="node-main-content">
                     <div className="node-summary-section">
@@ -258,6 +285,9 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                             )}
                         </div>
                     </div>
+                </div>
+                <div className="node-suggestions-section">
+                    <div className="node-suggestions-header">Suggestions</div>
                     <div className="node-suggestions-list">
                         {data.suggestions && data.suggestions.length > 0 ? (
                             data.suggestions.map((suggestion, index) => {
@@ -316,7 +346,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         )}
                     </div>
                 </div>
-                {nodeButtons}
             </div>
         );
     }, [

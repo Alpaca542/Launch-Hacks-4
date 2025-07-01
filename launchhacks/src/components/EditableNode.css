@@ -416,15 +416,7 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-.sidebar-content ul {
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.sidebar-content li {
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.15s ease, transform 0.1s ease;
-    background: rgba(255, 255, 255, 0.03);
+*/ .sidebar-content li {
     margin: 2px;
 }
 

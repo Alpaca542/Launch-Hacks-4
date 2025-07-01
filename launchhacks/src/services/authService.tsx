@@ -70,7 +70,16 @@ export const askAITwice = async (
         - ONLY the summary text
 
         Text to summarize: `;
-        const constantPromptSuggestions = `You are an expert educator. You answer only in json: {[concept1], [concept2]...}. Suggest 3 topics(each not more than 5 words, each topic is encased in [square-braces]) that are a good next step at learning the following concept:`;
+        const constantPromptSuggestions = `You are an expert educator. Respond ONLY with a valid JSON object in the following format: {"topics": ["[concept1]", "[concept2]", "[concept3]"]}. 
+
+    Instructions:
+    - Suggest exactly 3 topics that are logical next steps for learning the given concept.
+    - Each topic must be no more than 5 words.
+    - Each topic MUST be enclosed in double quotes, e.g., "example topic".
+    - Do NOT include any explanation, commentary, or formatting outside the JSON object.
+    - Only output the JSON object as specified.
+
+    Concept: `;
         const firstResponse = await askAI(constantPromptOrig + message);
 
         const secondResponse = await askAI(
@@ -114,7 +123,15 @@ export const askAITwice = async (
             secondResponse: {
                 response: secondResponse.response
                     ?.replace(/\[/g, "_")
-                    .replace(/\]/g, "_"),
+                    .replace(/\]/g, "_")
+                    .replace(
+                        /Here is a summary of the text in exactly 40 words or less:/g,
+                        ""
+                    )
+                    .replace(
+                        "/Here is a summary of the text in 40 words or less:/g",
+                        ""
+                    ),
             },
             thirdResponse: {
                 response: topicsArray,

@@ -2,11 +2,11 @@
 import * as v2 from "firebase-functions/v2";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const ai = new GoogleGenerativeAI("AIzaSyBNVsITc9ceoJEdKu5dIUZYehPT_7i2MMM");
 
 const askAI = async (message: string): Promise<any> => {
     try {
-        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
         const result = await model.generateContent(message);
         const response = await result.response;
         const text = response.text();

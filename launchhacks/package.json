@@ -21,6 +21,7 @@
     "react-markdown": "^10.1.0",
     "reactflow": "^11.11.4",
     "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "tailwind": "^2.3.1"
   },
   "devDependencies": {

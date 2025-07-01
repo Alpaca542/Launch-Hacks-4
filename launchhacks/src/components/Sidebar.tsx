@@ -341,7 +341,10 @@ function SideBar({
                                         <ReactMarkdown
                                             rehypePlugins={[rehypeRaw]}
                                         >
-                                            {explanation.text}
+                                            {explanation.text.replace(
+                                                "_",
+                                                "**"
+                                            )}
                                         </ReactMarkdown>
                                     </div>
                                 </>
