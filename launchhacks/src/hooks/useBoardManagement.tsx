@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNodesState, useEdgesState, Node, Edge } from "reactflow";
 import { User } from "firebase/auth";
 
@@ -138,48 +138,45 @@ export const useBoardManagement = (
     }, [user, setNodes, setEdges]);
 
     // Debounced auto-save function
-    const debouncedSave = useCallback(
-        async (boardId: string, nodesToSave: any, edgesToSave: any) => {
-            if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
-            }
+    const debouncedSave = async (
+        boardId: string,
+        nodesToSave: any,
+        edgesToSave: any
+    ) => {
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
 
-            const timeoutId = setTimeout(async () => {
-                try {
-                    setIsSaving(true);
+        const timeoutId = setTimeout(async () => {
+            try {
+                setIsSaving(true);
 
-                    // Save both nodes and edges in parallel
-                    const savePromises: Promise<void>[] = [];
-                    if (nodesToSave && nodesToSave.length > 0) {
-                        savePromises.push(
-                            saveNodesToBoard(boardId, nodesToSave)
-                        );
-                    }
-                    if (edgesToSave && edgesToSave.length > 0) {
-                        savePromises.push(
-                            saveEdgesToBoard(boardId, edgesToSave)
-                        );
-                    }
-
-                    if (savePromises.length > 0) {
-                        await Promise.all(savePromises);
-                        console.log("Auto-save completed successfully");
-                    }
-                } catch (error) {
-                    console.error("Auto-save failed:", error);
-                    if (showError) {
-                        showError("Failed to save changes automatically");
-                    }
-                } finally {
-                    setIsSaving(false);
-                    saveTimeoutRef.current = null;
+                // Save both nodes and edges in parallel
+                const savePromises: Promise<void>[] = [];
+                if (nodesToSave && nodesToSave.length > 0) {
+                    savePromises.push(saveNodesToBoard(boardId, nodesToSave));
                 }
-            }, 1000);
+                if (edgesToSave && edgesToSave.length > 0) {
+                    savePromises.push(saveEdgesToBoard(boardId, edgesToSave));
+                }
 
-            saveTimeoutRef.current = timeoutId;
-        },
-        [showError]
-    );
+                if (savePromises.length > 0) {
+                    await Promise.all(savePromises);
+                    console.log("Auto-save completed successfully");
+                }
+            } catch (error) {
+                console.error("Auto-save failed:", error);
+                if (showError) {
+                    showError("Failed to save changes automatically");
+                }
+            } finally {
+                setIsSaving(false);
+                saveTimeoutRef.current = null;
+            }
+        }, 1000);
+
+        saveTimeoutRef.current = timeoutId;
+    };
 
     // Auto-save when nodes or edges change
     useEffect(() => {
@@ -203,284 +200,253 @@ export const useBoardManagement = (
     }, [nodes, edges, isLoading, currentBoard, isSwitchingBoard]);
 
     // Switch to board
-    const switchToBoard = useCallback(
-        async (boardId: string) => {
-            try {
-                // Don't switch to the same board
-                if (currentBoard?.id === boardId) {
-                    return;
-                }
-
-                // Don't switch if fallback board
-                if (
-                    currentBoard?.isFallback ||
-                    allBoards.find((b) => b.id === boardId)?.isFallback
-                ) {
-                    if (showError) {
-                        showError(
-                            "Cannot switch to fallback board. Please create the missing Firestore index first."
-                        );
-                    }
-                    return;
-                }
-
-                setIsSwitchingBoard(true);
-
-                // Close current board
-                if (currentBoard && !currentBoard.isFallback) {
-                    const closedBoard = { ...currentBoard, isOpen: false };
-                    await updateBoardStatus(currentBoard.id, closedBoard);
-
-                    // Update in allBoards array
-                    setAllBoards((prevBoards) =>
-                        prevBoards.map((board) =>
-                            board.id === currentBoard.id ? closedBoard : board
-                        )
-                    );
-                }
-
-                // Open new board
-                const boardToOpen = allBoards.find(
-                    (board) => board.id === boardId
-                );
-                if (boardToOpen) {
-                    const openedBoard = { ...boardToOpen, isOpen: true };
-                    await updateBoardStatus(boardId, openedBoard);
-
-                    setCurrentBoard(openedBoard);
-
-                    // Update in allBoards array
-                    setAllBoards((prevBoards) =>
-                        prevBoards.map((board) =>
-                            board.id === boardId ? openedBoard : board
-                        )
-                    );
-
-                    // Load nodes and edges for the new board
-                    const [nodesData, edgesData] = await Promise.all([
-                        fetchNodesFromBoard(boardId),
-                        fetchEdgesFromBoard(boardId),
-                    ]);
-
-                    // Process nodes to ensure they have the proper data structure
-                    const processedNodes =
-                        processNodesForDataIntegrity(nodesData);
-
-                    setNodes(processedNodes);
-                    setEdges(edgesData as Edge[]);
-
-                    if (showSuccess) {
-                        showSuccess(`Switched to "${openedBoard.name}"`);
-                    }
-                } else {
-                    console.error("Board not found:", boardId);
-                    if (showError) {
-                        showError("Board not found");
-                    }
-                }
-            } catch (error) {
-                console.error("Error switching board:", error);
-                if (showError) {
-                    showError("Failed to switch board. Please try again.");
-                }
-            } finally {
-                setIsSwitchingBoard(false);
+    const switchToBoard = async (boardId: string) => {
+        try {
+            // Don't switch to the same board
+            if (currentBoard?.id === boardId) {
+                return;
             }
-        },
-        [currentBoard, allBoards, setNodes, setEdges, showSuccess, showError]
-    );
 
-    // Create new board
-    const createNewBoard = useCallback(
-        async (boardName?: string): Promise<BoardData | null> => {
-            try {
-                if (!user) {
-                    if (showError) {
-                        showError("You must be logged in to create a board");
-                    }
-                    return null;
-                }
-
-                if (showInfo) {
-                    showInfo("Creating new board...");
-                }
-
-                const newBoard = await createBoard(
-                    user.uid,
-                    boardName || null,
-                    allBoards
-                );
-                if (newBoard) {
-                    // First, close the current board if any
-                    if (currentBoard && !currentBoard.isFallback) {
-                        const closedBoard = { ...currentBoard, isOpen: false };
-                        updateBoardStatus(currentBoard.id, closedBoard).catch(
-                            console.error
-                        );
-                    }
-
-                    // Mark the new board as open
-                    const openNewBoard = { ...newBoard, isOpen: true };
-
-                    // Update local state with the new board
-                    setAllBoards((prevBoards) => {
-                        const updatedBoards = prevBoards.map((board) =>
-                            board.id === currentBoard?.id
-                                ? { ...board, isOpen: false }
-                                : board
-                        );
-                        return [openNewBoard, ...updatedBoards];
-                    });
-
-                    // Set as current board
-                    setCurrentBoard(openNewBoard);
-
-                    // Update in Firestore
-                    updateBoardStatus(newBoard.id, openNewBoard).catch(
-                        console.error
-                    );
-
-                    // Load initial nodes and edges for the new board
-                    setNodes([
-                        {
-                            id: "1",
-                            type: "staticEditable",
-                            data: {
-                                label: boardName || "New Board",
-                            },
-                            position: { x: 250, y: 25 },
-                            draggable: false, // Static nodes should not be draggable
-                        },
-                    ]);
-                    setEdges(initialEdges as Edge[]);
-
-                    if (showSuccess) {
-                        showSuccess(
-                            `Board "${newBoard.name}" created and opened!`
-                        );
-                    }
-
-                    return openNewBoard;
-                } else {
-                    if (showError) {
-                        showError("Failed to create board. Please try again.");
-                    }
-                    return null;
-                }
-            } catch (error: any) {
+            // Don't switch if fallback board
+            if (
+                currentBoard?.isFallback ||
+                allBoards.find((b) => b.id === boardId)?.isFallback
+            ) {
                 if (showError) {
-                    showError(`Failed to create board: ${error.message}`);
-                }
-                return null;
-            }
-        },
-        [
-            user,
-            allBoards,
-            currentBoard,
-            showSuccess,
-            showError,
-            showInfo,
-            setNodes,
-            setEdges,
-        ]
-    );
-
-    // Delete board
-    const deleteBoard = useCallback(
-        async (boardId: string) => {
-            try {
-                if (allBoards.length <= 1) {
-                    if (showError) {
-                        showError("Cannot delete the last board!");
-                    }
-                    return;
-                }
-
-                const boardToDelete = allBoards.find(
-                    (board) => board.id === boardId
-                );
-                if (!boardToDelete) {
-                    console.error("Board not found for deletion");
-                    if (showError) {
-                        showError("Board not found");
-                    }
-                    return;
-                }
-
-                if (showInfo) {
-                    showInfo("Deleting board...");
-                }
-
-                // If we're deleting the current board, switch to another one first
-                if (currentBoard?.id === boardId) {
-                    const otherBoard = allBoards.find(
-                        (board) => board.id !== boardId
+                    showError(
+                        "Cannot switch to fallback board. Please create the missing Firestore index first."
                     );
-                    if (otherBoard) {
-                        await switchToBoard(otherBoard.id);
-                    }
                 }
-
-                // Delete the board
-                await deleteBoardService(boardId);
-
-                // Remove from local state
-                setAllBoards((prevBoards) =>
-                    prevBoards.filter((board) => board.id !== boardId)
-                );
-
-                if (showSuccess) {
-                    showSuccess("Board deleted successfully!");
-                }
-            } catch (error) {
-                console.error("Error deleting board:", error);
-                if (showError) {
-                    showError("Failed to delete board. Please try again.");
-                }
+                return;
             }
-        },
-        [
-            allBoards,
-            currentBoard,
-            switchToBoard,
-            showSuccess,
-            showError,
-            showInfo,
-        ]
-    );
 
-    // Update board name
-    const updateBoardName = useCallback(
-        async (name: string) => {
-            if (currentBoard && currentBoard.name !== name) {
-                const updatedBoard = {
-                    ...currentBoard,
-                    name: name,
-                };
+            setIsSwitchingBoard(true);
 
-                setCurrentBoard(updatedBoard);
+            // Close current board
+            if (currentBoard && !currentBoard.isFallback) {
+                const closedBoard = { ...currentBoard, isOpen: false };
+                await updateBoardStatus(currentBoard.id, closedBoard);
 
                 // Update in allBoards array
                 setAllBoards((prevBoards) =>
                     prevBoards.map((board) =>
-                        board.id === currentBoard.id ? updatedBoard : board
+                        board.id === currentBoard.id ? closedBoard : board
+                    )
+                );
+            }
+
+            // Open new board
+            const boardToOpen = allBoards.find((board) => board.id === boardId);
+            if (boardToOpen) {
+                const openedBoard = { ...boardToOpen, isOpen: true };
+                await updateBoardStatus(boardId, openedBoard);
+
+                setCurrentBoard(openedBoard);
+
+                // Update in allBoards array
+                setAllBoards((prevBoards) =>
+                    prevBoards.map((board) =>
+                        board.id === boardId ? openedBoard : board
                     )
                 );
 
-                try {
-                    await updateBoardStatus(currentBoard.id, updatedBoard);
-                    console.log("Board name updated successfully");
-                } catch (error) {
-                    console.error("Error updating board name:", error);
+                // Load nodes and edges for the new board
+                const [nodesData, edgesData] = await Promise.all([
+                    fetchNodesFromBoard(boardId),
+                    fetchEdgesFromBoard(boardId),
+                ]);
+
+                // Process nodes to ensure they have the proper data structure
+                const processedNodes = processNodesForDataIntegrity(nodesData);
+
+                setNodes(processedNodes);
+                setEdges(edgesData as Edge[]);
+
+                if (showSuccess) {
+                    showSuccess(`Switched to "${openedBoard.name}"`);
+                }
+            } else {
+                console.error("Board not found:", boardId);
+                if (showError) {
+                    showError("Board not found");
                 }
             }
-        },
-        [currentBoard]
-    );
+        } catch (error) {
+            console.error("Error switching board:", error);
+            if (showError) {
+                showError("Failed to switch board. Please try again.");
+            }
+        } finally {
+            setIsSwitchingBoard(false);
+        }
+    };
+
+    // Create new board
+    const createNewBoard = async (
+        boardName?: string
+    ): Promise<BoardData | null> => {
+        try {
+            if (!user) {
+                if (showError) {
+                    showError("You must be logged in to create a board");
+                }
+                return null;
+            }
+
+            if (showInfo) {
+                showInfo("Creating new board...");
+            }
+
+            const newBoard = await createBoard(
+                user.uid,
+                boardName || null,
+                allBoards
+            );
+            if (newBoard) {
+                // First, close the current board if any
+                if (currentBoard && !currentBoard.isFallback) {
+                    const closedBoard = { ...currentBoard, isOpen: false };
+                    updateBoardStatus(currentBoard.id, closedBoard).catch(
+                        console.error
+                    );
+                }
+
+                // Mark the new board as open
+                const openNewBoard = { ...newBoard, isOpen: true };
+
+                // Update local state with the new board
+                setAllBoards((prevBoards) => {
+                    const updatedBoards = prevBoards.map((board) =>
+                        board.id === currentBoard?.id
+                            ? { ...board, isOpen: false }
+                            : board
+                    );
+                    return [openNewBoard, ...updatedBoards];
+                });
+
+                // Set as current board
+                setCurrentBoard(openNewBoard);
+
+                // Update in Firestore
+                updateBoardStatus(newBoard.id, openNewBoard).catch(
+                    console.error
+                );
+
+                // Load initial nodes and edges for the new board
+                setNodes([
+                    {
+                        id: "1",
+                        type: "staticEditable",
+                        data: {
+                            label: boardName || "New Board",
+                        },
+                        position: { x: 250, y: 25 },
+                        draggable: false, // Static nodes should not be draggable
+                    },
+                ]);
+                setEdges(initialEdges as Edge[]);
+
+                if (showSuccess) {
+                    showSuccess(`Board "${newBoard.name}" created and opened!`);
+                }
+
+                return openNewBoard;
+            } else {
+                if (showError) {
+                    showError("Failed to create board. Please try again.");
+                }
+                return null;
+            }
+        } catch (error: any) {
+            if (showError) {
+                showError(`Failed to create board: ${error.message}`);
+            }
+            return null;
+        }
+    };
+
+    // Delete board
+    const deleteBoard = async (boardId: string) => {
+        try {
+            if (allBoards.length <= 1) {
+                if (showError) {
+                    showError("Cannot delete the last board!");
+                }
+                return;
+            }
+
+            const boardToDelete = allBoards.find(
+                (board) => board.id === boardId
+            );
+            if (!boardToDelete) {
+                console.error("Board not found for deletion");
+                if (showError) {
+                    showError("Board not found");
+                }
+                return;
+            }
+
+            if (showInfo) {
+                showInfo("Deleting board...");
+            }
+
+            // If we're deleting the current board, switch to another one first
+            if (currentBoard?.id === boardId) {
+                const otherBoard = allBoards.find(
+                    (board) => board.id !== boardId
+                );
+                if (otherBoard) {
+                    await switchToBoard(otherBoard.id);
+                }
+            }
+
+            // Delete the board
+            await deleteBoardService(boardId);
+
+            // Remove from local state
+            setAllBoards((prevBoards) =>
+                prevBoards.filter((board) => board.id !== boardId)
+            );
+
+            if (showSuccess) {
+                showSuccess("Board deleted successfully!");
+            }
+        } catch (error) {
+            console.error("Error deleting board:", error);
+            if (showError) {
+                showError("Failed to delete board. Please try again.");
+            }
+        }
+    };
+
+    // Update board name
+    const updateBoardName = async (name: string) => {
+        if (currentBoard && currentBoard.name !== name) {
+            const updatedBoard = {
+                ...currentBoard,
+                name: name,
+            };
+
+            setCurrentBoard(updatedBoard);
+
+            // Update in allBoards array
+            setAllBoards((prevBoards) =>
+                prevBoards.map((board) =>
+                    board.id === currentBoard.id ? updatedBoard : board
+                )
+            );
+
+            try {
+                await updateBoardStatus(currentBoard.id, updatedBoard);
+                console.log("Board name updated successfully");
+            } catch (error) {
+                console.error("Error updating board name:", error);
+            }
+        }
+    };
 
     // Clear all state (for sign out)
-    const clearBoardState = useCallback(() => {
+    const clearBoardState = () => {
         // Clear any pending save timeouts
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
@@ -494,7 +460,7 @@ export const useBoardManagement = (
         setIsLoading(true);
         setIsSwitchingBoard(false);
         setIsSaving(false);
-    }, [setNodes, setEdges, saveTimeoutRef]);
+    };
 
     return {
         // State

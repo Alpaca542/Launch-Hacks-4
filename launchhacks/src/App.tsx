@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -74,34 +74,28 @@ function AppContent() {
     };
 
     // Handle explanation display
-    const showExplanation = useCallback((title: string, text: string) => {
+    const showExplanation = (title: string, text: string) => {
         setCurrentExplanation({ title, text });
         setSidebarMode("explanation");
-    }, []);
+    };
 
     // Handle sidebar mode change
-    const handleSidebarModeChange = useCallback(
-        (mode: "boards" | "explanation") => {
-            setSidebarMode(mode);
-        },
-        []
-    );
+    const handleSidebarModeChange = (mode: "boards" | "explanation") => {
+        setSidebarMode(mode);
+    };
 
     // ReactFlow connection handler
-    const onConnect = useCallback(
-        (params: Connection) => {
-            // Create the new edge and pass it as an add change
-            const newEdge = {
-                id: `e${params.source}-${params.target}`,
-                source: params.source!,
-                target: params.target!,
-                sourceHandle: params.sourceHandle,
-                targetHandle: params.targetHandle,
-            };
-            onEdgesChange([{ type: "add", item: newEdge }]);
-        },
-        [onEdgesChange]
-    );
+    const onConnect = (params: Connection) => {
+        // Create the new edge and pass it as an add change
+        const newEdge = {
+            id: `e${params.source}-${params.target}`,
+            source: params.source!,
+            target: params.target!,
+            sourceHandle: params.sourceHandle,
+            targetHandle: params.targetHandle,
+        };
+        onEdgesChange([{ type: "add", item: newEdge }]);
+    };
 
     // Render authentication screen if not logged in
     if (!user) {

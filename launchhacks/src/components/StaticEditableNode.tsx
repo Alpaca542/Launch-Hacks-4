@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
@@ -45,99 +45,84 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     }, [data.summary, data.label, isEditing]);
 
     // Parse text into tokens
-    const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
+    const tokens = parseTextIntoTokens(summary);
 
     // Token click handler - optimized to avoid repeated getNodes() calls
-    const handleTokenClickLocal = useCallback(
-        (token: Token, e: React.MouseEvent) => {
-            e.stopPropagation();
+    const handleTokenClickLocal = (token: Token, e: React.MouseEvent) => {
+        e.stopPropagation();
 
-            console.log("Static Token clicked:", token);
+        console.log("Static Token clicked:", token);
 
-            // Use the context handler with minimal node info
-            // We don't need to get all nodes just for position and type
-            handleTokenClick(
-                token,
-                id,
-                { x: 0, y: 0 }, // Position will be updated by the context handler
-                "staticEditable",
-                data.myColor,
-                data.summary || data.label || "Draggable Node",
-                token.suggestionId
-            );
-        },
-        [id, handleTokenClick, data.myColor]
-    );
+        // Use the context handler with minimal node info
+        // We don't need to get all nodes just for position and type
+        handleTokenClick(
+            token,
+            id,
+            { x: 0, y: 0 }, // Position will be updated by the context handler
+            "staticEditable",
+            data.myColor,
+            data.summary || data.label || "Draggable Node",
+            token.suggestionId
+        );
+    };
 
-    const handleClick = useCallback((e: React.MouseEvent) => {
+    const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsEditing(true);
-    }, []);
+    };
 
-    const handleSave = useCallback(() => {
+    const handleSave = () => {
         setIsEditing(false);
-    }, []);
+    };
 
-    const handleInputClick = useCallback((e: React.MouseEvent) => {
+    const handleInputClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-    }, []);
+    };
 
-    const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent) => {
-            e.stopPropagation();
-            if (e.key === "Enter") {
-                handleSave();
-            }
-            if (e.key === "Escape") {
-                setSummary(data.summary || data.label || "Static Node");
-                setIsEditing(false);
-            }
-        },
-        [handleSave, data.summary, data.label]
-    );
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        e.stopPropagation();
+        if (e.key === "Enter") {
+            handleSave();
+        }
+        if (e.key === "Escape") {
+            setSummary(data.summary || data.label || "Static Node");
+            setIsEditing(false);
+        }
+    };
 
-    const toggleExpansion = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-        },
-        [isExpanded]
-    );
+    const toggleExpansion = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+    };
 
-    const handleShowExplanation = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (showExplanation) {
-                showExplanation(
-                    data.title || "Explanation",
-                    data.full_text || "No detailed information available."
-                );
-            }
-        },
-        [showExplanation, data.title, data.full_text]
-    );
+    const handleShowExplanation = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (showExplanation) {
+            showExplanation(
+                data.title || "Explanation",
+                data.full_text || "No detailed information available."
+            );
+        }
+    };
 
     // Navigate to previous node
-    const navigateToPreviousNode = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (data.previousNode) {
-                const previousNode = getNode(data.previousNode);
-                if (previousNode) {
-                    const { x, y } = previousNode.position;
-                    // Center the viewport on the previous node with smooth animation
-                    setViewport(
-                        { x: -x + 200, y: -y + 100, zoom: 1 },
-                        { duration: 500 }
-                    );
-                }
+    const navigateToPreviousNode = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (data.previousNode) {
+            const previousNode = getNode(data.previousNode);
+            if (previousNode) {
+                const { x, y } = previousNode.position;
+                // Center the viewport on the previous node with smooth animation
+                setViewport(
+                    { x: -x + 200, y: -y + 100, zoom: 1 },
+                    { duration: 500 }
+                );
             }
-        },
-        [data.previousNode, getNode, setViewport]
-    );
+        }
+    };
 
     // Memoize token rendering separately for better performance
-    const tokenElements = useMemo(() => {
+    const tokenElements = (() => {
         const tokenColors = data.tokenColors || {};
 
         return tokens.map((token, index) => {
@@ -169,47 +154,37 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 </span>
             );
         });
-    }, [tokens, handleTokenClickLocal, data.tokenColors, data.myColor]);
+    })();
 
     // Memoize node buttons separately
-    const nodeButtons = useMemo(
-        () => (
-            <div className="node-buttons">
-                {data.previousNode && (
-                    <button
-                        className="node-expand-btn previous-node-btn"
-                        onClick={navigateToPreviousNode}
-                        title="Go to previous node"
-                    >
-                        ←
-                    </button>
-                )}
-                {tokens.length > 5 && (
-                    <button
-                        className="node-expand-btn"
-                        onClick={toggleExpansion}
-                        title={isExpanded ? "Show less" : "Show more"}
-                    >
-                        {isExpanded ? "−" : "+"}
-                    </button>
-                )}
+    const nodeButtons = (
+        <div className="node-buttons">
+            {data.previousNode && (
                 <button
-                    className="node-expand-btn explanation-btn-icon"
-                    onClick={handleShowExplanation}
-                    title="Show full text"
+                    className="node-expand-btn previous-node-btn"
+                    onClick={navigateToPreviousNode}
+                    title="Go to previous node"
                 >
-                    📄
+                    ←
                 </button>
-            </div>
-        ),
-        [
-            tokens.length,
-            toggleExpansion,
-            isExpanded,
-            handleShowExplanation,
-            data.previousNode,
-            navigateToPreviousNode,
-        ]
+            )}
+            {tokens.length > 5 && (
+                <button
+                    className="node-expand-btn"
+                    onClick={toggleExpansion}
+                    title={isExpanded ? "Show less" : "Show more"}
+                >
+                    {isExpanded ? "−" : "+"}
+                </button>
+            )}
+            <button
+                className="node-expand-btn explanation-btn-icon"
+                onClick={handleShowExplanation}
+                title="Show full text"
+            >
+                📄
+            </button>
+        </div>
     );
 
     const renderContent = useMemo(() => {

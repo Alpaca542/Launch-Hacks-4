@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
@@ -61,105 +61,90 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }, [tokens, isExpanded]);
 
     // Check if token is clickable
-    const isTokenClickable = useCallback(() => {
+    const isTokenClickable = () => {
         return true; // All tokens are clickable now
-    }, []);
+    };
 
     // Token click handler
-    const handleTokenClickLocal = useCallback(
-        (token: Token, e: React.MouseEvent) => {
-            e.stopPropagation();
+    const handleTokenClickLocal = (token: Token, e: React.MouseEvent) => {
+        e.stopPropagation();
 
-            // Get current node info
-            const currentNodes = getNodes();
-            const currentNode = currentNodes.find((node) => node.id === id);
-            if (!currentNode) {
-                return;
-            }
+        // Get current node info
+        const currentNodes = getNodes();
+        const currentNode = currentNodes.find((node) => node.id === id);
+        if (!currentNode) {
+            return;
+        }
 
-            // Use the context handler
-            const color = handleTokenClick(
-                token,
-                id,
-                currentNode.position,
-                currentNode.type || "draggableEditable",
-                data.myColor,
-                data.summary || data.label || "Draggable Node"
-            );
-            return color; // Can be null if token is already colored
-        },
-        [id, getNodes, handleTokenClick, data.myColor]
-    );
+        // Use the context handler
+        const color = handleTokenClick(
+            token,
+            id,
+            currentNode.position,
+            currentNode.type || "draggableEditable",
+            data.myColor,
+            data.summary || data.label || "Draggable Node"
+        );
+        return color; // Can be null if token is already colored
+    };
 
-    const handleClick = useCallback((e: React.MouseEvent) => {
+    const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsEditing(true);
-    }, []);
+    };
 
-    const handleSave = useCallback(() => {
+    const handleSave = () => {
         setIsEditing(false);
-    }, []);
+    };
 
-    const handleInputClick = useCallback((e: React.MouseEvent) => {
+    const handleInputClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-    }, []);
+    };
 
-    const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent) => {
-            e.stopPropagation();
-            if (e.key === "Enter") {
-                handleSave();
-            }
-            if (e.key === "Escape") {
-                setSummary(data.summary || data.label || "Draggable Node");
-                setIsEditing(false);
-            }
-        },
-        [handleSave, data.summary, data.label]
-    );
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        e.stopPropagation();
+        if (e.key === "Enter") {
+            handleSave();
+        }
+        if (e.key === "Escape") {
+            setSummary(data.summary || data.label || "Draggable Node");
+            setIsEditing(false);
+        }
+    };
 
-    const toggleExpansion = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-            if (!isExpanded && data.onExpand) {
-                data.onExpand();
-            }
-        },
-        [isExpanded, data.onExpand]
-    );
+    const toggleExpansion = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+        if (!isExpanded && data.onExpand) {
+            data.onExpand();
+        }
+    };
 
-    const handleShowExplanation = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (showExplanation) {
-                showExplanation(
-                    data.title!,
-                    data.full_text || "No detailed information available."
-                );
-            }
-        },
-        [showExplanation, summary, data.full_text]
-    );
+    const handleShowExplanation = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (showExplanation) {
+            showExplanation(
+                data.title!,
+                data.full_text || "No detailed information available."
+            );
+        }
+    };
 
     // Navigate to previous node
-    const navigateToPreviousNode = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (data.previousNode) {
-                const previousNode = getNode(data.previousNode);
-                if (previousNode) {
-                    const { x, y } = previousNode.position;
-                    // Center the viewport on the previous node with smooth animation
-                    setViewport(
-                        { x: -x + 200, y: -y + 100, zoom: 1 },
-                        { duration: 500 }
-                    );
-                }
+    const navigateToPreviousNode = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (data.previousNode) {
+            const previousNode = getNode(data.previousNode);
+            if (previousNode) {
+                const { x, y } = previousNode.position;
+                // Center the viewport on the previous node with smooth animation
+                setViewport(
+                    { x: -x + 200, y: -y + 100, zoom: 1 },
+                    { duration: 500 }
+                );
             }
-        },
-        [data.previousNode, getNode, setViewport]
-    );
+        }
+    };
 
     // Group tokens by concept for blue outline
     const groupedTokens = useMemo(() => {

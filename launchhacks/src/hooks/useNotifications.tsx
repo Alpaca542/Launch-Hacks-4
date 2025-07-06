@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 // Type definitions
 export type NotificationType = "success" | "error" | "info" | "warning";
@@ -33,82 +33,81 @@ export interface UseNotificationsReturn {
 export const useNotifications = (): UseNotificationsReturn => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
-    const addNotification = useCallback(
-        (notification: Omit<Notification, "id" | "timestamp">): string => {
-            const id = Date.now().toString();
-            const newNotification: Notification = {
-                id,
-                timestamp: new Date(),
-                ...notification,
-            };
-
-            setNotifications((prev) => [...prev, newNotification]);
-
-            // Auto-remove after delay if specified
-            if (notification.autoRemove !== false) {
-                setTimeout(() => {
-                    removeNotification(id);
-                }, notification.duration || 5000);
-            }
-
-            return id;
-        },
-        []
-    );
-
-    const removeNotification = useCallback((id: string): void => {
+    const removeNotification = (id: string): void => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, []);
+    };
 
-    const clearAllNotifications = useCallback((): void => {
+    const addNotification = (
+        notification: Omit<Notification, "id" | "timestamp">
+    ): string => {
+        const id = Date.now().toString();
+        const newNotification: Notification = {
+            id,
+            timestamp: new Date(),
+            ...notification,
+        };
+
+        setNotifications((prev) => [...prev, newNotification]);
+
+        // Auto-remove after delay if specified
+        if (notification.autoRemove !== false) {
+            setTimeout(() => {
+                removeNotification(id);
+            }, notification.duration || 5000);
+        }
+
+        return id;
+    };
+
+    const clearAllNotifications = (): void => {
         setNotifications([]);
-    }, []);
+    };
 
-    const showSuccess = useCallback(
-        (message: string, options: NotificationOptions = {}): string => {
-            return addNotification({
-                type: "success",
-                message,
-                ...options,
-            });
-        },
-        [addNotification]
-    );
+    const showSuccess = (
+        message: string,
+        options: NotificationOptions = {}
+    ): string => {
+        return addNotification({
+            type: "success",
+            message,
+            ...options,
+        });
+    };
 
-    const showError = useCallback(
-        (message: string, options: NotificationOptions = {}): string => {
-            return addNotification({
-                type: "error",
-                message,
-                duration: 7000, // Errors stay longer
-                ...options,
-            });
-        },
-        [addNotification]
-    );
+    const showError = (
+        message: string,
+        options: NotificationOptions = {}
+    ): string => {
+        return addNotification({
+            type: "error",
+            message,
+            duration: 7000, // Errors stay longer
+            ...options,
+        });
+    };
 
-    const showInfo = useCallback(
-        (message: string, options: NotificationOptions = {}): string => {
-            return addNotification({
-                type: "info",
-                message,
-                ...options,
-            });
-        },
-        [addNotification]
-    );
+    const showInfo = (
+        message: string,
+        options: NotificationOptions = {}
+    ): string => {
+        return addNotification({
+            type: "info",
+            message,
+            ...options,
+        });
+    };
 
-    const showWarning = useCallback(
-        (message: string, options: NotificationOptions = {}): string => {
-            return addNotification({
-                type: "warning",
-                message,
-                duration: 6000,
-                ...options,
-            });
-        },
-        [addNotification]
-    );
+    const showWarning = (
+        message: string,
+        options: NotificationOptions = {}
+    ): string => {
+        return addNotification({
+            type: "warning",
+            message,
+            duration: 6000,
+            ...options,
+        });
+    };
 
     return {
         notifications,

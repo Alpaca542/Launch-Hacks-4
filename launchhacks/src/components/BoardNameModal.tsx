@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
@@ -20,43 +20,34 @@ function BoardNameModal({
     const [boardName, setBoardName] = useState<string>("");
     const [isValid, setIsValid] = useState<boolean>(true);
 
-    const handleInputChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const value = e.target.value;
-            setBoardName(value);
-            setIsValid(value.trim().length > 0 && value.trim().length <= 50);
-        },
-        []
-    );
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setBoardName(value);
+        setIsValid(value.trim().length > 0 && value.trim().length <= 50);
+    };
 
-    const handleSubmit = useCallback(
-        (e: React.FormEvent) => {
-            e.preventDefault();
-            const trimmedName = boardName.trim();
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmedName = boardName.trim();
 
-            if (trimmedName.length > 0 && trimmedName.length <= 50) {
-                onConfirm(trimmedName);
-                setBoardName("");
-                setIsValid(true);
-            }
-        },
-        [boardName, onConfirm]
-    );
+        if (trimmedName.length > 0 && trimmedName.length <= 50) {
+            onConfirm(trimmedName);
+            setBoardName("");
+            setIsValid(true);
+        }
+    };
 
-    const handleHide = useCallback(() => {
+    const handleHide = () => {
         setBoardName("");
         setIsValid(true);
         onHide();
-    }, [onHide]);
+    };
 
-    const handleKeyPress = useCallback(
-        (e: React.KeyboardEvent) => {
-            if (e.key === "Enter") {
-                handleSubmit(e as any);
-            }
-        },
-        [handleSubmit]
-    );
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            handleSubmit(e as any);
+        }
+    };
 
     return (
         <Modal

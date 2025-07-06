@@ -24,7 +24,7 @@ function TopBar({
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
-    // Update editedName when name prop change
+    // Update editedName when name prop changes
     useEffect(() => {
         setEditedName(name || "");
     }, [name]);
