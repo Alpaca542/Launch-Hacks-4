@@ -1,23 +1,10 @@
 /* eslint-disable */
 import * as v2 from "firebase-functions/v2";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
-const ai = new GoogleGenerativeAI("AIzaSyBNVsITc9ceoJEdKu5dIUZYehPT_7i2MMM");
-
-const askAI = async (message: string): Promise<any> => {
-    try {
-        const model = ai.getGenerativeModel({
-            model: "gemini-2.5-flash-lite-preview-06-17",
-        });
-        const result = await model.generateContent(message);
-        const response = await result.response;
-        const text = response.text();
-        return { response: text };
-    } catch (err) {
-        console.error("Fetch error:", err);
-        throw err;
-    }
-};
+const groq = new Groq({
+    apiKey: process.env.LLAMA_KEY,
+});
 
 export const groqChat = v2.https.onRequest(
     {
@@ -55,8 +42,22 @@ export const groqChat = v2.https.onRequest(
                 return;
             }
 
-            const aiResponse = await askAI(message);
-            res.json(aiResponse);
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [{ role: "user", content: message }],
+                model: "llama3-8b-8192",
+            });
+
+            let responseText =
+                chatCompletion.choices[0]?.message?.content ||
+                "No response generated";
+            if (responseText.includes(":")) {
+                responseText = responseText
+                    .substring(responseText.indexOf(":") + 1)
+                    .trim();
+            }
+            res.json({
+                response: responseText,
+            });
         } catch (error) {
             console.error("Error:", error);
             res.status(500).json({ error: "Internal server error" });

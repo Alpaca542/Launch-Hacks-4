@@ -1,1 +1,15 @@
 node_modules
+.env
+.DS_Store
+.vscode
+.idea
+*.log
+*.tsbuildinfo
+dist
+coverage
+*.tgz
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.tar

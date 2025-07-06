@@ -19,7 +19,6 @@ import NotificationContainer from "./components/NotificationContainer";
 // Hooks
 import { useAuth } from "./hooks/useAuth";
 import { useBoardManagement } from "./hooks/useBoardManagement";
-import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useNotifications } from "./hooks/useNotifications";
 
 // Configuration
@@ -67,14 +66,6 @@ function AppContent() {
         updateBoardName,
         clearBoardState,
     } = useBoardManagement(user, { showSuccess, showError, showInfo });
-
-    // Keyboard shortcuts
-    useKeyboardShortcuts({
-        allBoards,
-        currentBoard,
-        createNewBoard,
-        switchToBoard,
-    });
 
     // // Handle sign out with state cleanup
     const handleSignOut = async () => {
