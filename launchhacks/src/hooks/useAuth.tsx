@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../firebase";
-import { handleSignOut } from "../services/authService";
+import { signOut } from "firebase/auth";
 
 // Type definitions
 export interface UseAuthReturn {
     user: User | null;
     signOut: () => Promise<void>;
 }
+
+const handleSignOut = async (): Promise<void> => {
+    try {
+        await signOut(auth);
+        console.log("User signed out successfully");
+    } catch (error) {
+        console.error("Error signing out:", error);
+        throw error;
+    }
+};
 
 export const useAuth = (): UseAuthReturn => {
     const [user, setUser] = useState<User | null>(null);

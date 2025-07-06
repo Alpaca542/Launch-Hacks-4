@@ -111,44 +111,19 @@ export const generateColorVariation = (baseColor: string): string => {
 };
 
 // Node positioning utilities
-export const calculateNewNodePosition = (
-    sourceNodePosition: { x: number; y: number },
-    existingNodes: Node[]
-): { x: number; y: number } => {
-    const baseOffset = 200;
-    const searchRadius = 150;
+export const calculateNewNodePosition = (sourceNodePosition: {
+    x: number;
+    y: number;
+}): { x: number; y: number } => {
+    const yOffset = 200; // Fixed distance below the source node
+    const xVariation = 150; // Maximum random horizontal variation
 
-    // Try different angles to find a position that doesn't overlap
-    const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+    // Generate random horizontal offset within limits
+    const randomXOffset = (Math.random() - 0.5) * xVariation * 2;
 
-    for (const angle of angles) {
-        const radian = (angle * Math.PI) / 180;
-        const newX = sourceNodePosition.x + Math.cos(radian) * baseOffset;
-        const newY = sourceNodePosition.y + Math.sin(radian) * baseOffset;
-
-        // Check if this position is too close to existing nodes
-        const hasOverlap = existingNodes.some((node) => {
-            const distance = Math.sqrt(
-                Math.pow(node.position.x - newX, 2) +
-                    Math.pow(node.position.y - newY, 2)
-            );
-            return distance < searchRadius;
-        });
-
-        if (!hasOverlap) {
-            return { x: newX, y: newY };
-        }
-    }
-
-    // If all positions have overlaps, just use the first one with a random offset
-    const randomAngle = Math.random() * 2 * Math.PI;
     return {
-        x:
-            sourceNodePosition.x +
-            Math.cos(randomAngle) * (baseOffset + Math.random() * 100),
-        y:
-            sourceNodePosition.y +
-            Math.sin(randomAngle) * (baseOffset + Math.random() * 100),
+        x: sourceNodePosition.x + randomXOffset,
+        y: sourceNodePosition.y + yOffset,
     };
 };
 

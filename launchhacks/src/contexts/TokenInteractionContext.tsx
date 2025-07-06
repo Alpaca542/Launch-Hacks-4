@@ -7,8 +7,8 @@ import {
     createNewNode,
     createNewEdge,
 } from "../utils/nodeHelpers";
-import { askAITwice } from "../services";
-// Token interface with concept support
+import { askAITwice } from "../services/aiService";
+
 export interface Token {
     word: string;
     myConcept?: string;
@@ -114,16 +114,13 @@ export const TokenInteractionProvider: React.FC<
             );
 
             // Calculate position for new node
-            const newPosition = calculateNewNodePosition(
-                sourceNodePosition,
-                nodes
-            );
+            const newPosition = calculateNewNodePosition(sourceNodePosition);
 
             const newNode = createNewNode(
                 newPosition,
                 "Loading...", // fallback text
-                "Loading...", // fallback text
-                "Loading...", // fallback text
+                "Loading...",
+                "Loading...",
                 color,
                 sourceNodeType,
                 sourceNodeId // Pass the source node ID as previousNode

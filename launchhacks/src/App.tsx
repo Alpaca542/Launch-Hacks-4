@@ -73,9 +73,6 @@ function AppContent() {
         clearBoardState();
     };
 
-    // Toggle sidebar
-    // No longer needed - using split pane
-
     // Handle explanation display
     const showExplanation = useCallback((title: string, text: string) => {
         setCurrentExplanation({ title, text });
@@ -132,8 +129,6 @@ function AppContent() {
                             onDeleteBoard={deleteBoard}
                             onSignOut={handleSignOut}
                             isLoading={isSwitchingBoard}
-                            isCollapsed={false} // Always visible in split pane
-                            onToggleSidebar={() => {}} // No toggle needed
                             mode={sidebarMode}
                             onModeChange={handleSidebarModeChange}
                             explanation={currentExplanation}

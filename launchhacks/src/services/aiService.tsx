@@ -1,17 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
-
-export const handleSignOut = async (): Promise<void> => {
-    try {
-        await signOut(auth);
-        console.log("User signed out successfully");
-    } catch (error) {
-        console.error("Error signing out:", error);
-        throw error;
-    }
-};
-
 const askAI = async (message: string): Promise<any> => {
     try {
         const response = await fetch(
