@@ -1,66 +1,115 @@
 /* eslint-disable */
-import * as v2 from "firebase-functions/v2";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/v2";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-    apiKey: process.env.LLAMA_KEY,
+    apiKey: "",
 });
 
-export const groqChat = v2.https.onRequest(
+export const groqChat = onCall(
     {
         cors: true,
         timeoutSeconds: 60,
         memory: "256MiB",
     },
-    async (req, res) => {
+    async (request, response) => {
         try {
-            // Enable CORS for all origins - more comprehensive headers
-            res.set("Access-Control-Allow-Origin", "*");
-            res.set(
-                "Access-Control-Allow-Methods",
-                "GET, POST, OPTIONS, PUT, DELETE"
-            );
-            res.set(
-                "Access-Control-Allow-Headers",
-                "Content-Type, Authorization, X-Requested-With"
-            );
-            res.set("Access-Control-Max-Age", "3600");
+            const { message } = request.data;
 
-            // Handle preflight requests
-            if (req.method === "OPTIONS") {
-                res.status(204).send("");
-                return;
+            if (!message || typeof message !== "string") {
+                throw new HttpsError(
+                    "invalid-argument",
+                    "Message is required and must be a string"
+                );
             }
 
-            // Parse URL and extract message from query parameters
-            const url = new URL(req.url, `http://${req.headers.host}`);
-            const message =
-                url.searchParams.get("message") || req.body?.message;
-
-            if (!message) {
-                res.status(400).json({ error: "Message is required" });
-                return;
-            }
-
-            const chatCompletion = await groq.chat.completions.create({
-                messages: [{ role: "user", content: message }],
-                model: "llama3-8b-8192",
+            logger.info("Processing groq chat request", {
+                message: message.substring(0, 100),
+                acceptsStreaming: request.acceptsStreaming,
+                hasResponse: !!response,
             });
 
-            let responseText =
-                chatCompletion.choices[0]?.message?.content ||
-                "No response generated";
-            if (responseText.includes(":")) {
-                responseText = responseText
-                    .substring(responseText.indexOf(":") + 1)
-                    .trim();
+            // Check if client supports streaming
+            if (request.acceptsStreaming && response) {
+                logger.info(
+                    "Client supports streaming, starting stream response"
+                );
+                // Handle streaming response
+                const streamResponse = await groq.chat.completions.create({
+                    messages: [{ role: "user", content: message }],
+                    model: "llama3-8b-8192",
+                    stream: true,
+                });
+
+                let fullResponse = "";
+                let chunkCount = 0;
+                for await (const chunk of streamResponse) {
+                    const content = chunk.choices[0]?.delta?.content;
+                    if (content) {
+                        chunkCount++;
+                        fullResponse += content;
+                        // Send each chunk to streaming clients
+                        const chunkData = {
+                            type: "chunk",
+                            content: content,
+                        };
+                        logger.info(`Sending chunk ${chunkCount}:`, chunkData);
+                        response.sendChunk(chunkData);
+                    }
+                }
+
+                logger.info(
+                    `Streaming complete. Sent ${chunkCount} chunks. Full response length: ${fullResponse.length}`
+                );
+
+                // Process final response
+                let processedResponse = fullResponse;
+                if (processedResponse.includes(":")) {
+                    processedResponse = processedResponse
+                        .substring(processedResponse.indexOf(":") + 1)
+                        .trim();
+                }
+
+                // Return the complete response for non-streaming clients and final result for streaming
+                return {
+                    response: processedResponse,
+                    type: "complete",
+                };
+            } else {
+                // Handle non-streaming response
+                const chatCompletion = await groq.chat.completions.create({
+                    messages: [{ role: "user", content: message }],
+                    model: "llama3-8b-8192",
+                    stream: false,
+                });
+
+                let responseText =
+                    chatCompletion.choices[0]?.message?.content ||
+                    "No response generated";
+
+                if (responseText.includes(":")) {
+                    responseText = responseText
+                        .substring(responseText.indexOf(":") + 1)
+                        .trim();
+                }
+
+                return {
+                    response: responseText,
+                    type: "complete",
+                };
             }
-            res.json({
-                response: responseText,
-            });
         } catch (error) {
-            console.error("Error:", error);
-            res.status(500).json({ error: "Internal server error" });
+            logger.error("Error in groqChat function:", error);
+
+            if (error instanceof HttpsError) {
+                throw error;
+            }
+
+            throw new HttpsError(
+                "internal",
+                "An internal error occurred while processing your request"
+            );
         }
     }
 );

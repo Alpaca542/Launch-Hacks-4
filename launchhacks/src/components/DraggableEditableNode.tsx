@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
@@ -50,15 +50,15 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }, [data.summary, data.label, isEditing]);
 
     // Parse text into tokens
-    const tokens = useMemo(() => parseTextIntoTokens(summary), [summary]);
+    const tokens = parseTextIntoTokens(summary);
 
     // Display tokens based on expansion state
-    const displayTokens = useMemo(() => {
+    const displayTokens = (() => {
         if (isExpanded || tokens.length <= 5) {
             return tokens;
         }
         return tokens.slice(0, 5);
-    }, [tokens, isExpanded]);
+    })();
 
     // Check if token is clickable
     const isTokenClickable = () => {
@@ -160,19 +160,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }, [displayTokens]);
 
     const renderContent = useMemo(() => {
-        // Show loading spinner if node is loading
-        if (data.isLoading) {
-            return (
-                <div className="node-loading-content">
-                    <LoadingSpinner
-                        size="small"
-                        color={data.myColor || "#4f86f7"}
-                    />
-                    <span className="loading-text">Loading concept...</span>
-                </div>
-            );
-        }
-
         if (isEditing) {
             return (
                 <input
@@ -189,157 +176,176 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         }
 
         return (
-            <div className="node-layout">
-                <div className="node-header">
-                    <div className="node-title">{data.title || "Node"}</div>
-                    <div className="node-buttons">
-                        {data.previousNode && (
+            <>
+                {data.isLoading && <LoadingSpinner />}
+                <div className="node-layout">
+                    <div className="node-header">
+                        <div className="node-title">{data.title || "Node"}</div>
+                        <div className="node-buttons">
+                            {data.previousNode && (
+                                <button
+                                    className="node-expand-btn previous-node-btn"
+                                    onClick={navigateToPreviousNode}
+                                    title="Go to previous node"
+                                >
+                                    ←
+                                </button>
+                            )}
+                            {tokens.length > 5 && (
+                                <button
+                                    className="node-expand-btn"
+                                    onClick={toggleExpansion}
+                                    title={
+                                        isExpanded ? "Show less" : "Show more"
+                                    }
+                                >
+                                    {isExpanded ? "−" : "+"}
+                                </button>
+                            )}
                             <button
-                                className="node-expand-btn previous-node-btn"
-                                onClick={navigateToPreviousNode}
-                                title="Go to previous node"
+                                className="node-expand-btn explanation-btn-icon"
+                                onClick={handleShowExplanation}
+                                title="Show full text"
                             >
-                                ←
+                                📄
                             </button>
-                        )}
-                        {tokens.length > 5 && (
-                            <button
-                                className="node-expand-btn"
-                                onClick={toggleExpansion}
-                                title={isExpanded ? "Show less" : "Show more"}
-                            >
-                                {isExpanded ? "−" : "+"}
-                            </button>
-                        )}
-                        <button
-                            className="node-expand-btn explanation-btn-icon"
-                            onClick={handleShowExplanation}
-                            title="Show full text"
-                        >
-                            📄
-                        </button>
+                        </div>
                     </div>
-                </div>
-                <div className="node-main-content">
-                    <div className="node-summary-section">
-                        <div
-                            className="node-summary-text"
-                            onClick={handleClick}
-                        >
-                            {displayTokens.map((token, index) => {
-                                const tokenColors = data.tokenColors || {};
-                                const tokenKey = token.myConcept || token.word;
-                                const tokenColor = tokenColors[tokenKey];
-                                const isClickable =
-                                    isTokenClickable() && !tokenColor; // Not clickable if already colored
+                    <div className="node-main-content">
+                        <div className="node-summary-section">
+                            <div
+                                className="node-summary-text"
+                                onClick={handleClick}
+                            >
+                                {displayTokens.map((token, index) => {
+                                    const tokenColors = data.tokenColors || {};
+                                    const tokenKey =
+                                        token.myConcept || token.word;
+                                    const tokenColor = tokenColors[tokenKey];
+                                    const isClickable =
+                                        isTokenClickable() && !tokenColor; // Not clickable if already colored
 
-                                return (
-                                    <span
-                                        key={index}
-                                        className={`word-token ${
-                                            !isClickable ? "disabled" : ""
-                                        } ${
-                                            token.myConcept
-                                                ? "concept-highlight"
-                                                : ""
-                                        }`}
-                                        style={{
-                                            backgroundColor:
-                                                tokenColor || "transparent",
-                                            color: tokenColor
-                                                ? getContrastColor(tokenColor)
-                                                : "inherit",
-                                            border: tokenColor
-                                                ? `1px solid ${darkenColor(
-                                                      tokenColor,
-                                                      20
-                                                  )}`
-                                                : "",
-                                        }}
-                                        onClick={(e) =>
-                                            isClickable
-                                                ? handleTokenClickLocal(
-                                                      token,
-                                                      e
-                                                  )
-                                                : e.stopPropagation()
-                                        }
-                                    >
-                                        {token.word}
-                                        {index < displayTokens.length - 1
-                                            ? " "
-                                            : ""}
+                                    return (
+                                        <span
+                                            key={index}
+                                            className={`word-token ${
+                                                !isClickable ? "disabled" : ""
+                                            } ${
+                                                token.myConcept
+                                                    ? "concept-highlight"
+                                                    : ""
+                                            }`}
+                                            style={{
+                                                backgroundColor:
+                                                    tokenColor || "transparent",
+                                                color: tokenColor
+                                                    ? getContrastColor(
+                                                          tokenColor
+                                                      )
+                                                    : "inherit",
+                                                border: tokenColor
+                                                    ? `1px solid ${darkenColor(
+                                                          tokenColor,
+                                                          20
+                                                      )}`
+                                                    : "",
+                                            }}
+                                            onClick={(e) =>
+                                                isClickable
+                                                    ? handleTokenClickLocal(
+                                                          token,
+                                                          e
+                                                      )
+                                                    : e.stopPropagation()
+                                            }
+                                        >
+                                            {token.word}
+                                            {index < displayTokens.length - 1
+                                                ? " "
+                                                : ""}
+                                        </span>
+                                    );
+                                })}
+                                {tokens.length > 5 && !isExpanded && (
+                                    <span className="token-truncation">
+                                        ...
                                     </span>
-                                );
-                            })}
-                            {tokens.length > 5 && !isExpanded && (
-                                <span className="token-truncation">...</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="node-suggestions-section">
+                        <div className="node-suggestions-header">
+                            Suggestions
+                        </div>
+                        <div className="node-suggestions-list">
+                            {data.suggestions && data.suggestions.length > 0 ? (
+                                data.suggestions.map((suggestion, index) => {
+                                    const tokenColors = data.tokenColors || {};
+                                    const tokenColor = tokenColors[suggestion];
+                                    const isClickable =
+                                        isTokenClickable() && !tokenColor;
+
+                                    return (
+                                        <span
+                                            key={index}
+                                            className={`suggestion-token ${
+                                                !isClickable ? "disabled" : ""
+                                            }`}
+                                            style={{
+                                                backgroundColor:
+                                                    tokenColor || "transparent",
+                                                color: tokenColor
+                                                    ? getContrastColor(
+                                                          tokenColor
+                                                      )
+                                                    : "inherit",
+                                                border: tokenColor
+                                                    ? `1px solid ${darkenColor(
+                                                          tokenColor,
+                                                          20
+                                                      )}`
+                                                    : "",
+                                            }}
+                                            onClick={(e) =>
+                                                isClickable
+                                                    ? handleTokenClickLocal(
+                                                          {
+                                                              word: suggestion,
+                                                              myConcept:
+                                                                  suggestion,
+                                                              suggestionId:
+                                                                  data.label +
+                                                                  suggestion +
+                                                                  index,
+                                                          },
+                                                          e
+                                                      )
+                                                    : e.stopPropagation()
+                                            }
+                                        >
+                                            {suggestion}
+                                            <Handle
+                                                type="source"
+                                                position={Position.Bottom}
+                                                id={
+                                                    data.label +
+                                                    suggestion +
+                                                    index
+                                                }
+                                            />
+                                        </span>
+                                    );
+                                })
+                            ) : (
+                                <div className="node-suggestions-empty">
+                                    No suggestions
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="node-suggestions-section">
-                    <div className="node-suggestions-header">Suggestions</div>
-                    <div className="node-suggestions-list">
-                        {data.suggestions && data.suggestions.length > 0 ? (
-                            data.suggestions.map((suggestion, index) => {
-                                const tokenColors = data.tokenColors || {};
-                                const tokenColor = tokenColors[suggestion];
-                                const isClickable =
-                                    isTokenClickable() && !tokenColor;
-
-                                return (
-                                    <span
-                                        key={index}
-                                        className={`suggestion-token ${
-                                            !isClickable ? "disabled" : ""
-                                        }`}
-                                        style={{
-                                            backgroundColor:
-                                                tokenColor || "transparent",
-                                            color: tokenColor
-                                                ? getContrastColor(tokenColor)
-                                                : "inherit",
-                                            border: tokenColor
-                                                ? `1px solid ${darkenColor(
-                                                      tokenColor,
-                                                      20
-                                                  )}`
-                                                : "",
-                                        }}
-                                        onClick={(e) =>
-                                            isClickable
-                                                ? handleTokenClickLocal(
-                                                      {
-                                                          word: suggestion,
-                                                          myConcept: suggestion,
-                                                          suggestionId:
-                                                              data.label +
-                                                              suggestion +
-                                                              index,
-                                                      },
-                                                      e
-                                                  )
-                                                : e.stopPropagation()
-                                        }
-                                    >
-                                        {suggestion}
-                                        <Handle
-                                            type="source"
-                                            position={Position.Bottom}
-                                            id={data.label + suggestion + index}
-                                        />
-                                    </span>
-                                );
-                            })
-                        ) : (
-                            <div className="node-suggestions-empty">
-                                No suggestions
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+            </>
         );
     }, [
         isEditing,

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="Parser test page for testing JSON to HTML conversion functionality"
+        />
+        <meta name="keywords" content="parser, test, html, json, converter" />
+        <title>Parser Test</title>
+        <link rel="stylesheet" href="../services/parsedContent.css" />
+    </head>
+    <body>
+        <div id="output"></div>
+
+        <script type="module">
+            // Import the parser function (assuming it's exported as ES module)
+            import { parseJsonToHtml } from "./htmlParser.js";
+
+            // Test data
+            const testData = [
+                { large_header: "Whales: Giants of the Ocean" },
+                { small_header: "Introduction to Whales" },
+                {
+                    ul: [
+                        "Whales are marine mammals.",
+                        "They breathe air through lungs.",
+                        "They can be found in all the world's oceans.",
+                    ],
+                },
+                {
+                    quiz: {
+                        question: "Which of the following is a type of whale?",
+                        answers: [
+                            { Shark: "Sharks are fish, not mammals!" },
+                            {
+                                Orca: "Correct! Orcas, or killer whales, are actually dolphins.",
+                            },
+                            { Octopus: "Nope, octopuses are mollusks." },
+                        ],
+                        correctAnswer: 1,
+                    },
+                },
+                {
+                    img: [
+                        "https://example.com/blue_whale.jpg",
+                        "A majestic blue whale swimming in the deep sea",
+                    ],
+                },
+                {
+                    vid: [
+                        "https://example.com/whale_documentary.mp4",
+                        "Watch this short documentary about humpback whales",
+                    ],
+                },
+                {
+                    gif: [
+                        "https://example.com/whale_breach.gif",
+                        "A humpback whale breaching the surface",
+                    ],
+                },
+                {
+                    textblock:
+                        "Whales are **intelligent** and (social creatures)[https://en.wikipedia.org/wiki/Whale].",
+                },
+                {
+                    ol: [
+                        "Blue Whale – the largest animal ever",
+                        "Humpback Whale – known for their songs",
+                        "Sperm Whale – with the largest brain on Earth",
+                    ],
+                },
+                {
+                    codeblock:
+                        "const whale = { species: 'Blue Whale', weight: '150,000 kg' }; console.log(whale);",
+                },
+                {
+                    quote: "The whale is a creature of myth, science, and awe. – Unknown",
+                },
+                {
+                    link: "https://www.nationalgeographic.com/animals/mammals/facts/whales",
+                },
+                {
+                    table: [
+                        ["Species", "Max Length (m)"],
+                        ["Blue Whale", "30"],
+                        ["Humpback Whale", "16"],
+                        ["Sperm Whale", "20"],
+                    ],
+                },
+                {
+                    purehtml:
+                        "<div><strong>Fun Fact:</strong> Whales sleep with one eye open!</div>",
+                },
+                {
+                    sidecontainer:
+                        "Did you know? A whale's song can travel thousands of kilometers underwater.",
+                },
+                {
+                    diagram:
+                        "graph TD; Whale-->Baleen; Whale-->Toothed; Baleen-->Blue; Toothed-->Sperm;",
+                },
+                {
+                    note: "Whales are divided into two groups: baleen whales and toothed whales.",
+                },
+                {
+                    warning:
+                        "Many whale species are endangered due to climate change and hunting.",
+                },
+                {
+                    tip: "If whale watching, keep a respectful distance and follow local regulations.",
+                },
+                {
+                    htmlCanvas:
+                        "const canvas = document.getElementById('whaleCanvas'); const ctx = canvas.getContext('2d'); ctx.fillStyle = 'blue'; ctx.fillRect(10, 10, 150, 75);",
+                },
+            ];
+
+            // Parse and render
+            try {
+                const htmlOutput = parseJsonToHtml(testData);
+                document.getElementById("output").innerHTML = htmlOutput;
+            } catch (error) {
+                console.error("Parser test failed:", error);
+                document.getElementById("output").innerHTML =
+                    "<p>Error: " + error.message + "</p>";
+            }
+        </script>
+    </body>
+</html>

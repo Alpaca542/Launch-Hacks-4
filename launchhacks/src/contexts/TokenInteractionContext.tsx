@@ -117,9 +117,9 @@ export const TokenInteractionProvider: React.FC<
 
         const newNode = createNewNode(
             newPosition,
-            "Loading...", // fallback text
-            "Loading...",
-            "Loading...",
+            token.word, // Use the token word as initial label
+            "Loading...", // full_text placeholder
+            "", // Start with empty summary for progressive streaming
             color,
             sourceNodeType,
             sourceNodeId // Pass the source node ID as previousNode
@@ -141,14 +141,35 @@ export const TokenInteractionProvider: React.FC<
         onEdgesChange([{ type: "add", item: newEdge }]);
 
         // Always ask AI for concept and update node when response arrives
-        askAITwice(token.word, sourceNodeText || "")
+        askAITwice(
+            token.word,
+            sourceNodeText || "",
+            // Progressive summary update callback
+            (chunk: string) => {
+                setNodes((nds) =>
+                    nds.map((node) => {
+                        if (node.id === newNode.id) {
+                            const currentSummary = node.data.summary || "";
+                            return {
+                                ...node,
+                                data: {
+                                    ...node.data,
+                                    label: currentSummary + chunk,
+                                    summary: currentSummary + chunk,
+                                },
+                            };
+                        }
+                        return node;
+                    })
+                );
+            }
+        )
             .then((response) => {
                 const full_text =
                     response.firstResponse?.response || token.word;
                 const summary = response.secondResponse?.response || token.word;
                 const suggestions = response.thirdResponse?.response || {};
-                // Use setNodes with function to update the specific node
-                // This follows ReactFlow's recommended pattern for updating nodes
+                // Final update with all responses when everything is complete
                 setNodes((nds) =>
                     nds.map((node) => {
                         if (node.id === newNode.id) {
