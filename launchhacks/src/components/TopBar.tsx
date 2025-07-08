@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./EditableNode.css";
+import ThemeToggle from "./ThemeToggle";
 
 interface User {
     isAnonymous?: boolean;
@@ -36,45 +36,22 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
 
     return (
         <>
-            <div className={"name"}>
-                <div className="app-container">
-                    <header className="app-header">
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "16px",
-                            }}
-                        >
-                            <h1>Launch Flow</h1>
-                            <span
-                                style={{ color: "#64748b", fontSize: "13px" }}
-                            >
+            <div className="name bg-gray-900 dark:bg-gray-950 border-b border-gray-700 dark:border-gray-800">
+                <div className="app-container max-w-7xl mx-auto px-4">
+                    <header className="app-header flex justify-between items-center py-4">
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-xl font-bold text-white dark:text-white">
+                                Launch Flow
+                            </h1>
+                            <span className="text-slate-500 dark:text-slate-500 text-sm">
                                 •
                             </span>
                             {!edit ? (
                                 <button
                                     onClick={handleClick}
-                                    style={{
-                                        background: "none",
-                                        border: "none",
-                                        color: "#94a3b8",
-                                        fontSize: "14px",
-                                        cursor: "pointer",
-                                        padding: "4px 8px",
-                                        borderRadius: "4px",
-                                        transition: "all 0.15s ease",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background =
-                                            "rgba(255, 255, 255, 0.05)";
-                                        e.currentTarget.style.color = "#f1f5f9";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background =
-                                            "none";
-                                        e.currentTarget.style.color = "#94a3b8";
-                                    }}
+                                    className="bg-transparent border-none text-slate-400 dark:text-slate-400 text-sm cursor-pointer 
+                                             px-2 py-1 rounded transition-all duration-150 ease-in-out
+                                             hover:bg-white/5 dark:hover:bg-white/5 hover:text-slate-100 dark:hover:text-slate-100"
                                 >
                                     {name || "Untitled Board"}
                                 </button>
@@ -90,27 +67,22 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                                         onSetName(editedName);
                                         setEdit(false);
                                     }}
-                                    style={{
-                                        background: "#2a2a2a",
-                                        border: "1px solid rgba(255, 255, 255, 0.2)",
-                                        borderRadius: "4px",
-                                        padding: "4px 8px",
-                                        color: "#f1f5f9",
-                                        fontSize: "14px",
-                                        minWidth: "120px",
-                                    }}
+                                    className="bg-gray-800 dark:bg-gray-800 border border-white/20 dark:border-white/20 
+                                             rounded px-2 py-1 text-slate-100 dark:text-slate-100 text-sm min-w-[120px]
+                                             focus:outline-none focus:border-blue-400 dark:focus:border-blue-400"
                                     autoFocus
                                 />
                             )}
                         </div>
-                        <div className="user-info">
-                            <p>
+                        <div className="user-info flex items-center gap-3">
+                            <ThemeToggle />
+                            <p className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                                 {user?.isAnonymous
                                     ? "Guest"
                                     : user?.email?.split("@")[0] || "User"}
                             </p>
                             {isSaving && (
-                                <span className="save-indicator">
+                                <span className="save-indicator text-blue-600 dark:text-blue-400 text-sm flex items-center gap-1">
                                     💾 Saving
                                 </span>
                             )}

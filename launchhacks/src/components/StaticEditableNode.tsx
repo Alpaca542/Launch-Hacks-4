@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 import { useReactFlow, Handle, Position } from "reactflow";

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
-import "./EditableNode.css";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
+
 import {
     getContrastColor,
     darkenColor,

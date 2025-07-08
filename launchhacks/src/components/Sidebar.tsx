@@ -33,49 +33,6 @@ function SideBar({
     const [showBoardNameModal, setShowBoardNameModal] = useState(false);
     const [hoveredBoardId, setHoveredBoardId] = useState<string | null>(null);
 
-    /* --------------------  Shared inline style helpers -------------------- */
-    const baseItemStyle = {
-        minHeight: 54,
-        padding: "14px 20px",
-        margin: "0 8px",
-        borderRadius: 10,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        transition:
-            "background 0.15s, border 0.15s, box-shadow 0.15s, transform 0.15s",
-    };
-
-    const getItemStyle = (isActive: boolean, isHovered: boolean) => ({
-        ...baseItemStyle,
-        cursor: isLoading ? "not-allowed" : "pointer",
-        border: isActive
-            ? "2px solid #4f8cff"
-            : isHovered
-            ? "1px solid #555"
-            : "1px solid #333",
-        background: isActive ? "#25304a" : isHovered ? "#23293a" : "#181c24",
-        color: isActive ? "#fff" : "#cfd8dc",
-        fontWeight: isActive ? 600 : 400,
-        boxShadow: isActive
-            ? "0 2px 8px 0 #4f8cff22"
-            : isHovered
-            ? "0 1px 4px 0 #00000033"
-            : "none",
-        transform: isHovered ? "translateY(-1px)" : "none",
-    });
-
-    const actionBtnBase = {
-        background: "none",
-        border: "none",
-        color: "#ff4d4d",
-        cursor: "pointer",
-        fontSize: "1.2em",
-        lineHeight: 1,
-        padding: "0 5px",
-        transition: "opacity 0.15s",
-    };
-
     const handleCreateBoard = async (boardName: string) => {
         try {
             setIsCreatingBoard(true);
@@ -105,52 +62,29 @@ function SideBar({
 
     return (
         <>
-            <div className="sidebar split-pane-sidebar">
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        height: "100%",
-                        padding: "16px",
-                    }}
-                >
+            <div className="sidebar split-pane-sidebar bg-gray-900 dark:bg-gray-950 border-r border-gray-700 dark:border-gray-800">
+                <div className="flex flex-col h-full p-4">
                     {/* Header */}
-                    <div
-                        style={{
-                            padding: "8px 0",
-                            textAlign: "right",
-                        }}
-                    >
+                    <div className="py-2 text-right">
                         <button
                             onClick={handleShowModal}
                             disabled={isLoading || isCreatingBoard}
-                            style={{
-                                padding: "6px 12px",
-                                borderRadius: 6,
-                                border: "1px solid #4f8cff",
-                                background: "#1d2330",
-                                color: "#4f8cff",
-                                cursor:
+                            className={`px-3 py-1.5 rounded border transition-all duration-150 
+                                ${
                                     isLoading || isCreatingBoard
-                                        ? "not-allowed"
-                                        : "pointer",
-                            }}
+                                        ? "cursor-not-allowed opacity-50"
+                                        : "cursor-pointer hover:bg-blue-600 hover:border-blue-400"
+                                }
+                                border-blue-500 bg-gray-800 dark:bg-gray-900 
+                                text-blue-400 dark:text-blue-400
+                                dark:border-blue-500`}
                         >
                             {isCreatingBoard ? "Creating..." : "+ New Board"}
                         </button>
                     </div>
 
                     {/* Boards list */}
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                            marginTop: 8,
-                            overflowY: "auto",
-                            flexGrow: 1,
-                        }}
-                    >
+                    <div className="flex flex-col gap-2 mt-2 overflow-y-auto flex-grow">
                         {allBoards.map((board) => {
                             const isActive = currentBoard?.id === board.id;
                             const isHovered = hoveredBoardId === board.id;
@@ -164,7 +98,22 @@ function SideBar({
                                         setHoveredBoardId(board.id)
                                     }
                                     onMouseLeave={() => setHoveredBoardId(null)}
-                                    style={getItemStyle(isActive, isHovered)}
+                                    className={`
+                                        min-h-[54px] px-5 py-3.5 mx-2 rounded-lg flex justify-between items-center
+                                        transition-all duration-150 cursor-pointer
+                                        ${
+                                            isLoading
+                                                ? "cursor-not-allowed"
+                                                : "cursor-pointer"
+                                        }
+                                        ${
+                                            isActive
+                                                ? "border-2 border-blue-500 bg-blue-900/30 dark:bg-blue-900/40 text-white dark:text-white font-semibold shadow-lg shadow-blue-500/20"
+                                                : isHovered
+                                                ? "border border-gray-500 dark:border-gray-600 bg-gray-800 dark:bg-gray-800 text-gray-300 dark:text-gray-300 shadow-sm shadow-black/20 -translate-y-0.5"
+                                                : "border border-gray-700 dark:border-gray-700 bg-gray-850 dark:bg-gray-850 text-gray-400 dark:text-gray-400"
+                                        }
+                                    `}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
@@ -178,34 +127,22 @@ function SideBar({
                                     }}
                                 >
                                     <span
-                                        style={{
-                                            fontWeight: isActive ? 700 : 500,
-                                            fontSize: "1.1em",
-                                            flex: 1,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            letterSpacing: "0.2px",
-                                            lineHeight: 1.3,
-                                        }}
+                                        className={`
+                                        ${
+                                            isActive
+                                                ? "font-bold"
+                                                : "font-medium"
+                                        } 
+                                        text-lg flex-1 whitespace-nowrap overflow-hidden text-ellipsis 
+                                        tracking-wide leading-5
+                                    `}
                                     >
                                         {board.name}
                                     </span>
 
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                        }}
-                                    >
+                                    <div className="flex items-center gap-2">
                                         {board.isOpen && (
-                                            <span
-                                                style={{
-                                                    color: "#4f8cff",
-                                                    fontSize: "1.1em",
-                                                }}
-                                            >
+                                            <span className="text-blue-400 dark:text-blue-400 text-lg">
                                                 ●
                                             </span>
                                         )}
@@ -220,13 +157,16 @@ function SideBar({
                                                     );
                                                 }}
                                                 title="Delete board"
-                                                style={{
-                                                    ...actionBtnBase,
-                                                    opacity: isHovered ? 1 : 0,
-                                                    visibility: isHovered
-                                                        ? "visible"
-                                                        : "hidden",
-                                                }}
+                                                className={`
+                                                    bg-transparent border-none text-red-400 dark:text-red-400 
+                                                    cursor-pointer text-xl leading-none px-1 transition-opacity duration-150
+                                                    ${
+                                                        isHovered
+                                                            ? "opacity-100 visible"
+                                                            : "opacity-0 invisible"
+                                                    }
+                                                    hover:text-red-300 dark:hover:text-red-300
+                                                `}
                                             >
                                                 ×
                                             </button>
@@ -239,29 +179,20 @@ function SideBar({
 
                     {/* Loading indicator */}
                     {isLoading && (
-                        <div
-                            style={{
-                                padding: 16,
-                                textAlign: "center",
-                                color: "#9e9e9e",
-                            }}
-                        >
+                        <div className="p-4 text-center text-gray-500 dark:text-gray-500">
                             Loading boards...
                         </div>
                     )}
 
                     {/* Footer */}
-                    <div style={{ padding: "12px 0" }}>
+                    <div className="py-3">
                         <button
                             onClick={onSignOut}
-                            style={{
-                                padding: "6px 12px",
-                                borderRadius: 6,
-                                border: "1px solid #333",
-                                background: "transparent",
-                                color: "#cfd8dc",
-                                cursor: "pointer",
-                            }}
+                            className="px-3 py-1.5 rounded border border-gray-700 dark:border-gray-600 
+                                     bg-transparent text-gray-300 dark:text-gray-300 cursor-pointer
+                                     hover:bg-gray-700 dark:hover:bg-gray-700
+                                     hover:border-gray-600 dark:hover:border-gray-500
+                                     transition-all duration-150"
                         >
                             Sign Out
                         </button>

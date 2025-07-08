@@ -28,6 +28,7 @@ import { nodeTypes } from "./config/nodeTypes";
 
 // Context
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
     // Explanation sidebar state with localStorage persistence
@@ -125,12 +126,18 @@ function AppContent() {
 
     // Main application interface
     return (
-        <div className="app-layout" style={{ height: "100vh", width: "100vw" }}>
+        <div
+            className="app-layout bg-gray-900 dark:bg-gray-950"
+            style={{ height: "100vh", width: "100vw" }}
+        >
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-            <div style={{ height: "100%", position: "relative" }}>
+            <div
+                className="bg-gray-900 dark:bg-gray-950"
+                style={{ height: "100%", position: "relative" }}
+            >
                 {/* Main layout: Left sidebar + Main content */}
                 <Allotment defaultSizes={[280, 1000]}>
                     {/* Left Pane - Board Sidebar */}
@@ -151,7 +158,7 @@ function AppContent() {
                     {/* Main Content Area */}
                     <Allotment.Pane>
                         <div
-                            className="main-content-pane"
+                            className="main-content-pane bg-gray-800 dark:bg-gray-900"
                             style={{ height: "100%", position: "relative" }}
                         >
                             <TopBar
@@ -162,7 +169,7 @@ function AppContent() {
                             />
 
                             <div
-                                className="reactflow-container"
+                                className="reactflow-container bg-gray-800 dark:bg-gray-900"
                                 style={{ height: "calc(100% - 56px)" }}
                             >
                                 <TokenInteractionProvider
@@ -202,7 +209,7 @@ function AppContent() {
                     <>
                         {/* Floating Panel Container */}
                         <div
-                            className="explanation-panel-floating"
+                            className="explanation-panel-floating bg-gray-900 dark:bg-gray-950 border-l border-gray-700 dark:border-gray-800"
                             style={{
                                 position: "fixed",
                                 top: "0",
@@ -262,7 +269,7 @@ function AppContent() {
                             />
 
                             {/* Panel Content */}
-                            <div className="panel-main-content">
+                            <div className="panel-main-content h-full">
                                 <ExplanationSidebar
                                     explanation={currentExplanation}
                                     onClose={closeExplanation}
@@ -278,7 +285,11 @@ function AppContent() {
 }
 
 function App() {
-    return <AppContent />;
+    return (
+        <ThemeProvider>
+            <AppContent />
+        </ThemeProvider>
+    );
 }
 
 export default App;
