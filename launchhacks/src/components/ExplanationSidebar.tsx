@@ -18,71 +18,69 @@ function ExplanationSidebar({
     if (!isVisible) return null;
 
     return (
-        <div
-            className="explanation-sidebar bg-gray-900 dark:bg-gray-950 border-l border-gray-700 dark:border-gray-800 
-                       h-full flex flex-col shadow-2xl"
-        >
-            <div className="explanation-sidebar-header flex justify-between items-center p-4 border-b border-gray-700 dark:border-gray-800">
-                <h3 className="explanation-title text-lg font-semibold text-white dark:text-white flex items-center gap-2">
-                    📄 Explanation
+        <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <span className="text-blue-500">📄</span>
+                    Explanation
                 </h3>
                 <button
-                    className="explanation-close-btn bg-transparent border-none text-gray-400 dark:text-gray-400 
-                             hover:text-white dark:hover:text-white cursor-pointer text-xl p-1 rounded 
-                             transition-colors duration-150 hover:bg-gray-700 dark:hover:bg-gray-800"
+                    className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 
+                             p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/50 
+                             transition-all duration-200 transform hover:scale-105"
                     onClick={onClose}
                     title="Close explanation"
                     aria-label="Close explanation sidebar"
                 >
-                    ×
+                    <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                    >
+                        <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
                 </button>
             </div>
-            <div className="explanation-content p-4 overflow-y-auto flex-1">
+            <div className="p-6 overflow-y-auto flex-1 scrollbar-thin">
                 {explanation ? (
                     <>
-                        <div className="explanation-header mb-4">
-                            <h3 className="text-xl font-bold text-white dark:text-white leading-tight">
+                        <div className="mb-6">
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
                                 {explanation.title}
                             </h3>
                         </div>
                         <div
-                            className="explanation-text prose prose-invert dark:prose-invert prose-gray max-w-none
-                                      [&>h1]:text-white [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:mt-6
-                                      [&>h2]:text-white [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:mt-5
-                                      [&>h3]:text-white [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mb-2 [&>h3]:mt-4
-                                      [&>h4]:text-gray-200 [&>h4]:text-base [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:mt-3
-                                      [&>h5]:text-gray-300 [&>h5]:text-sm [&>h5]:font-medium [&>h5]:mb-2 [&>h5]:mt-3
-                                      [&>h6]:text-gray-400 [&>h6]:text-sm [&>h6]:font-medium [&>h6]:mb-2 [&>h6]:mt-3
-                                      [&>p]:text-gray-300 [&>p]:leading-relaxed [&>p]:mb-4
-                                      [&>strong]:text-blue-400 [&>strong]:font-semibold
-                                      [&>em]:text-gray-200 [&>em]:italic
-                                      [&>code]:bg-gray-800 [&>code]:text-blue-300 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm
-                                      [&>pre]:bg-gray-800 [&>pre]:border [&>pre]:border-gray-700 [&>pre]:rounded-lg [&>pre]:p-4 [&>pre]:mb-4 [&>pre]:overflow-x-auto
-                                      [&>pre>code]:bg-transparent [&>pre>code]:text-gray-200 [&>pre>code]:p-0 [&>pre>code]:text-sm [&>pre>code]:font-mono
-                                      [&>ul]:text-gray-300 [&>ul]:mb-4 [&>ul]:pl-6
-                                      [&>ol]:text-gray-300 [&>ol]:mb-4 [&>ol]:pl-6
-                                      [&>li]:mb-1 [&>li]:leading-relaxed
-                                      [&>ul>li]:list-disc [&>ol>li]:list-decimal
-                                      [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-gray-800/50 [&>blockquote]:p-4 [&>blockquote]:mb-4 [&>blockquote]:italic
-                                      [&>blockquote>p]:text-gray-200 [&>blockquote>p]:mb-0
-                                      [&>a]:text-blue-400 [&>a]:underline [&>a]:transition-colors [&>a]:duration-150
-                                      [&>a:hover]:text-blue-300"
+                            className="prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-300
+                                      [&>h1]:text-gray-900 [&>h1]:dark:text-gray-100 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:mt-6
+                                      [&>h2]:text-gray-900 [&>h2]:dark:text-gray-100 [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:mt-5
+                                      [&>h3]:text-gray-900 [&>h3]:dark:text-gray-100 [&>h3]:text-lg [&>h3]:font-medium [&>h3]:mb-2 [&>h3]:mt-4
+                                      [&>p]:text-gray-700 [&>p]:dark:text-gray-300 [&>p]:leading-relaxed [&>p]:mb-4
+                                      [&>ul]:text-gray-700 [&>ul]:dark:text-gray-300 [&>ul]:mb-4 [&>ul>li]:mb-2
+                                      [&>ol]:text-gray-700 [&>ol]:dark:text-gray-300 [&>ol]:mb-4 [&>ol>li]:mb-2
+                                      [&>blockquote]:border-l-4 [&>blockquote]:border-blue-400 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-gray-600 [&>blockquote]:dark:text-gray-400 [&>blockquote]:bg-blue-50 [&>blockquote]:dark:bg-blue-900/20 [&>blockquote]:py-2 [&>blockquote]:rounded-r-lg
+                                      [&>code]:bg-gray-100 [&>code]:dark:bg-gray-800 [&>code]:text-blue-600 [&>code]:dark:text-blue-400 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>code]:text-sm [&>code]:font-medium
+                                      [&>pre]:bg-gray-100 [&>pre]:dark:bg-gray-800 [&>pre]:text-gray-800 [&>pre]:dark:text-gray-200 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>pre]:mb-4 [&>pre]:border [&>pre]:border-gray-200 [&>pre]:dark:border-gray-700"
                         >
                             <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                                {explanation.text.replace(/_/g, "")}
+                                {explanation.text}
                             </ReactMarkdown>
                         </div>
                     </>
                 ) : (
-                    <div className="explanation-placeholder text-center py-8">
-                        <p className="text-gray-400 dark:text-gray-400 mb-4">
-                            💡 Click on a node's explanation button (📄) to view
-                            its detailed information here.
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-500 text-sm opacity-70">
-                            This panel provides in-depth explanations and
-                            documentation for your workflow components.
-                        </p>
+                    <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                        <div className="text-center">
+                            <div className="text-6xl mb-6 opacity-60">📄</div>
+                            <p className="text-xl font-medium mb-2">
+                                No explanation available
+                            </p>
+                            <p className="text-sm opacity-75">
+                                Click on a node to see its explanation
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>

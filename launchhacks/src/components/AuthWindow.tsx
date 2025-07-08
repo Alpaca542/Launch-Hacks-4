@@ -121,47 +121,57 @@ function AuthWindow() {
     };
 
     return (
-        <div className="auth-window-container fixed inset-0 bg-gray-900/80 dark:bg-gray-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="auth-window bg-gray-800 dark:bg-gray-900 rounded-lg shadow-2xl p-8 w-full max-w-md border border-gray-700 dark:border-gray-600">
-                <div className="auth-window-header text-center mb-8">
-                    <h2 className="auth-window-title text-2xl font-bold text-white dark:text-white mb-2">
-                        {isSignUp ? "Create Account" : "Welcome Back"}
+        <div className="fixed inset-0 bg-[#1a1a1d]/90 dark:bg-[#1a1a1d]/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div
+                className="bg-[#222226] dark:bg-[#222226] rounded-2xl shadow-[0_24px_48px_rgba(0,0,0,0.7),0_10px_20px_rgba(0,0,0,0.5)] 
+                          p-8 w-full max-w-md border border-white/12 dark:border-white/12"
+            >
+                <div className="text-center mb-8">
+                    <div className="flex items-center justify-center mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">
+                                T
+                            </span>
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-bold text-[#f8faff] dark:text-[#f8faff] mb-2">
+                        {isSignUp ? "Join TinkFlow" : "Welcome Back"}
                     </h2>
-                    <p className="auth-window-subtitle text-gray-400 dark:text-gray-400 text-sm">
+                    <p className="text-[#b0b3b8] dark:text-[#b0b3b8] text-sm">
                         {isSignUp
-                            ? "Join the platform to start building your boards"
-                            : "Sign in to access your boards and continue your work"}
+                            ? "Start your AI-powered learning journey"
+                            : "Continue exploring concepts with AI"}
                     </p>
                 </div>
 
                 <form
                     onSubmit={isSignUp ? handleSignUp : handleSignIn}
-                    className="auth-form space-y-6"
+                    className="space-y-6"
                 >
-                    <div className="auth-input-group">
+                    <div>
                         <input
                             type="email"
                             placeholder="Email address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="auth-input w-full px-4 py-3 bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-700 
-                                     rounded-lg text-white dark:text-white placeholder-gray-400 dark:placeholder-gray-400 
-                                     focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 
+                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-white/15 dark:border-white/15 
+                                     rounded-lg text-[#f8faff] dark:text-[#f8faff] placeholder-[#8b949e] dark:placeholder-[#8b949e] 
+                                     focus:outline-none focus:border-[#5a9cf8] dark:focus:border-[#5a9cf8] focus:shadow-[0_0_0_3px_rgba(90,156,248,0.25)]
                                      transition-all duration-200"
                         />
                     </div>
 
-                    <div className="auth-input-group">
+                    <div>
                         <input
                             type="password"
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="auth-input w-full px-4 py-3 bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-700 
-                                     rounded-lg text-white dark:text-white placeholder-gray-400 dark:placeholder-gray-400 
-                                     focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20 
+                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-white/15 dark:border-white/15 
+                                     rounded-lg text-[#f8faff] dark:text-[#f8faff] placeholder-[#8b949e] dark:placeholder-[#8b949e] 
+                                     focus:outline-none focus:border-[#5a9cf8] dark:focus:border-[#5a9cf8] focus:shadow-[0_0_0_3px_rgba(90,156,248,0.25)]
                                      transition-all duration-200"
                         />
                     </div>
@@ -169,17 +179,16 @@ function AuthWindow() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`auth-submit-btn w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 
+                        className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 
                                    ${
                                        loading
-                                           ? "bg-gray-600 dark:bg-gray-700 cursor-not-allowed"
-                                           : "bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-700"
+                                           ? "bg-[#3a3a3e] dark:bg-[#3a3a3e] cursor-not-allowed opacity-60"
+                                           : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:from-indigo-700 active:to-purple-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                                    }
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-400/20
-                                   ${loading ? "loading" : ""}`}
+                                   focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,102,241,0.4)]`}
                     >
                         {loading ? (
-                            <div className="loading-spinner inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <div className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : isSignUp ? (
                             "Create Account"
                         ) : (
@@ -189,7 +198,7 @@ function AuthWindow() {
 
                     {error && (
                         <div
-                            className="auth-error bg-red-900/20 dark:bg-red-900/30 border border-red-500/30 dark:border-red-500/40 
+                            className="bg-red-900/20 dark:bg-red-900/30 border border-red-500/30 dark:border-red-500/40 
                                        rounded-lg p-3 text-red-400 dark:text-red-400 text-sm"
                         >
                             {error}

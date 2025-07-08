@@ -40,9 +40,16 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                 <div className="app-container max-w-7xl mx-auto px-4">
                     <header className="app-header flex justify-between items-center py-4">
                         <div className="flex items-center gap-4">
-                            <h1 className="text-xl font-bold text-white dark:text-white">
-                                Launch Flow
-                            </h1>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm">
+                                        T
+                                    </span>
+                                </div>
+                                <h1 className="text-xl font-bold text-white dark:text-white">
+                                    TinkFlow
+                                </h1>
+                            </div>
                             <span className="text-slate-500 dark:text-slate-500 text-sm">
                                 •
                             </span>
@@ -82,9 +89,16 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                                     : user?.email?.split("@")[0] || "User"}
                             </p>
                             {isSaving && (
-                                <span className="save-indicator text-blue-600 dark:text-blue-400 text-sm flex items-center gap-1">
-                                    💾 Saving
-                                </span>
+                                <div
+                                    className="text-emerald-500 dark:text-emerald-400 text-sm flex items-center gap-2 
+                                               bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-700/50
+                                               animate-pulse"
+                                >
+                                    <div className="w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-bounce"></div>
+                                    <span className="font-medium">
+                                        Saving...
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </header>

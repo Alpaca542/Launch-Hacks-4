@@ -169,7 +169,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                     onBlur={handleSave}
                     onKeyDown={handleKeyPress}
                     onClick={handleInputClick}
-                    className="node-input nodrag"
+                    className="w-full bg-gray-700/50 border border-white/15 rounded-lg px-4 py-3 text-gray-100 
+                             placeholder-gray-500 focus:outline-none focus:border-blue-500/60 focus:bg-gray-600/50 
+                             focus:ring-2 focus:ring-blue-500/25 transition-all duration-200 nodrag"
+                    placeholder="Enter node content..."
                     autoFocus
                 />
             );
@@ -177,14 +180,28 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
 
         return (
             <>
-                {data.isLoading && <LoadingSpinner />}
-                <div className="node-layout">
-                    <div className="node-header">
-                        <div className="node-title">{data.title || "Node"}</div>
-                        <div className="node-buttons">
+                {data.isLoading && (
+                    <div className="flex items-center justify-center gap-2 py-5">
+                        <LoadingSpinner
+                            size="small"
+                            color={data.myColor || "#6366f1"}
+                        />
+                        <span className="text-slate-400 text-sm">
+                            Loading concept...
+                        </span>
+                    </div>
+                )}
+                <div className="flex flex-col gap-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                        <div className="text-base font-semibold text-gray-100">
+                            {data.title || "Node"}
+                        </div>
+                        <div className="flex gap-2">
                             {data.previousNode && (
                                 <button
-                                    className="node-expand-btn previous-node-btn"
+                                    className="w-8 h-8 bg-gray-500/25 text-gray-400 border border-gray-500/35 rounded-lg 
+                                             hover:bg-gray-500/35 hover:border-gray-500/55 hover:-translate-y-0.5 
+                                             transition-all duration-150 flex items-center justify-center text-sm font-semibold"
                                     onClick={navigateToPreviousNode}
                                     title="Go to previous node"
                                 >
@@ -193,7 +210,9 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                             )}
                             {tokens.length > 5 && (
                                 <button
-                                    className="node-expand-btn"
+                                    className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
+                                             hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
+                                             transition-all duration-150 flex items-center justify-center text-sm font-semibold"
                                     onClick={toggleExpansion}
                                     title={
                                         isExpanded ? "Show less" : "Show more"
@@ -203,7 +222,9 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 </button>
                             )}
                             <button
-                                className="node-expand-btn explanation-btn-icon"
+                                className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
+                                         hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
+                                         transition-all duration-150 flex items-center justify-center text-sm"
                                 onClick={handleShowExplanation}
                                 title="Show full text"
                             >
@@ -211,74 +232,76 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                             </button>
                         </div>
                     </div>
-                    <div className="node-main-content">
-                        <div className="node-summary-section">
-                            <div
-                                className="node-summary-text"
-                                onClick={handleClick}
-                            >
-                                {displayTokens.map((token, index) => {
-                                    const tokenColors = data.tokenColors || {};
-                                    const tokenKey =
-                                        token.myConcept || token.word;
-                                    const tokenColor = tokenColors[tokenKey];
-                                    const isClickable =
-                                        isTokenClickable() && !tokenColor; // Not clickable if already colored
+                    <div className="flex-1">
+                        <div
+                            className="cursor-text leading-relaxed break-words"
+                            onClick={handleClick}
+                        >
+                            {displayTokens.map((token, index) => {
+                                const tokenColors = data.tokenColors || {};
+                                const tokenKey = token.myConcept || token.word;
+                                const tokenColor = tokenColors[tokenKey];
+                                const isClickable =
+                                    isTokenClickable() && !tokenColor;
 
-                                    return (
-                                        <span
-                                            key={index}
-                                            className={`word-token ${
-                                                !isClickable ? "disabled" : ""
-                                            } ${
-                                                token.myConcept
-                                                    ? "concept-highlight"
-                                                    : ""
-                                            }`}
-                                            style={{
-                                                backgroundColor:
-                                                    tokenColor || "transparent",
-                                                color: tokenColor
-                                                    ? getContrastColor(
-                                                          tokenColor
-                                                      )
-                                                    : "inherit",
-                                                border: tokenColor
-                                                    ? `1px solid ${darkenColor(
-                                                          tokenColor,
-                                                          20
-                                                      )}`
-                                                    : "",
-                                            }}
-                                            onClick={(e) =>
-                                                isClickable
-                                                    ? handleTokenClickLocal(
-                                                          token,
-                                                          e
-                                                      )
-                                                    : e.stopPropagation()
-                                            }
-                                        >
-                                            {token.word}
-                                            {index < displayTokens.length - 1
-                                                ? " "
-                                                : ""}
-                                        </span>
-                                    );
-                                })}
-                                {tokens.length > 5 && !isExpanded && (
-                                    <span className="token-truncation">
-                                        ...
+                                return (
+                                    <span
+                                        key={index}
+                                        className={`inline-block px-2 py-1 m-0.5 rounded-lg font-medium transition-all duration-300 ease-out
+                                                  ${
+                                                      isClickable
+                                                          ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+                                                          : "cursor-not-allowed opacity-70"
+                                                  } 
+                                                  ${
+                                                      token.myConcept
+                                                          ? "bg-blue-500/10 border border-blue-500/30 shadow-md"
+                                                          : "border border-transparent hover:border-blue-500/30"
+                                                  }`}
+                                        style={{
+                                            backgroundColor:
+                                                tokenColor || "transparent",
+                                            color: tokenColor
+                                                ? getContrastColor(tokenColor)
+                                                : "inherit",
+                                            border: tokenColor
+                                                ? `1px solid ${darkenColor(
+                                                      tokenColor,
+                                                      20
+                                                  )}`
+                                                : "",
+                                            boxShadow: tokenColor
+                                                ? `0 0 0 1px ${tokenColor}25`
+                                                : "",
+                                        }}
+                                        onClick={(e) =>
+                                            isClickable
+                                                ? handleTokenClickLocal(
+                                                      token,
+                                                      e
+                                                  )
+                                                : e.stopPropagation()
+                                        }
+                                    >
+                                        {token.word}
+                                        {index < displayTokens.length - 1
+                                            ? " "
+                                            : ""}
                                     </span>
-                                )}
-                            </div>
+                                );
+                            })}
+                            {tokens.length > 5 && !isExpanded && (
+                                <span className="text-slate-500 font-normal">
+                                    ...
+                                </span>
+                            )}
                         </div>
                     </div>
-                    <div className="node-suggestions-section">
-                        <div className="node-suggestions-header">
+                    <div className="mt-2">
+                        <div className="text-sm font-semibold text-slate-400 mb-1.5">
                             Suggestions
                         </div>
-                        <div className="node-suggestions-list">
+                        <div className="flex flex-wrap gap-1">
                             {data.suggestions && data.suggestions.length > 0 ? (
                                 data.suggestions.map((suggestion, index) => {
                                     const tokenColors = data.tokenColors || {};
@@ -289,9 +312,13 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     return (
                                         <span
                                             key={index}
-                                            className={`suggestion-token ${
-                                                !isClickable ? "disabled" : ""
-                                            }`}
+                                            className={`inline-block px-2 py-1 m-0.5 rounded-md text-sm 
+                                                      bg-white/5 border border-white/10 transition-all duration-200 
+                                                      ${
+                                                          isClickable
+                                                              ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40"
+                                                              : "cursor-not-allowed opacity-70"
+                                                      }`}
                                             style={{
                                                 backgroundColor:
                                                     tokenColor || "transparent",
@@ -338,7 +365,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     );
                                 })
                             ) : (
-                                <div className="node-suggestions-empty">
+                                <div className="text-slate-500 italic text-sm">
                                     No suggestions
                                 </div>
                             )}
@@ -371,16 +398,24 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
 
     return (
         <div
-            className="draggable-editable-node"
+            className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[450px] 
+                       shadow-[0_10px_30px_rgba(0,0,0,0.5),0_1px_4px_rgba(0,0,0,0.7)] 
+                       transition-all duration-200 ease-in-out cursor-grab select-none overflow-hidden
+                       hover:transform hover:-translate-y-[3px] hover:shadow-[0_12px_35px_rgba(0,0,0,0.6),0_2px_6px_rgba(0,0,0,0.8)] 
+                       hover:border-white/[0.18] hover:bg-[#242427]"
             style={{
                 background: data.myColor,
-                color: data.myColor ? getContrastColor(data.myColor) : "",
+                color: data.myColor
+                    ? getContrastColor(data.myColor)
+                    : "#f0f4f8",
                 border: data.myColor
-                    ? `2px solid ${darkenColor(data.myColor, 20)}`
-                    : "",
+                    ? `1px solid ${darkenColor(data.myColor, 20)}`
+                    : "1px solid rgba(255, 255, 255, 0.12)",
             }}
         >
-            <div className="node-content">{renderContent}</div>
+            <div className="relative pointer-events-auto text-[#f0f4f8] text-[17px] leading-[1.7] font-medium">
+                {renderContent}
+            </div>
             <Handle
                 type="source"
                 position={Position.Bottom}

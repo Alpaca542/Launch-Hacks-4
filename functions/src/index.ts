@@ -4,7 +4,7 @@ import { logger } from "firebase-functions/v2";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-    apiKey: "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",
+    apiKey: "",
 });
 
 export const groqChat = onCall(

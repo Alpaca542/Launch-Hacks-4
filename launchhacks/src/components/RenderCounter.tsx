@@ -21,20 +21,7 @@ export const RenderCounter: React.FC<RenderCounterProps> = ({
     if (!enabled) return null;
 
     return (
-        <div
-            style={{
-                position: "absolute",
-                top: "-20px",
-                right: "0",
-                background: "red",
-                color: "white",
-                padding: "2px 6px",
-                fontSize: "10px",
-                borderRadius: "3px",
-                zIndex: 1000,
-                pointerEvents: "none",
-            }}
-        >
+        <div className="absolute -top-5 right-0 bg-red-500 dark:bg-red-600 text-white px-2 py-1 text-xs rounded-md z-[1000] pointer-events-none font-mono">
             {renderCount.current}
         </div>
     );
