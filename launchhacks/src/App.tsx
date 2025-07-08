@@ -34,6 +34,7 @@ function AppContent() {
     // Explanation sidebar state
     const [isExplanationVisible, setIsExplanationVisible] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [explanationWidth, setExplanationWidth] = useState(450);
 
     const [currentExplanation, setCurrentExplanation] = useState<{
         title: string;
@@ -92,6 +93,11 @@ function AppContent() {
         setIsExplanationVisible(false);
     };
 
+    // Handle explanation panel width change
+    const handleWidthChange = (newWidth: number) => {
+        setExplanationWidth(newWidth);
+    };
+
     // ReactFlow connection handler
     const onConnect = (params: Connection) => {
         // Create the new edge and pass it as an add change
@@ -122,36 +128,41 @@ function AppContent() {
                 onRemove={removeNotification}
             />
 
-            {/* Main layout: Left sidebar + Central board (managed together with Allotment) */}
-            <div className="h-full w-full flex">
-                <Allotment defaultSizes={[300, 1000]} className="h-full w-full">
+            <div style={{ height: "100%", position: "relative" }}>
+                {/* Main layout: Left sidebar + Main content */}
+                <Allotment defaultSizes={[280, 1000]}>
                     {/* Left Pane - Board Sidebar */}
                     <Allotment.Pane minSize={250} maxSize={600}>
-                        <div className="h-full w-full bg-gray-900 dark:bg-gray-950">
-                            <SideBar
-                                allBoards={allBoards}
-                                currentBoard={currentBoard}
-                                onSwitchBoard={switchToBoard}
-                                onCreateBoard={async (boardName?: string) => {
-                                    await createNewBoard(boardName);
-                                }}
-                                onDeleteBoard={deleteBoard}
-                                onSignOut={handleSignOut}
-                                isLoading={isSwitchingBoard}
-                            />
-                        </div>
+                        <SideBar
+                            allBoards={allBoards}
+                            currentBoard={currentBoard}
+                            onSwitchBoard={switchToBoard}
+                            onCreateBoard={async (boardName?: string) => {
+                                await createNewBoard(boardName);
+                            }}
+                            onDeleteBoard={deleteBoard}
+                            onSignOut={handleSignOut}
+                            isLoading={isSwitchingBoard}
+                        />
                     </Allotment.Pane>
 
-                    {/* Central Board Area - Always full width of available space */}
+                    {/* Main Content Area */}
                     <Allotment.Pane>
-                        <div className="bg-white dark:bg-gray-800 h-full flex flex-col w-full">
+                        <div
+                            className="bg-white dark:bg-gray-800 h-full flex flex-col w-full"
+                            style={{ height: "100%", position: "relative" }}
+                        >
                             <TopBar
                                 name={currentBoard?.name || "Loading..."}
                                 onSetName={updateBoardName}
                                 user={user}
                                 isSaving={isSaving}
                             />
-                            <div className="flex-1 bg-gray-50 dark:bg-gray-900 w-full">
+
+                            <div
+                                className="flex-1 bg-gray-50 dark:bg-gray-900 w-full"
+                                style={{ height: "calc(100% - 56px)" }}
+                            >
                                 <TokenInteractionProvider
                                     nodes={nodes}
                                     onNodesChange={onNodesChange}
@@ -185,28 +196,86 @@ function AppContent() {
                         </div>
                     </Allotment.Pane>
                 </Allotment>
-            </div>
 
-            {/* Independent Right-side Explanation Panel - Bubble-like design */}
-            {isExplanationVisible && (
-                <div
-                    className="fixed top-4 right-4 h-[calc(100vh-2rem)] 
-                               bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl
-                               border border-gray-200/50 dark:border-gray-700/50 
-                               rounded-3xl shadow-2xl z-50 
-                               animate-in slide-in-from-right-5 fade-in duration-300
-                               transition-all ease-out"
-                    style={{ width: "28rem" }}
-                >
-                    <div className="h-full rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
-                        <ExplanationSidebar
-                            explanation={currentExplanation}
-                            onClose={closeExplanation}
-                            isVisible={isExplanationVisible}
-                        />
-                    </div>
-                </div>
-            )}
+                {/* Independent Right-side Explanation Panel - Bubble-like design with resizable width */}
+                {isExplanationVisible && (
+                    <>
+                        {/* Floating Panel Container */}
+                        <div
+                            className="fixed top-4 right-4 h-[calc(100vh-2rem)] 
+                                       bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl
+                                       border border-gray-200/50 dark:border-gray-700/50 
+                                       rounded-3xl shadow-2xl z-50 
+                                       animate-in slide-in-from-right-5 fade-in duration-300
+                                       transition-all ease-out"
+                            style={{
+                                width: `${explanationWidth}px`,
+                                maxWidth: "50vw",
+                                minWidth: "420px",
+                                pointerEvents: "auto",
+                            }}
+                        >
+                            {/* Left Resize Handle */}
+                            <div
+                                className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                style={{
+                                    zIndex: 1001,
+                                }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    const startX = e.clientX;
+                                    const startWidth = explanationWidth;
+
+                                    const handleMouseMove = (e: MouseEvent) => {
+                                        const deltaX = startX - e.clientX;
+                                        const newWidth = Math.max(
+                                            420,
+                                            Math.min(
+                                                window.innerWidth * 0.5,
+                                                startWidth + deltaX
+                                            )
+                                        );
+                                        handleWidthChange(newWidth);
+                                    };
+
+                                    const handleMouseUp = () => {
+                                        document.removeEventListener(
+                                            "mousemove",
+                                            handleMouseMove
+                                        );
+                                        document.removeEventListener(
+                                            "mouseup",
+                                            handleMouseUp
+                                        );
+                                        document.body.style.cursor = "default";
+                                        document.body.style.userSelect = "auto";
+                                    };
+
+                                    document.addEventListener(
+                                        "mousemove",
+                                        handleMouseMove
+                                    );
+                                    document.addEventListener(
+                                        "mouseup",
+                                        handleMouseUp
+                                    );
+                                    document.body.style.cursor = "ew-resize";
+                                    document.body.style.userSelect = "none";
+                                }}
+                            />
+
+                            {/* Panel Content */}
+                            <div className="h-full rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                                <ExplanationSidebar
+                                    explanation={currentExplanation}
+                                    onClose={closeExplanation}
+                                    isVisible={isExplanationVisible}
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }
