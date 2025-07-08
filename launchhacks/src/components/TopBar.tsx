@@ -11,16 +11,9 @@ interface TopBarProps {
     onSetName: (name: string) => void;
     user: User | null;
     isSaving: boolean;
-    sidebarCollapsed?: boolean;
 }
 
-function TopBar({
-    name,
-    onSetName,
-    user,
-    isSaving,
-    sidebarCollapsed = false,
-}: TopBarProps) {
+function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
     const [edit, setEdit] = useState(false);
     const [editedName, setEditedName] = useState(name || "");
 
@@ -43,11 +36,7 @@ function TopBar({
 
     return (
         <>
-            <div
-                className={`name ${
-                    sidebarCollapsed ? "sidebar-collapsed" : ""
-                }`}
-            >
+            <div className={"name"}>
                 <div className="app-container">
                     <header className="app-header">
                         <div

@@ -13,8 +13,10 @@ import "allotment/dist/style.css";
 // Components
 import AuthWindow from "./components/AuthWindow";
 import SideBar from "./components/Sidebar";
+import ExplanationSidebar from "./components/ExplanationSidebar";
 import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
+import LandingPage from "./components/LandingPage";
 
 // Hooks
 import { useAuth } from "./hooks/useAuth";
@@ -28,10 +30,14 @@ import { nodeTypes } from "./config/nodeTypes";
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 
 function AppContent() {
-    // Sidebar state
-    const [sidebarMode, setSidebarMode] = useState<"boards" | "explanation">(
-        "boards"
-    );
+    // Explanation sidebar state with localStorage persistence
+    const [isExplanationVisible, setIsExplanationVisible] = useState(false);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    const [explanationWidth, setExplanationWidth] = useState(() => {
+        const saved = localStorage.getItem("explanationSidebarWidth");
+        return saved ? parseInt(saved) : 650; // Default to 650px for better reading
+    });
     const [currentExplanation, setCurrentExplanation] = useState<{
         title: string;
         text: string;
@@ -72,16 +78,27 @@ function AppContent() {
         await signOut();
         clearBoardState();
     };
+    // Handle sign in state
+
+    const handleSignIn = () => {
+        setIsLoggingIn(true);
+    };
 
     // Handle explanation display
     const showExplanation = (title: string, text: string) => {
         setCurrentExplanation({ title, text });
-        setSidebarMode("explanation");
+        setIsExplanationVisible(true);
     };
 
-    // Handle sidebar mode change
-    const handleSidebarModeChange = (mode: "boards" | "explanation") => {
-        setSidebarMode(mode);
+    // Handle explanation sidebar close
+    const closeExplanation = () => {
+        setIsExplanationVisible(false);
+    };
+
+    // Handle width changes and persist to localStorage
+    const handleWidthChange = (newWidth: number) => {
+        setExplanationWidth(newWidth);
+        localStorage.setItem("explanationSidebarWidth", newWidth.toString());
     };
 
     // ReactFlow connection handler
@@ -99,7 +116,11 @@ function AppContent() {
 
     // Render authentication screen if not logged in
     if (!user) {
-        return <AuthWindow />;
+        if (isLoggingIn) {
+            return <AuthWindow />;
+        } else {
+            return <LandingPage onLogin={handleSignIn} />;
+        }
     }
 
     // Main application interface
@@ -109,10 +130,11 @@ function AppContent() {
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-            <div style={{ height: "100%" }}>
-                <Allotment defaultSizes={[420, 1000]}>
-                    {/* Left Pane - Sidebar */}
-                    <Allotment.Pane minSize={240} maxSize={860}>
+            <div style={{ height: "100%", position: "relative" }}>
+                {/* Main layout: Left sidebar + Main content */}
+                <Allotment defaultSizes={[280, 1000]}>
+                    {/* Left Pane - Board Sidebar */}
+                    <Allotment.Pane minSize={200} maxSize={500}>
                         <SideBar
                             allBoards={allBoards}
                             currentBoard={currentBoard}
@@ -123,25 +145,22 @@ function AppContent() {
                             onDeleteBoard={deleteBoard}
                             onSignOut={handleSignOut}
                             isLoading={isSwitchingBoard}
-                            mode={sidebarMode}
-                            onModeChange={handleSidebarModeChange}
-                            explanation={currentExplanation}
                         />
                     </Allotment.Pane>
 
-                    {/* Right Pane - Main Content */}
+                    {/* Main Content Area */}
                     <Allotment.Pane>
                         <div
                             className="main-content-pane"
-                            style={{ height: "100%" }}
+                            style={{ height: "100%", position: "relative" }}
                         >
                             <TopBar
                                 name={currentBoard?.name || "Loading..."}
                                 onSetName={updateBoardName}
                                 user={user}
                                 isSaving={isSaving}
-                                sidebarCollapsed={false} // Always visible in split pane
                             />
+
                             <div
                                 className="reactflow-container"
                                 style={{ height: "calc(100% - 56px)" }}
@@ -177,6 +196,82 @@ function AppContent() {
                         </div>
                     </Allotment.Pane>
                 </Allotment>
+
+                {/* Professional Black Theme Explanation Panel */}
+                {isExplanationVisible && (
+                    <>
+                        {/* Floating Panel Container */}
+                        <div
+                            className="explanation-panel-floating"
+                            style={{
+                                position: "fixed",
+                                top: "0",
+                                right: "0",
+                                width: `${explanationWidth}px`,
+                                maxWidth: "50vw",
+                                minWidth: "420px",
+                                height: "100vh",
+                                zIndex: 1000,
+                                pointerEvents: "auto",
+                            }}
+                        >
+                            {/* Left Resize Handle */}
+                            <div
+                                className="panel-resize-handle"
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    const startX = e.clientX;
+                                    const startWidth = explanationWidth;
+
+                                    const handleMouseMove = (e: MouseEvent) => {
+                                        const deltaX = startX - e.clientX;
+                                        const newWidth = Math.max(
+                                            420,
+                                            Math.min(
+                                                window.innerWidth * 0.5,
+                                                startWidth + deltaX
+                                            )
+                                        );
+                                        handleWidthChange(newWidth);
+                                    };
+
+                                    const handleMouseUp = () => {
+                                        document.removeEventListener(
+                                            "mousemove",
+                                            handleMouseMove
+                                        );
+                                        document.removeEventListener(
+                                            "mouseup",
+                                            handleMouseUp
+                                        );
+                                        document.body.style.cursor = "default";
+                                        document.body.style.userSelect = "auto";
+                                    };
+
+                                    document.addEventListener(
+                                        "mousemove",
+                                        handleMouseMove
+                                    );
+                                    document.addEventListener(
+                                        "mouseup",
+                                        handleMouseUp
+                                    );
+                                    document.body.style.cursor = "ew-resize";
+                                    document.body.style.userSelect = "none";
+                                }}
+                            />
+
+                            {/* Panel Content */}
+                            <div className="panel-main-content">
+                                <ExplanationSidebar
+                                    explanation={currentExplanation}
+                                    onClose={closeExplanation}
+                                    isVisible={isExplanationVisible}
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -13,21 +13,38 @@
         ]
     },
     {
-        "quiz": {
-            "question": "What is the capital of France?",
-            "answers": [
-                {
-                    "Berlin": "It's germany!"
-                },
-                {
-                    "Madrid": "It is spain :("
-                },
-                {
-                    "Paris": "Correct! It's Paris!"
-                }
-            ],
-            "correctAnswer": 2
-        }
+        "quiz": [
+            {
+                "question": "What is the capital of France?",
+                "answers": [
+                    {
+                        "Berlin": "It's germany!"
+                    },
+                    {
+                        "Madrid": "It is spain :("
+                    },
+                    {
+                        "Paris": "Correct! It's Paris!"
+                    }
+                ],
+                "correctAnswer": 2
+            },
+            {
+                "question": "What is the capital of Poland?",
+                "answers": [
+                    {
+                        "Berlin": "It's germany!"
+                    },
+                    {
+                        "Warshava": "Yahoo! It's Poland!"
+                    },
+                    {
+                        "Paris": "No!"
+                    }
+                ],
+                "correctAnswer": 1
+            }
+        ]
     },
     {
         "img": [

@@ -1,7 +1,5 @@
 import { useState } from "react";
 import BoardNameModal from "./BoardNameModal";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
 
 interface BoardData {
     id: string;
@@ -20,15 +18,6 @@ interface SideBarProps {
     onDeleteBoard: (boardId: string) => void;
     onSignOut: () => void;
     isLoading: boolean;
-    isCollapsed?: boolean;
-    onToggleSidebar?: () => void;
-    // Explanation mode props
-    mode?: "boards" | "explanation";
-    onModeChange?: (mode: "boards" | "explanation") => void;
-    explanation?: {
-        title: string;
-        text: string;
-    } | null;
 }
 
 function SideBar({
@@ -39,11 +28,6 @@ function SideBar({
     onDeleteBoard,
     onSignOut,
     isLoading,
-    isCollapsed = false,
-    onToggleSidebar,
-    mode = "boards",
-    onModeChange,
-    explanation,
 }: SideBarProps) {
     const [isCreatingBoard, setIsCreatingBoard] = useState(false);
     const [showBoardNameModal, setShowBoardNameModal] = useState(false);
@@ -122,240 +106,166 @@ function SideBar({
     return (
         <>
             <div className="sidebar split-pane-sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-mode-switch">
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        height: "100%",
+                        padding: "16px",
+                    }}
+                >
+                    {/* Header */}
+                    <div
+                        style={{
+                            padding: "8px 0",
+                            textAlign: "right",
+                        }}
+                    >
                         <button
-                            className={`mode-switch-btn ${
-                                mode === "boards" ? "active" : ""
-                            }`}
-                            onClick={() =>
-                                onModeChange && onModeChange("boards")
-                            }
+                            onClick={handleShowModal}
+                            disabled={isLoading || isCreatingBoard}
+                            style={{
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                border: "1px solid #4f8cff",
+                                background: "#1d2330",
+                                color: "#4f8cff",
+                                cursor:
+                                    isLoading || isCreatingBoard
+                                        ? "not-allowed"
+                                        : "pointer",
+                            }}
                         >
-                            📋 Boards
-                        </button>
-                        <button
-                            className={`mode-switch-btn ${
-                                mode === "explanation" ? "active" : ""
-                            }`}
-                            onClick={() =>
-                                onModeChange && onModeChange("explanation")
-                            }
-                        >
-                            📄 Explanation
+                            {isCreatingBoard ? "Creating..." : "+ New Board"}
                         </button>
                     </div>
-                </div>
-                <div className="sidebar-content">
-                    {mode === "boards" ? (
-                        // Board management mode
-                        <>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    height: "100%",
-                                }}
-                            >
-                                {/* Header */}
+
+                    {/* Boards list */}
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                            marginTop: 8,
+                            overflowY: "auto",
+                            flexGrow: 1,
+                        }}
+                    >
+                        {allBoards.map((board) => {
+                            const isActive = currentBoard?.id === board.id;
+                            const isHovered = hoveredBoardId === board.id;
+                            return (
                                 <div
-                                    style={{
-                                        padding: "8px 0",
-                                        textAlign: "right",
+                                    key={board.id}
+                                    onClick={() =>
+                                        !isLoading && onSwitchBoard(board.id)
+                                    }
+                                    onMouseEnter={() =>
+                                        setHoveredBoardId(board.id)
+                                    }
+                                    onMouseLeave={() => setHoveredBoardId(null)}
+                                    style={getItemStyle(isActive, isHovered)}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (
+                                            (e.key === "Enter" ||
+                                                e.key === " ") &&
+                                            !isLoading
+                                        ) {
+                                            onSwitchBoard(board.id);
+                                        }
                                     }}
                                 >
-                                    <button
-                                        onClick={handleShowModal}
-                                        disabled={isLoading || isCreatingBoard}
+                                    <span
                                         style={{
-                                            padding: "6px 12px",
-                                            borderRadius: 6,
-                                            border: "1px solid #4f8cff",
-                                            background: "#1d2330",
-                                            color: "#4f8cff",
-                                            cursor:
-                                                isLoading || isCreatingBoard
-                                                    ? "not-allowed"
-                                                    : "pointer",
+                                            fontWeight: isActive ? 700 : 500,
+                                            fontSize: "1.1em",
+                                            flex: 1,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            letterSpacing: "0.2px",
+                                            lineHeight: 1.3,
                                         }}
                                     >
-                                        {isCreatingBoard
-                                            ? "Creating..."
-                                            : "+ New Board"}
-                                    </button>
-                                </div>
+                                        {board.name}
+                                    </span>
 
-                                {/* Boards list */}
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 8,
-                                        marginTop: 8,
-                                        overflowY: "auto",
-                                        flexGrow: 1,
-                                    }}
-                                >
-                                    {allBoards.map((board) => {
-                                        const isActive =
-                                            currentBoard?.id === board.id;
-                                        const isHovered =
-                                            hoveredBoardId === board.id;
-                                        return (
-                                            <div
-                                                key={board.id}
-                                                onClick={() =>
-                                                    !isLoading &&
-                                                    onSwitchBoard(board.id)
-                                                }
-                                                onMouseEnter={() =>
-                                                    setHoveredBoardId(board.id)
-                                                }
-                                                onMouseLeave={() =>
-                                                    setHoveredBoardId(null)
-                                                }
-                                                style={getItemStyle(
-                                                    isActive,
-                                                    isHovered
-                                                )}
-                                                role="button"
-                                                tabIndex={0}
-                                                onKeyDown={(e) => {
-                                                    if (
-                                                        (e.key === "Enter" ||
-                                                            e.key === " ") &&
-                                                        !isLoading
-                                                    ) {
-                                                        onSwitchBoard(board.id);
-                                                    }
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        fontWeight: isActive
-                                                            ? 700
-                                                            : 500,
-                                                        fontSize: "1.1em",
-                                                        flex: 1,
-                                                        whiteSpace: "nowrap",
-                                                        overflow: "hidden",
-                                                        textOverflow:
-                                                            "ellipsis",
-                                                        letterSpacing: "0.2px",
-                                                        lineHeight: 1.3,
-                                                    }}
-                                                >
-                                                    {board.name}
-                                                </span>
-
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: 8,
-                                                    }}
-                                                >
-                                                    {board.isOpen && (
-                                                        <span
-                                                            style={{
-                                                                color: "#4f8cff",
-                                                                fontSize:
-                                                                    "1.1em",
-                                                            }}
-                                                        >
-                                                            ●
-                                                        </span>
-                                                    )}
-
-                                                    {allBoards.length > 1 && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteBoard(
-                                                                    e,
-                                                                    board.id
-                                                                );
-                                                            }}
-                                                            title="Delete board"
-                                                            style={{
-                                                                ...actionBtnBase,
-                                                                opacity:
-                                                                    isHovered
-                                                                        ? 1
-                                                                        : 0,
-                                                                visibility:
-                                                                    isHovered
-                                                                        ? "visible"
-                                                                        : "hidden",
-                                                            }}
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Loading indicator */}
-                                {isLoading && (
                                     <div
                                         style={{
-                                            padding: 16,
-                                            textAlign: "center",
-                                            color: "#9e9e9e",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
                                         }}
                                     >
-                                        Loading boards...
-                                    </div>
-                                )}
+                                        {board.isOpen && (
+                                            <span
+                                                style={{
+                                                    color: "#4f8cff",
+                                                    fontSize: "1.1em",
+                                                }}
+                                            >
+                                                ●
+                                            </span>
+                                        )}
 
-                                {/* Footer */}
-                                <div style={{ padding: "12px 0" }}>
-                                    <button
-                                        onClick={onSignOut}
-                                        style={{
-                                            padding: "6px 12px",
-                                            borderRadius: 6,
-                                            border: "1px solid #333",
-                                            background: "transparent",
-                                            color: "#cfd8dc",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Sign Out
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        // Explanation mode
-                        <div className="explanation-content">
-                            {explanation ? (
-                                <>
-                                    <div className="explanation-header">
-                                        <h3>{explanation.title}</h3>
+                                        {allBoards.length > 1 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteBoard(
+                                                        e,
+                                                        board.id
+                                                    );
+                                                }}
+                                                title="Delete board"
+                                                style={{
+                                                    ...actionBtnBase,
+                                                    opacity: isHovered ? 1 : 0,
+                                                    visibility: isHovered
+                                                        ? "visible"
+                                                        : "hidden",
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </div>
-                                    <div className="explanation-text">
-                                        <ReactMarkdown
-                                            rehypePlugins={[rehypeRaw]}
-                                        >
-                                            {explanation.text.replace(/_/g, "")}
-                                        </ReactMarkdown>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="explanation-placeholder">
-                                    <p>
-                                        Click on a node's explanation button
-                                        (📄) to view its detailed information
-                                        here.
-                                    </p>
                                 </div>
-                            )}
+                            );
+                        })}
+                    </div>
+
+                    {/* Loading indicator */}
+                    {isLoading && (
+                        <div
+                            style={{
+                                padding: 16,
+                                textAlign: "center",
+                                color: "#9e9e9e",
+                            }}
+                        >
+                            Loading boards...
                         </div>
                     )}
+
+                    {/* Footer */}
+                    <div style={{ padding: "12px 0" }}>
+                        <button
+                            onClick={onSignOut}
+                            style={{
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                border: "1px solid #333",
+                                background: "transparent",
+                                color: "#cfd8dc",
+                                cursor: "pointer",
+                            }}
+                        >
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
             </div>
             <BoardNameModal
