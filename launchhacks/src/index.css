@@ -1,27 +1,25 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Performance optimized CSS with consistent fonts */
-* {
+s */ * {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Allotment resizer styling - necessary for third-party component */
-.allotment-resizer {
-    background-color: #374151;
-    border: none;
-    width: 2px;
-    transition: all 0.2s ease;
+/* 
+#«r6» {
+    background: transparent;
+    position: fixed;
+    right: 6px;
+    top: 70px;
+    border-radius: 20px;
 }
 
-.allotment-resizer:hover {
-    background-color: #4f46e5;
-    width: 4px;
-}
-
-.allotment-resizer:active {
-    background-color: #6366f1;
-    width: 4px;
-}
+#«r5» {
+    background: transparent;
+    position: fixed;
+    right: 6px;
+    top: 70px;
+    border-radius: 20px;
+} */

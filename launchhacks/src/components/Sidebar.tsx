@@ -62,7 +62,7 @@ function SideBar({
 
     return (
         <>
-            <div className="fixed left-0 top-0 w-[440px] h-screen bg-[#222226] dark:bg-[#222226] border-r border-white/10 dark:border-white/10 flex flex-col z-[1001] transition-transform duration-[0.35s] ease-[cubic-bezier(0.4,0,0.2,1)]">
+            <div className="left-0 top-0 w-[100%] h-screen bg-[#222226] dark:bg-[#222226] border-r border-white/10 dark:border-white/10 flex flex-col z-[1001] transition-transform duration-[0.35s] ease-[cubic-bezier(0.4,0,0.2,1)]">
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="p-[22px] border-b border-white/[0.08] dark:border-white/[0.08] bg-white/[0.03] dark:bg-white/[0.03]">

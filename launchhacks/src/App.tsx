@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -7,8 +7,8 @@ import ReactFlow, {
     BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Allotment } from "allotment";
-import "allotment/dist/style.css";
+import { Resizable } from "re-resizable";
+import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -17,7 +17,7 @@ import ExplanationSidebar from "./components/ExplanationSidebar";
 import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
-
+import "./index.css"; // Ensure this is imported for styles
 // Hooks
 import { useAuth } from "./hooks/useAuth";
 import { useBoardManagement } from "./hooks/useBoardManagement";
@@ -34,12 +34,21 @@ function AppContent() {
     // Explanation sidebar state
     const [isExplanationVisible, setIsExplanationVisible] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [explanationWidth, setExplanationWidth] = useState(450);
 
     const [currentExplanation, setCurrentExplanation] = useState<{
         title: string;
         text: string;
     } | null>(null);
+
+    // Optimized explanation handlers
+    const showExplanation = useCallback((title: string, text: string) => {
+        setCurrentExplanation({ title, text });
+        setIsExplanationVisible(true);
+    }, []);
+
+    const closeExplanation = useCallback(() => {
+        setIsExplanationVisible(false);
+    }, []);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -82,34 +91,48 @@ function AppContent() {
         setIsLoggingIn(true);
     };
 
-    // Handle explanation display
-    const showExplanation = (title: string, text: string) => {
-        setCurrentExplanation({ title, text });
-        setIsExplanationVisible(true);
-    };
-
-    // Handle explanation sidebar close
-    const closeExplanation = () => {
-        setIsExplanationVisible(false);
-    };
-
-    // Handle explanation panel width change
-    const handleWidthChange = (newWidth: number) => {
-        setExplanationWidth(newWidth);
-    };
-
     // ReactFlow connection handler
-    const onConnect = (params: Connection) => {
-        // Create the new edge and pass it as an add change
-        const newEdge = {
-            id: `e${params.source}-${params.target}`,
-            source: params.source!,
-            target: params.target!,
-            sourceHandle: params.sourceHandle,
-            targetHandle: params.targetHandle,
-        };
-        onEdgesChange([{ type: "add", item: newEdge }]);
-    };
+    const onConnect = useCallback(
+        (params: Connection) => {
+            // Create the new edge and pass it as an add change
+            const newEdge = {
+                id: `e${params.source}-${params.target}`,
+                source: params.source!,
+                target: params.target!,
+                sourceHandle: params.sourceHandle,
+                targetHandle: params.targetHandle,
+            };
+            onEdgesChange([{ type: "add", item: newEdge }]);
+        },
+        [onEdgesChange]
+    );
+
+    const ReactFlowComponent = useMemo(
+        () => (
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                connectionMode={ConnectionMode.Loose}
+                fitView
+                className="bg-gray-50 dark:bg-gray-900 w-full h-full"
+            >
+                <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg" />
+                <Background
+                    variant={BackgroundVariant.Cross}
+                    gap={30}
+                    size={10}
+                    lineWidth={0.5}
+                    color="#94a3b8"
+                    className="bg-gray-50 dark:bg-gray-900"
+                />
+            </ReactFlow>
+        ),
+        [nodes, edges, onNodesChange, onEdgesChange, onConnect]
+    );
 
     // Render authentication screen if not logged in
     if (!user) {
@@ -122,34 +145,39 @@ function AppContent() {
 
     // Main application interface
     return (
-        <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 relative">
+        <div
+            className="bg-gray-50 dark:bg-gray-900 relative"
+            style={{ height: "100vh", width: "100vw", overflow: "hidden" }}
+        >
             <NotificationContainer
                 notifications={notifications}
                 onRemove={removeNotification}
             />
 
             <div style={{ height: "100%", position: "relative" }}>
-                {/* Main layout: Left sidebar + Main content */}
-                <Allotment defaultSizes={[280, 1000]}>
-                    {/* Left Pane - Board Sidebar */}
-                    <Allotment.Pane minSize={250} maxSize={600}>
-                        <SideBar
-                            allBoards={allBoards}
-                            currentBoard={currentBoard}
-                            onSwitchBoard={switchToBoard}
-                            onCreateBoard={async (boardName?: string) => {
-                                await createNewBoard(boardName);
-                            }}
-                            onDeleteBoard={deleteBoard}
-                            onSignOut={handleSignOut}
-                            isLoading={isSwitchingBoard}
-                        />
-                    </Allotment.Pane>
-
-                    {/* Main Content Area */}
-                    <Allotment.Pane>
+                {/* Simple flex layout */}
+                <PanelGroup direction="horizontal">
+                    {/* Left Panel - Sidebar */}
+                    <Panel defaultSize={15} minSize={10} maxSize={30}>
+                        <div className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+                            <SideBar
+                                allBoards={allBoards}
+                                currentBoard={currentBoard}
+                                onSwitchBoard={switchToBoard}
+                                onCreateBoard={async (boardName?: string) => {
+                                    await createNewBoard(boardName);
+                                }}
+                                onDeleteBoard={deleteBoard}
+                                onSignOut={handleSignOut}
+                                isLoading={isSwitchingBoard}
+                            />
+                        </div>
+                    </Panel>
+                    <PanelResizeHandle />
+                    {/* Main Content Panel */}
+                    <Panel>
                         <div
-                            className="bg-white dark:bg-gray-800 h-full flex flex-col w-full"
+                            className="bg-white dark:bg-gray-800"
                             style={{ height: "100%", position: "relative" }}
                         >
                             <TopBar
@@ -160,8 +188,11 @@ function AppContent() {
                             />
 
                             <div
-                                className="flex-1 bg-gray-50 dark:bg-gray-900 w-full"
-                                style={{ height: "calc(100% - 56px)" }}
+                                className="bg-gray-50 dark:bg-gray-900"
+                                style={{
+                                    height: "calc(100% - 60px)",
+                                    width: "100%",
+                                }}
                             >
                                 <TokenInteractionProvider
                                     nodes={nodes}
@@ -170,102 +201,55 @@ function AppContent() {
                                     setNodes={setNodes}
                                     showExplanation={showExplanation}
                                 >
-                                    <ReactFlow
-                                        nodes={nodes}
-                                        edges={edges}
-                                        onNodesChange={onNodesChange}
-                                        onEdgesChange={onEdgesChange}
-                                        onConnect={onConnect}
-                                        nodeTypes={nodeTypes}
-                                        connectionMode={ConnectionMode.Loose}
-                                        fitView
-                                        className="bg-gray-50 dark:bg-gray-900 w-full h-full"
-                                    >
-                                        <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg" />
-                                        <Background
-                                            variant={BackgroundVariant.Cross}
-                                            gap={30}
-                                            size={10}
-                                            lineWidth={0.5}
-                                            color="#94a3b8"
-                                            className="bg-gray-50 dark:bg-gray-900"
-                                        />
-                                    </ReactFlow>
+                                    {ReactFlowComponent}
                                 </TokenInteractionProvider>
                             </div>
                         </div>
-                    </Allotment.Pane>
-                </Allotment>
-
-                {/* Independent Right-side Explanation Panel - Bubble-like design with resizable width */}
+                    </Panel>
+                </PanelGroup>
+                {/* Right Panel - Explanation Sidebar (conditionally rendered) */}
                 {isExplanationVisible && (
-                    <>
-                        {/* Floating Panel Container */}
+                    <Resizable
+                        defaultSize={{
+                            width: 380,
+                        }}
+                        style={{
+                            background: "transparent",
+                            position: "fixed",
+                            right: "12px",
+                            top: "80px",
+                            borderRadius: "16px",
+                            zIndex: 1000,
+                        }}
+                        enable={{
+                            right: false,
+                            top: false,
+                            bottom: false,
+                            left: true,
+                        }}
+                    >
                         <div
-                            className="fixed top-4 right-4 h-[calc(100vh-2rem)] 
-                                       bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl
-                                       border border-gray-200/50 dark:border-gray-700/50 
-                                       rounded-3xl shadow-2xl z-50 
-                                       animate-in slide-in-from-right-5 fade-in duration-300
-                                       transition-all ease-out"
+                            className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
+                                       border border-gray-200/50 dark:border-gray-700/50
+                                       shadow-2xl shadow-black/10 dark:shadow-black/30
+                                       animate-in slide-in-from-right-3 fade-in duration-500
+                                       transition-all ease-out overflow-hidden
+                                       ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
+                                       before:absolute before:inset-0 before:bg-gradient-to-br 
+                                       before:from-white/40 before:to-transparent before:pointer-events-none
+                                       dark:before:from-gray-800/40 dark:before:to-transparent
+                                       relative"
                             style={{
-                                width: `${explanationWidth}px`,
-                                maxWidth: "50vw",
-                                minWidth: "420px",
-                                pointerEvents: "auto",
+                                maxHeight: "calc(100vh - 100px)",
+                                height: "auto",
+                                minHeight: "200px",
                             }}
                         >
-                            {/* Left Resize Handle */}
-                            <div
-                                className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                                style={{
-                                    zIndex: 1001,
-                                }}
-                                onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    const startX = e.clientX;
-                                    const startWidth = explanationWidth;
+                            {/* Subtle top accent */}
+                            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
 
-                                    const handleMouseMove = (e: MouseEvent) => {
-                                        const deltaX = startX - e.clientX;
-                                        const newWidth = Math.max(
-                                            420,
-                                            Math.min(
-                                                window.innerWidth * 0.5,
-                                                startWidth + deltaX
-                                            )
-                                        );
-                                        handleWidthChange(newWidth);
-                                    };
-
-                                    const handleMouseUp = () => {
-                                        document.removeEventListener(
-                                            "mousemove",
-                                            handleMouseMove
-                                        );
-                                        document.removeEventListener(
-                                            "mouseup",
-                                            handleMouseUp
-                                        );
-                                        document.body.style.cursor = "default";
-                                        document.body.style.userSelect = "auto";
-                                    };
-
-                                    document.addEventListener(
-                                        "mousemove",
-                                        handleMouseMove
-                                    );
-                                    document.addEventListener(
-                                        "mouseup",
-                                        handleMouseUp
-                                    );
-                                    document.body.style.cursor = "ew-resize";
-                                    document.body.style.userSelect = "none";
-                                }}
-                            />
-
-                            {/* Panel Content */}
-                            <div className="h-full rounded-3xl overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                            {/* Content container with improved styling */}
+                            <div className="relative z-10 overflow-auto h-full">
                                 <ExplanationSidebar
                                     explanation={currentExplanation}
                                     onClose={closeExplanation}
@@ -273,7 +257,7 @@ function AppContent() {
                                 />
                             </div>
                         </div>
-                    </>
+                    </Resizable>
                 )}
             </div>
         </div>

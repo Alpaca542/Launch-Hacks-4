@@ -132,15 +132,15 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             return (
                 <span
                     key={index}
-                    className={`inline-block px-2 py-1 m-0.5 rounded-lg font-medium transition-all duration-300 ease-out
+                    className={`inline-block px-2 py-1 m-0.5 rounded-lg font-medium transition-all duration-200 ease-out
                               ${
                                   isClickable
-                                      ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+                                      ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40"
                                       : "cursor-not-allowed opacity-70"
                               } 
                               ${
                                   token.myConcept
-                                      ? "bg-blue-500/10 border border-blue-500/30 shadow-md"
+                                      ? "bg-blue-500/10 border border-blue-500/30"
                                       : "border border-transparent hover:border-blue-500/30"
                               }`}
                     style={{
@@ -149,9 +149,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                             ? data.myColor || "#ffffff"
                             : "inherit",
                         border: tokenColor ? `1px solid ${tokenColor}` : "",
-                        boxShadow: tokenColor
-                            ? `0 0 0 1px ${tokenColor}25`
-                            : "",
                     }}
                     onClick={(e) =>
                         isClickable
@@ -299,12 +296,12 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                                     <span
                                         key={index}
                                         className={`inline-block px-2 py-1 m-0.5 rounded-md text-sm 
-                                                  bg-white/5 border border-white/10 transition-all duration-200 
-                                                  ${
-                                                      isClickable
-                                                          ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40"
-                                                          : "cursor-not-allowed opacity-70"
-                                                  }`}
+                                                      bg-white/5 border border-white/10 transition-all duration-200 
+                                                      ${
+                                                          isClickable
+                                                              ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40"
+                                                              : "cursor-not-allowed opacity-70"
+                                                      }`}
                                         style={{
                                             backgroundColor:
                                                 tokenColor || "transparent",
@@ -368,11 +365,9 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     return (
         <div
             className="bg-[#1a1a1d] border border-white/[0.1] rounded-[20px] p-7 min-w-[320px] max-w-[500px] 
-                       shadow-[0_14px_36px_rgba(0,0,0,0.6),0_2px_6px_rgba(0,0,0,0.8)] 
                        transition-all duration-150 ease-in-out cursor-pointer select-none overflow-hidden
                        opacity-[0.98] border-b-[3px] border-b-white/[0.06]
-                       hover:opacity-100 hover:bg-[#28282c] hover:border-white/[0.2] 
-                       hover:transform hover:scale-[1.03] hover:shadow-[0_14px_36px_rgba(0,0,0,0.6),0_4px_8px_rgba(0,0,0,0.8)]"
+                       hover:opacity-100 hover:bg-[#28282c] hover:border-white/[0.2]"
             style={{
                 backgroundColor: data.myColor,
                 color: data.myColor
