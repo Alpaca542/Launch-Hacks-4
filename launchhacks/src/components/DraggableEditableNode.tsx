@@ -250,7 +250,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                         className={`inline-block px-2 py-1 m-0.5 rounded-lg font-medium transition-all duration-300 ease-out
                                                   ${
                                                       isClickable
-                                                          ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+                                                          ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
                                                           : "cursor-not-allowed opacity-70"
                                                   } 
                                                   ${
@@ -399,9 +399,8 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     return (
         <div
             className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[450px] 
-                       shadow-[0_10px_30px_rgba(0,0,0,0.5),0_1px_4px_rgba(0,0,0,0.7)] 
                        transition-all duration-200 ease-in-out cursor-grab select-none overflow-hidden
-                       hover:transform hover:-translate-y-[3px] hover:shadow-[0_12px_35px_rgba(0,0,0,0.6),0_2px_6px_rgba(0,0,0,0.8)] 
+                       hover:transform hover:-translate-y-[3px]
                        hover:border-white/[0.18] hover:bg-[#242427]"
             style={{
                 background: data.myColor,

@@ -120,7 +120,7 @@ function AppContent() {
                 fitView
                 className="bg-gray-50 dark:bg-gray-900 w-full h-full"
             >
-                <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg" />
+                <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg" />
                 <Background
                     variant={BackgroundVariant.Cross}
                     gap={30}
@@ -173,7 +173,7 @@ function AppContent() {
                             />
                         </div>
                     </Panel>
-                    <PanelResizeHandle />
+                    <PanelResizeHandle className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200" />
                     {/* Main Content Panel */}
                     <Panel>
                         <div
@@ -231,7 +231,6 @@ function AppContent() {
                         <div
                             className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
                                        border border-gray-200/50 dark:border-gray-700/50
-                                       shadow-2xl shadow-black/10 dark:shadow-black/30
                                        animate-in slide-in-from-right-3 fade-in duration-500
                                        transition-all ease-out overflow-hidden
                                        ring-1 ring-white/20 dark:ring-white/10 rounded-2xl

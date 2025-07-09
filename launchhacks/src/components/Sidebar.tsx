@@ -62,23 +62,22 @@ function SideBar({
 
     return (
         <>
-            <div className="left-0 top-0 w-[100%] h-screen bg-[#222226] dark:bg-[#222226] border-r border-white/10 dark:border-white/10 flex flex-col z-[1001] transition-transform duration-[0.35s] ease-[cubic-bezier(0.4,0,0.2,1)]">
+            <div className="left-0 top-0 w-[100%] h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="p-[22px] border-b border-white/[0.08] dark:border-white/[0.08] bg-white/[0.03] dark:bg-white/[0.03]">
-                        <h2 className="m-0 mb-[18px] text-[18px] font-semibold text-[#f8faff] dark:text-[#f8faff] tracking-[-0.012em]">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+                        <h2 className="m-0 mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
                             TinkFlow Boards
                         </h2>
                         <button
                             onClick={handleShowModal}
                             disabled={isLoading || isCreatingBoard}
-                            className={`w-full bg-[#2f2f33] dark:bg-[#2f2f33] text-[#f8faff] dark:text-[#f8faff] border border-white/12 dark:border-white/12 
-                                      px-4 py-[10px] rounded-md cursor-pointer text-[13px] font-semibold transition-all duration-200 
-                                      tracking-[0.015em] uppercase
+                            className={`w-full bg-blue-600 dark:bg-blue-600 text-white dark:text-white border border-blue-600 dark:border-blue-600 
+                                      px-3 py-2 rounded-lg cursor-pointer text-xs font-medium transition-all duration-200 
                                       ${
                                           isLoading || isCreatingBoard
                                               ? "cursor-not-allowed opacity-60"
-                                              : "hover:bg-[#3a3a3e] dark:hover:bg-[#3a3a3e] hover:border-white/18 dark:hover:border-white/18 hover:-translate-y-0.5"
+                                              : "hover:bg-blue-700 dark:hover:bg-blue-700 hover:border-blue-700 dark:hover:border-blue-700 hover:-translate-y-0.5 hover:shadow-md"
                                       }`}
                         >
                             {isCreatingBoard ? "Creating..." : "+ New Board"}
@@ -86,7 +85,7 @@ function SideBar({
                     </div>
 
                     {/* Boards list */}
-                    <div className="flex-1 overflow-y-auto p-[14px] scrollbar-thin scrollbar-track-[#2a2a2e] scrollbar-thumb-[#4a4a4e] hover:scrollbar-thumb-[#5a5a5e]">
+                    <div className="flex-1 overflow-y-auto p-2">
                         {allBoards.map((board) => {
                             const isActive = currentBoard?.id === board.id;
                             const isHovered = hoveredBoardId === board.id;
@@ -101,8 +100,8 @@ function SideBar({
                                     }
                                     onMouseLeave={() => setHoveredBoardId(null)}
                                     className={`
-                                        min-h-[54px] px-[18px] py-[14px] mb-[8px] rounded-[12px] flex justify-between items-center
-                                        transition-all duration-200 cursor-pointer border font-medium text-[14px] leading-[1.4]
+                                        min-h-[44px] px-3 py-2.5 mb-1 rounded-lg flex justify-between items-center
+                                        transition-all duration-200 cursor-pointer border font-medium text-sm leading-tight
                                         ${
                                             isLoading
                                                 ? "cursor-not-allowed opacity-60"
@@ -110,10 +109,10 @@ function SideBar({
                                         }
                                         ${
                                             isActive
-                                                ? "border-[#4a90e2] bg-[#2a3850] dark:bg-[#2a3850] text-[#f8faff] dark:text-[#f8faff] font-semibold shadow-[0_2px_8px_rgba(74,144,226,0.3)] transform translate-y-[-1px]"
+                                                ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100 font-semibold shadow-sm"
                                                 : isHovered
-                                                ? "border-white/20 dark:border-white/20 bg-[#2a2a2e] dark:bg-[#2a2a2e] text-[#e8eaed] dark:text-[#e8eaed] shadow-[0_2px_8px_rgba(0,0,0,0.3)] transform translate-y-[-1px]"
-                                                : "border-white/10 dark:border-white/10 bg-[#1e1e22] dark:bg-[#1e1e22] text-[#b0b3b8] dark:text-[#b0b3b8]"
+                                                ? "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 shadow-sm"
+                                                : "border-transparent bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30"
                                         }
                                     `}
                                     role="button"
@@ -132,19 +131,19 @@ function SideBar({
                                         className={`
                                         ${
                                             isActive
-                                                ? "font-bold"
+                                                ? "font-semibold"
                                                 : "font-medium"
                                         } 
-                                        text-lg flex-1 whitespace-nowrap overflow-hidden text-ellipsis 
-                                        tracking-wide leading-5
+                                        flex-1 whitespace-nowrap overflow-hidden text-ellipsis 
+                                        text-sm leading-tight
                                     `}
                                     >
                                         {board.name}
                                     </span>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 ml-2">
                                         {board.isOpen && (
-                                            <span className="text-blue-400 dark:text-blue-400 text-lg">
+                                            <span className="text-green-500 dark:text-green-400 text-xs">
                                                 ●
                                             </span>
                                         )}
@@ -160,14 +159,15 @@ function SideBar({
                                                 }}
                                                 title="Delete board"
                                                 className={`
-                                                    bg-transparent border-none text-red-400 dark:text-red-400 
-                                                    cursor-pointer text-xl leading-none px-1 transition-opacity duration-150
+                                                    w-5 h-5 bg-transparent border-none text-red-500 dark:text-red-400 
+                                                    cursor-pointer text-sm leading-none flex items-center justify-center
+                                                    rounded transition-all duration-150
                                                     ${
                                                         isHovered
-                                                            ? "opacity-100 visible"
+                                                            ? "opacity-100 visible hover:bg-red-50 dark:hover:bg-red-900/30"
                                                             : "opacity-0 invisible"
                                                     }
-                                                    hover:text-red-300 dark:hover:text-red-300
+                                                    hover:text-red-600 dark:hover:text-red-300
                                                 `}
                                             >
                                                 ×
@@ -181,20 +181,20 @@ function SideBar({
 
                     {/* Loading indicator */}
                     {isLoading && (
-                        <div className="p-4 text-center text-[#b0b3b8] dark:text-[#b0b3b8] text-[13px] font-medium">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-xs font-medium">
                             Loading boards...
                         </div>
                     )}
 
                     {/* Footer */}
-                    <div className="p-[22px] border-t border-white/[0.08] dark:border-white/[0.08]">
+                    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                         <button
                             onClick={onSignOut}
-                            className="w-full px-4 py-[10px] rounded-md border border-white/12 dark:border-white/12 
-                                     bg-transparent text-[#b0b3b8] dark:text-[#b0b3b8] cursor-pointer text-[13px] font-semibold
-                                     transition-all duration-200 tracking-[0.015em] uppercase
-                                     hover:bg-[#2a2a2e] dark:hover:bg-[#2a2a2e] hover:border-white/18 dark:hover:border-white/18 
-                                     hover:text-[#e8eaed] dark:hover:text-[#e8eaed] hover:-translate-y-0.5"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                                     bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer text-xs font-medium
+                                     transition-all duration-200
+                                     hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:border-gray-400 dark:hover:border-gray-500 
+                                     hover:text-gray-900 dark:hover:text-gray-100"
                         >
                             Sign Out
                         </button>
