@@ -173,7 +173,7 @@ function AppContent() {
                             />
                         </div>
                     </Panel>
-                    <PanelResizeHandle className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200" />
+                    <PanelResizeHandle />
                     {/* Main Content Panel */}
                     <Panel>
                         <div
@@ -232,12 +232,12 @@ function AppContent() {
                             className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
                                        border border-gray-200/50 dark:border-gray-700/50
                                        animate-in slide-in-from-right-3 fade-in duration-500
-                                       transition-all ease-out overflow-hidden
+                                       transition-all ease-out
                                        ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
                                        before:absolute before:inset-0 before:bg-gradient-to-br 
                                        before:from-white/40 before:to-transparent before:pointer-events-none
                                        dark:before:from-gray-800/40 dark:before:to-transparent
-                                       relative"
+                                       relative overflow-auto"
                             style={{
                                 maxHeight: "calc(100vh - 100px)",
                                 height: "auto",

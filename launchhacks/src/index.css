@@ -7,6 +7,10 @@ s */ * {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.react-flow__handle {
+    opacity: 0;
+}
+
 /* 
 #«r6» {
     background: transparent;

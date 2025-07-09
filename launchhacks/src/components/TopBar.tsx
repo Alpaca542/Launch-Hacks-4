@@ -82,21 +82,6 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                             )}
                         </div>
                         <div className="flex items-center gap-3">
-                            <ThemeToggle />
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white font-medium text-xs">
-                                        {user?.isAnonymous
-                                            ? "G"
-                                            : user?.email?.charAt(0).toUpperCase() || "U"}
-                                    </span>
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 text-sm font-medium">
-                                    {user?.isAnonymous
-                                        ? "Guest"
-                                        : user?.email?.split("@")[0] || "User"}
-                                </p>
-                            </div>
                             {isSaving && (
                                 <div
                                     className="text-green-600 dark:text-green-400 text-sm flex items-center gap-2 
@@ -109,6 +94,23 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                                     </span>
                                 </div>
                             )}
+                            <ThemeToggle />
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white font-medium text-xs">
+                                        {user?.isAnonymous
+                                            ? "G"
+                                            : user?.email
+                                                  ?.charAt(0)
+                                                  .toUpperCase() || "U"}
+                                    </span>
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+                                    {user?.isAnonymous
+                                        ? "Guest"
+                                        : user?.email?.split("@")[0] || "User"}
+                                </p>
+                            </div>
                         </div>
                     </header>
                 </div>
