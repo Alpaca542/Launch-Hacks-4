@@ -15,6 +15,7 @@
     "allotment": "^1.20.4",
     "bootstrap": "^5.3.7",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
     "firebase": "^11.9.1",
     "re-resizable": "^6.11.2",
     "react": "^19.1.0",

@@ -113,9 +113,11 @@ function ExplanationSidebar({
                                       }`}
                             style={{ transitionDelay: "200ms" }}
                         >
-                            <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                                {explanation.text}
-                            </ReactMarkdown>
+                            <div
+                                dangerouslySetInnerHTML={{
+                                    __html: explanation.text,
+                                }}
+                            />
                         </div>
                     </>
                 ) : (

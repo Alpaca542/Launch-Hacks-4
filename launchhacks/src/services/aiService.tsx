@@ -1,6 +1,6 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // Adjust path to your Firebase config
-
+import { parseJsonToHtml } from "./htmlParser";
 const askAI = async (message: string): Promise<any> => {
     try {
         // Add validation
@@ -106,50 +106,161 @@ export const askAITwice = async (
     thirdResponse: any;
 }> => {
     try {
-        const detailedExplanationPrompt = `You are an expert educator. Explain the following concept to a beginner.
+        const SCHEMA = [
+            {
+                large_header: "Large Header Text",
+            },
+            {
+                small_header: "Small Header Text",
+            },
+            {
+                ul: ["Item one", "Item 2", "Item 3"],
+            },
+            {
+                quiz: [
+                    {
+                        question: "What is the capital of France?",
+                        answers: [
+                            {
+                                Berlin: "It's germany!",
+                            },
+                            {
+                                Madrid: "It is spain :(",
+                            },
+                            {
+                                Paris: "Correct! It's Paris!",
+                            },
+                        ],
+                        correctAnswer: 2,
+                    },
+                    {
+                        question: "What is the capital of Poland?",
+                        answers: [
+                            {
+                                Berlin: "It's germany!",
+                            },
+                            {
+                                Warshava: "Yahoo! It's Poland!",
+                            },
+                            {
+                                Paris: "No!",
+                            },
+                        ],
+                        correctAnswer: 1,
+                    },
+                ],
+            },
+            {
+                img: [
+                    "very short image description(e.g. funny cats)",
+                    "The image shows a group of cats doing something amusing.",
+                ],
+            },
+            {
+                vid: [
+                    "very short video description(e.g. playing footbal)",
+                    "This video shows a group of people playing football in a park.",
+                ],
+            },
+            {
+                gif: [
+                    "very short gif description(e.g. frogs jumping)",
+                    "This gif shows frogs jumping around in a pond.",
+                ],
+            },
+            {
+                textblock: "text, **text**, (text)[text.com]",
+            },
+            {
+                ol: ["Heyyo", "Nice", "That's a list"],
+            },
+            {
+                codeblock: "console.log('Hello World');",
+            },
+            {
+                quote: "This is a quote",
+            },
+            {
+                link: "https://example.com",
+            },
+            {
+                table: [
+                    ["Header1", "Header2"],
+                    ["Row1Col1", "Row1Col2"],
+                    ["Row2Col1", "Row2Col2"],
+                ],
+            },
+            {
+                purehtml: "<div>Pure HTML content</div>",
+            },
+            {
+                sidecontainer: "This is a side container with some text.",
+            },
+            {
+                diagram: "graph TD; A-->B; A-->C; B-->D; C-->D;",
+            },
+            {
+                note: "This is a note.",
+            },
+            {
+                warning: "This is a warning note.",
+            },
+            {
+                tip: "This is a tip note.",
+            },
+            {
+                htmlCanvas: "code for HTML canvas",
+            },
+        ];
 
-        Context: ${context}
+        const detailedExplanationPrompt = `
+        Return ONLY a valid JSON array (4–6 objects).
 
-        Instructions:
-        - Highlight every key term with [square-braces], e.g., [variable].
-        - Use simple language and practical examples or analogies.
-        - Use only correct HTML or MARKDOWN for all formatting (headings, lists, tables, images, code).
-        - All HTML elements (including headings, lists, tables, images, code) MUST use inline CSS for styling.
-        - For inline CSS, use: <span style="color:#fff;background:#222;padding:4px;border-radius:4px;">example</span>
-        - For images: <img src="IMAGE_URL" alt="desc" style="max-width:100%;border-radius:8px;">
-        - For code: <pre style="background:#222;color:#fff;padding:8px;border-radius:6px;"><code>console.log("Hello World");</code></pre>
-        - For tables: <table style="border-collapse:collapse;width:100%;"><tr><th style="background:#222;color:#fff;padding:6px;">Header</th></tr><tr><td style="padding:6px;">Data</td></tr></table>
-        - For lists: <ul style="padding-left:20px;"><li style="margin-bottom:4px;">Item 1</li></ul>
-        - No introductions, conclusions, or extra commentary.
-        - Start directly with the explanation.
+        RULES
+        • Each object = exactly one tag from SCHEMA; no new tags.
+        • Include:
+        – >=1 {quiz}
+        – >=1 of {codeblock | diagram | htmlCanvas}
+        – >=2 distinct support tags from
+            {img | vid | gif | ul | ol | sidecontainer | tip | note | warning | quote | table | purehtml | link}
+        • Use different tags to make the studying experience diverse and engaging
+        • Cover, somewhere in the set: definition, worked example, real-world analogy, misconception + correction.
+        • All the textblocks should be relatively concise <120 words. If you have a longer explanation, break it into multiple textblocks.
+        • Tone: encouraging, professional.
+        • Make the explanations long and detailed, but not too long.
+        • Use websites like imgur.com, youtube.com, or giphy.com for images, videos, and gifs.
 
-        Concept: `;
+        OUTPUT
+        JSON array only — no fences, comments, or extra text.
 
-        const summaryPrompt = `Summarize in exactly 40 words or less.
+        SCHEMA = ${JSON.stringify(SCHEMA)}
+        CONTEXT = ${context}
+        CONCEPT = ${message}
+        `;
+        const summaryPrompt = `Provide a brief explanation in 50 words or less.
 
         CRITICAL:
-        - Preserve ALL [square-braces] concepts exactly
-        - Every key concept MUST use [square-braces]
+        - Highlight EVERY key term with [square-braces], e.g., [artificial intelligence], [mammal], [vector product]
         - NO introductory phrases like "Here is..." or "Summary..."
         - NO bullet points or formatting except [square-braces]
-        - Start immediately with summary content
-        - ONLY the summary text
+        - Start immediately with explanation content
+        - ONLY the explanation text
 
-        Text to summarize: `;
+        Topic to explain: `;
 
-        const suggestionsPrompt = `You are an expert educator. Respond ONLY with a valid JSON object in the following format: {"topics": ["[concept1]", "[concept2]", "[concept3]"]}. 
+        const suggestionsPrompt = `You are an expert educator. Respond ONLY with a valid JSON array in the following format: ["concept1", "concept2", "concept3"]. 
 
         Instructions:
-        - Suggest exactly 3 topics that are logical next steps for learning the given concept.
+        - Suggest exactly 3-5 topics that are logical next steps for learning the given concept.
         - Each topic must be no more than 5 words.
         - Each topic MUST be enclosed in double quotes, e.g., "example topic".
-        - Do NOT include any explanation, commentary, or formatting outside the JSON object.
-        - Only output the JSON object as specified.
+        - Do NOT include any explanation, commentary, or formatting outside the JSON array.
+        - Only output the JSON array as specified.
 
         Concept: `;
 
         // Start all three requests concurrently
-        const detailedPromise = askAI(detailedExplanationPrompt + message);
+        const detailedPromise = askAI(detailedExplanationPrompt);
         const suggestionsPromise = askAI(suggestionsPrompt + message);
 
         // Stream the summary with progressive updates
@@ -188,24 +299,14 @@ export const askAITwice = async (
 
         const processedResult = {
             firstResponse: {
-                response: detailedExplanation
-                    ?.replace(/\[/g, "_")
-                    .replace(/\]/g, "_")
-                    .replace(/```/g, "")
-                    .replace(/markdown/g, ""),
+                response: await parseJsonToHtml(
+                    JSON.parse(detailedExplanation)
+                ),
             },
             secondResponse: {
                 response: summaryResponse // This is the complete streamed response
                     ?.replace(/\[/g, "_")
-                    .replace(/\]/g, "_")
-                    .replace(
-                        /Here is a summary of the text in exactly 40 words or less:/g,
-                        ""
-                    )
-                    .replace(
-                        "/Here is a summary of the text in 40 words or less:/g",
-                        ""
-                    ),
+                    .replace(/\]/g, "_"),
             },
             thirdResponse: {
                 response: parsedTopics,

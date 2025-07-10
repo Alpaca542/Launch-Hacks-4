@@ -31,7 +31,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Static Node"
     );
-    const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     const { handleTokenClick, showExplanation } = useTokenInteraction();
     const { getNode, setViewport } = useReactFlow();
@@ -87,11 +86,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             setSummary(data.summary || data.label || "Static Node");
             setIsEditing(false);
         }
-    };
-
-    const toggleExpansion = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
     };
 
     const handleShowExplanation = (e: React.MouseEvent) => {
@@ -175,15 +169,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     ←
                 </button>
             )}
-            {tokens.length > 5 && (
-                <button
-                    className="node-expand-btn"
-                    onClick={toggleExpansion}
-                    title={isExpanded ? "Show less" : "Show more"}
-                >
-                    {isExpanded ? "−" : "+"}
-                </button>
-            )}
             <button
                 className="node-expand-btn explanation-btn-icon"
                 onClick={handleShowExplanation}
@@ -246,17 +231,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                                 ←
                             </button>
                         )}
-                        {tokens.length > 5 && (
-                            <button
-                                className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
-                                         hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
-                                         transition-all duration-150 flex items-center justify-center text-sm font-semibold"
-                                onClick={toggleExpansion}
-                                title={isExpanded ? "Show less" : "Show more"}
-                            >
-                                {isExpanded ? "−" : "+"}
-                            </button>
-                        )}
                         <button
                             className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
                                      hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
@@ -274,11 +248,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         onClick={handleClick}
                     >
                         {tokenElements}
-                        {tokens.length > 5 && !isExpanded && (
-                            <span className="text-slate-500 font-normal">
-                                ...
-                            </span>
-                        )}
                     </div>
                 </div>
                 <div className="mt-2">
@@ -352,7 +321,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     }, [
         isEditing,
         summary,
-        isExpanded,
         tokens.length,
         handleClick,
         handleSave,

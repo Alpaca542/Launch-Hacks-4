@@ -3,12 +3,7 @@ import { useReactFlow, Handle, Position } from "reactflow";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 
-import {
-    getContrastColor,
-    darkenColor,
-    parseTextIntoTokens,
-    Token,
-} from "../utils/nodeHelpers";
+import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
 
 interface NodeData {
     label?: string;
@@ -35,9 +30,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Draggable Node"
     );
-    const [isExpanded, setIsExpanded] = useState<boolean>(
-        data.expanded || false
-    );
 
     const { getNodes, getNode, setViewport } = useReactFlow();
     const { handleTokenClick, showExplanation } = useTokenInteraction();
@@ -54,10 +46,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
 
     // Display tokens based on expansion state
     const displayTokens = (() => {
-        if (isExpanded || tokens.length <= 5) {
-            return tokens;
-        }
-        return tokens.slice(0, 5);
+        return tokens;
     })();
 
     // Check if token is clickable
@@ -112,14 +101,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         }
     };
 
-    const toggleExpansion = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-        if (!isExpanded && data.onExpand) {
-            data.onExpand();
-        }
-    };
-
     const handleShowExplanation = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (showExplanation) {
@@ -158,6 +139,28 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         });
         return groups;
     }, [displayTokens]);
+    function getContrastTextColor(hexColor: string): "#000000" | "#ffffff" {
+        // Remove leading "#" if present
+        const hex = hexColor.replace(/^#/, "");
+
+        // Parse R, G, B values
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+
+        // Convert to relative luminance
+        const [R, G, B] = [r, g, b].map((v) => {
+            const channel = v / 255;
+            return channel <= 0.03928
+                ? channel / 12.92
+                : Math.pow((channel + 0.055) / 1.055, 2.4);
+        });
+
+        const luminance = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+
+        // Return black or white depending on brightness
+        return luminance > 0.179 ? "#000000" : "#ffffff";
+    }
 
     const renderContent = useMemo(() => {
         if (isEditing) {
@@ -208,19 +211,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     ←
                                 </button>
                             )}
-                            {tokens.length > 5 && (
-                                <button
-                                    className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
-                                             hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
-                                             transition-all duration-150 flex items-center justify-center text-sm font-semibold"
-                                    onClick={toggleExpansion}
-                                    title={
-                                        isExpanded ? "Show less" : "Show more"
-                                    }
-                                >
-                                    {isExpanded ? "−" : "+"}
-                                </button>
-                            )}
                             <button
                                 className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
                                          hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
@@ -247,7 +237,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                 return (
                                     <span
                                         key={index}
-                                        className={`inline-block px-2 py-1 m-0.5 rounded-lg font-medium transition-all duration-300 ease-out
+                                        className={`inline-block px-1 py-0.5 m-0.5 rounded-lg font-medium transition-all duration-300 ease-out
                                                   ${
                                                       isClickable
                                                           ? "cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
@@ -262,8 +252,12 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                             backgroundColor:
                                                 tokenColor || "transparent",
                                             color: tokenColor
-                                                ? getContrastColor(tokenColor)
-                                                : "inherit",
+                                                ? getContrastTextColor(
+                                                      tokenColor
+                                                  )
+                                                : getContrastTextColor(
+                                                      data.myColor!
+                                                  ), //TODO: fix
                                             border: tokenColor
                                                 ? `1px solid ${darkenColor(
                                                       tokenColor,
@@ -290,11 +284,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                     </span>
                                 );
                             })}
-                            {tokens.length > 5 && !isExpanded && (
-                                <span className="text-slate-500 font-normal">
-                                    ...
-                                </span>
-                            )}
                         </div>
                     </div>
                     <div className="mt-2">
@@ -323,10 +312,12 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                                                 backgroundColor:
                                                     tokenColor || "transparent",
                                                 color: tokenColor
-                                                    ? getContrastColor(
+                                                    ? getContrastTextColor(
                                                           tokenColor
                                                       )
-                                                    : "inherit",
+                                                    : getContrastTextColor(
+                                                          data.myColor!
+                                                      ),
                                                 border: tokenColor
                                                     ? `1px solid ${darkenColor(
                                                           tokenColor,
@@ -379,13 +370,11 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         summary,
         displayTokens,
         tokens,
-        isExpanded,
         groupedTokens,
         handleClick,
         handleSave,
         handleKeyPress,
         handleInputClick,
-        toggleExpansion,
         handleShowExplanation,
         handleTokenClickLocal,
         isTokenClickable,
@@ -398,14 +387,14 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
 
     return (
         <div
-            className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[450px] 
+            className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[600px] 
                        transition-all duration-200 ease-in-out cursor-grab select-none overflow-hidden
                        hover:transform hover:-translate-y-[3px]
                        hover:border-white/[0.18] hover:bg-[#242427]"
             style={{
                 background: data.myColor,
                 color: data.myColor
-                    ? getContrastColor(data.myColor)
+                    ? getContrastTextColor(data.myColor)
                     : "#f0f4f8",
                 border: data.myColor
                     ? `1px solid ${darkenColor(data.myColor, 20)}`

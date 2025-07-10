@@ -1,11 +1,9 @@
 /* eslint-disable */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 
-const groq = new Groq({
-    apiKey: "",
-});
+const openai = new OpenAI({});
 
 export const groqChat = onCall(
     {
@@ -24,7 +22,7 @@ export const groqChat = onCall(
                 );
             }
 
-            logger.info("Processing groq chat request", {
+            logger.info("Processing OpenAI chat request", {
                 message: message.substring(0, 100),
                 acceptsStreaming: request.acceptsStreaming,
                 hasResponse: !!response,
@@ -35,27 +33,39 @@ export const groqChat = onCall(
                 logger.info(
                     "Client supports streaming, starting stream response"
                 );
-                // Handle streaming response
-                const streamResponse = await groq.chat.completions.create({
-                    messages: [{ role: "user", content: message }],
-                    model: "llama3-8b-8192",
+                // Handle streaming response using Responses API
+                const streamResponse = await openai.responses.create({
+                    model: "gpt-4o-mini",
                     stream: true,
+                    instructions: "You are a helpful assistant.",
+                    input: [
+                        {
+                            type: "message",
+                            role: "user",
+                            content: [{ type: "input_text", text: message }],
+                        },
+                    ],
                 });
 
                 let fullResponse = "";
                 let chunkCount = 0;
                 for await (const chunk of streamResponse) {
-                    const content = chunk.choices[0]?.delta?.content;
-                    if (content) {
-                        chunkCount++;
-                        fullResponse += content;
-                        // Send each chunk to streaming clients
-                        const chunkData = {
-                            type: "chunk",
-                            content: content,
-                        };
-                        logger.info(`Sending chunk ${chunkCount}:`, chunkData);
-                        response.sendChunk(chunkData);
+                    if (chunk.type === "response.output_text.delta") {
+                        const content = chunk.delta;
+                        if (content) {
+                            chunkCount++;
+                            fullResponse += content;
+                            // Send each chunk to streaming clients
+                            const chunkData = {
+                                type: "chunk",
+                                content: content,
+                            };
+                            logger.info(
+                                `Sending chunk ${chunkCount}:`,
+                                chunkData
+                            );
+                            response.sendChunk(chunkData);
+                        }
                     }
                 }
 
@@ -63,35 +73,44 @@ export const groqChat = onCall(
                     `Streaming complete. Sent ${chunkCount} chunks. Full response length: ${fullResponse.length}`
                 );
 
-                // Process final response
-                let processedResponse = fullResponse;
-                if (processedResponse.includes(":")) {
-                    processedResponse = processedResponse
-                        .substring(processedResponse.indexOf(":") + 1)
-                        .trim();
-                }
-
                 // Return the complete response for non-streaming clients and final result for streaming
                 return {
-                    response: processedResponse,
+                    response: fullResponse,
                     type: "complete",
                 };
             } else {
-                // Handle non-streaming response
-                const chatCompletion = await groq.chat.completions.create({
-                    messages: [{ role: "user", content: message }],
-                    model: "llama3-8b-8192",
+                // Handle non-streaming response using Responses API
+                const chatCompletion = await openai.responses.create({
+                    model: "gpt-4o-mini",
                     stream: false,
+                    instructions: "You are a helpful assistant.",
+                    input: [
+                        {
+                            type: "message",
+                            role: "user",
+                            content: [{ type: "input_text", text: message }],
+                        },
+                    ],
                 });
 
-                let responseText =
-                    chatCompletion.choices[0]?.message?.content ||
-                    "No response generated";
-
-                if (responseText.includes(":")) {
-                    responseText = responseText
-                        .substring(responseText.indexOf(":") + 1)
-                        .trim();
+                let responseText = "";
+                if (chatCompletion.output && chatCompletion.output.length > 0) {
+                    // Extract text content from the response
+                    const messageContent = chatCompletion.output.find(
+                        (item) => item.type === "message"
+                    );
+                    if (messageContent && messageContent.type === "message") {
+                        // Extract text from the message content
+                        const textContent = messageContent.content.find(
+                            (content) => content.type === "output_text"
+                        );
+                        if (textContent && textContent.type === "output_text") {
+                            responseText =
+                                textContent.text || "No response generated";
+                        }
+                    }
+                } else {
+                    responseText = "No response generated";
                 }
 
                 return {
@@ -100,7 +119,7 @@ export const groqChat = onCall(
                 };
             }
         } catch (error) {
-            logger.error("Error in groqChat function:", error);
+            logger.error("Error in openaiChat function:", error);
 
             if (error instanceof HttpsError) {
                 throw error;
