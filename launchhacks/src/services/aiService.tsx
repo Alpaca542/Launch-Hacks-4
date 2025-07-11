@@ -191,13 +191,8 @@ export const askAITwice = async (
                 ],
             },
             {
-                purehtml: "<div>Pure HTML content</div>",
-            },
-            {
-                sidecontainer: "This is a side container with some text.",
-            },
-            {
-                diagram: "graph TD; A-->B; A-->C; B-->D; C-->D;",
+                diagram:
+                    "a mermaid-based diagram: graph TD; A-->B; A-->C; B-->D; C-->D;",
             },
             {
                 note: "This is a note.",
@@ -209,31 +204,35 @@ export const askAITwice = async (
                 tip: "This is a tip note.",
             },
             {
-                htmlCanvas: "code for HTML canvas",
+                htmlCanvas: "js code for HTML canvas",
             },
         ];
 
         const detailedExplanationPrompt = `
-        Return ONLY a valid JSON array (4–6 objects).
+        Return ONLY a valid JSON array.
 
         RULES
         • Each object = exactly one tag from SCHEMA; no new tags.
         • Include:
-        – >=1 {quiz}
-        – >=1 of {codeblock | diagram | htmlCanvas}
-        – >=2 distinct support tags from
-            {img | vid | gif | ul | ol | sidecontainer | tip | note | warning | quote | table | purehtml | link}
+        – Only one of {quiz} with multiple questions
+        – At least one of {codeblock or diagram or htmlCanvas or table}
+        – At least two of of {img or vid or gif}
+        - At least five of of {textblock or ul or ol }
+        - ONLY ONE of { tip or note or warning or quote or link}
+        • You should educate the user about the concept and then ask the quiz about the material you taught.
         • Use different tags to make the studying experience diverse and engaging
-        • Cover, somewhere in the set: definition, worked example, real-world analogy, misconception + correction.
-        • All the textblocks should be relatively concise <120 words. If you have a longer explanation, break it into multiple textblocks.
-        • Tone: encouraging, professional.
-        • Make the explanations long and detailed, but not too long.
-        • Use websites like imgur.com, youtube.com, or giphy.com for images, videos, and gifs.
+        • Cover, somewhere in the set: definition, deep explanation, worked example, real-world analogy and links at what to look up next.
+        • If you have a long explanation, break it into multiple textblocks.
+        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space.
+        • Tone: encouraging, professional
+        • Make the text of the explanations long and detailed! You need to educate the user
+        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, htmlCanvas, table.
+        • Make sure to put the concept over the context, not focusing on the context but rather on what actually needs to be explained.
 
         OUTPUT
-        JSON array only — no fences, comments, or extra text.
+        VALID JSON array only — no comments, or extra text. All the braces must be properly closed.
 
-        SCHEMA = ${JSON.stringify(SCHEMA)}
+        SCHEMA = ${JSON.stringify(SCHEMA)}\n
         CONTEXT = ${context}
         CONCEPT = ${message}
         `;
@@ -286,7 +285,13 @@ export const askAITwice = async (
         cleanedSuggestionsData = cleanedSuggestionsData
             .replace(/^```json\s*/i, "")
             .replace(/^```\s*/i, "")
-            .replace(/```$/i, "");
+            .replace(/```$/i, "")
+            .replace(/\\/g, "&#92;")
+            .replace(/\$/g, "&#36;")
+            .replace(/\^/g, "&#94;")
+            .replace(/_/g, "&#95;")
+            .replace(/~/g, "&#126;")
+            .replace(/&/g, "&#38;");
 
         let parsedTopics: string[] = [];
 
@@ -300,7 +305,12 @@ export const askAITwice = async (
         const processedResult = {
             firstResponse: {
                 response: await parseJsonToHtml(
-                    JSON.parse(detailedExplanation)
+                    JSON.parse(
+                        detailedExplanation
+                            .replace(/^```json\s*/i, "")
+                            .replace(/^```\s*/i, "")
+                            .replace(/```$/i, "")
+                    )
                 ),
             },
             secondResponse: {

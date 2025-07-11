@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -29,6 +29,70 @@ import { nodeTypes } from "./config/nodeTypes";
 // Context
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+
+// Memoized explanation sidebar container
+const MemoizedExplanationSidebar = memo(function MemoizedExplanationSidebar({
+    isVisible,
+    explanation,
+    onClose,
+}: {
+    isVisible: boolean;
+    explanation: { title: string; text: string } | null;
+    onClose: () => void;
+}) {
+    if (!isVisible) return null;
+
+    return (
+        <Resizable
+            defaultSize={{
+                width: 380,
+            }}
+            style={{
+                background: "transparent",
+                position: "fixed",
+                right: "12px",
+                top: "80px",
+                borderRadius: "16px",
+                zIndex: 1000,
+            }}
+            enable={{
+                right: false,
+                top: false,
+                bottom: false,
+                left: true,
+            }}
+        >
+            <div
+                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
+                           border border-gray-200/50 dark:border-gray-700/50
+                           animate-in slide-in-from-right-3 fade-in duration-500
+                           transition-all ease-out
+                           ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
+                           before:absolute before:inset-0 before:bg-gradient-to-br 
+                           before:from-white/40 before:to-transparent before:pointer-events-none
+                           dark:before:from-gray-800/40 dark:before:to-transparent
+                           relative overflow-auto"
+                style={{
+                    maxHeight: "calc(100vh - 100px)",
+                    height: "auto",
+                    minHeight: "200px",
+                }}
+            >
+                {/* Subtle top accent */}
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
+
+                {/* Content container with improved styling */}
+                <div className="relative z-10 overflow-auto h-full">
+                    <ExplanationSidebar
+                        explanation={explanation}
+                        onClose={onClose}
+                        isVisible={isVisible}
+                    />
+                </div>
+            </div>
+        </Resizable>
+    );
+});
 
 function AppContent() {
     // Explanation sidebar state
@@ -207,57 +271,13 @@ function AppContent() {
                         </div>
                     </Panel>
                 </PanelGroup>
-                {/* Right Panel - Explanation Sidebar (conditionally rendered) */}
-                {isExplanationVisible && (
-                    <Resizable
-                        defaultSize={{
-                            width: 380,
-                        }}
-                        style={{
-                            background: "transparent",
-                            position: "fixed",
-                            right: "12px",
-                            top: "80px",
-                            borderRadius: "16px",
-                            zIndex: 1000,
-                        }}
-                        enable={{
-                            right: false,
-                            top: false,
-                            bottom: false,
-                            left: true,
-                        }}
-                    >
-                        <div
-                            className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
-                                       border border-gray-200/50 dark:border-gray-700/50
-                                       animate-in slide-in-from-right-3 fade-in duration-500
-                                       transition-all ease-out
-                                       ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
-                                       before:absolute before:inset-0 before:bg-gradient-to-br 
-                                       before:from-white/40 before:to-transparent before:pointer-events-none
-                                       dark:before:from-gray-800/40 dark:before:to-transparent
-                                       relative overflow-auto"
-                            style={{
-                                maxHeight: "calc(100vh - 100px)",
-                                height: "auto",
-                                minHeight: "200px",
-                            }}
-                        >
-                            {/* Subtle top accent */}
-                            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
 
-                            {/* Content container with improved styling */}
-                            <div className="relative z-10 overflow-auto h-full">
-                                <ExplanationSidebar
-                                    explanation={currentExplanation}
-                                    onClose={closeExplanation}
-                                    isVisible={isExplanationVisible}
-                                />
-                            </div>
-                        </div>
-                    </Resizable>
-                )}
+                {/* Right Panel - Explanation Sidebar (conditionally rendered) */}
+                <MemoizedExplanationSidebar
+                    isVisible={isExplanationVisible}
+                    explanation={currentExplanation}
+                    onClose={closeExplanation}
+                />
             </div>
         </div>
     );

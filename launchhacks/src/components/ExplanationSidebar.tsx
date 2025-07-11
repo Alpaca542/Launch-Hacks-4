@@ -1,6 +1,4 @@
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 interface ExplanationSidebarProps {
     explanation?: {
@@ -11,7 +9,7 @@ interface ExplanationSidebarProps {
     isVisible: boolean;
 }
 
-function ExplanationSidebar({
+const ExplanationSidebar = memo(function ExplanationSidebar({
     explanation,
     onClose,
     isVisible,
@@ -144,6 +142,6 @@ function ExplanationSidebar({
             </div>
         </div>
     );
-}
+});
 
 export default ExplanationSidebar;
