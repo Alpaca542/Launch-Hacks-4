@@ -4,6 +4,8 @@ import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 
 import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
+import InputMenu from "./InputMenu";
+import InputNode from "./InputNode";
 
 interface NodeData {
     label?: string;
@@ -23,23 +25,65 @@ interface NodeData {
 interface DraggableEditableNodeProps {
     data: NodeData;
     id: string;
+    showInputNode(value: boolean, inputMode: string): void;
 }
-
-function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
-    const [isEditing, setIsEditing] = useState<boolean>(false);
+function Handles() {
+    return (
+        <>
+            <Handle
+                type="source"
+                position={Position.Bottom}
+                id="bottom-source"
+            />
+            <Handle
+                style={{ transform: "translateY(100%)" }}
+                type="target"
+                position={Position.Top}
+                id="top-target"
+            />
+            <Handle
+                style={{ transform: "translateY(100%)" }}
+                type="source"
+                position={Position.Left}
+                id="left-source"
+            />
+            <Handle
+                style={{ transform: "translateY(100%)" }}
+                type="target"
+                position={Position.Left}
+                id="left-target"
+            />
+            <Handle
+                style={{ transform: "translateY(100%)" }}
+                type="source"
+                position={Position.Right}
+                id="right-source"
+            />
+            <Handle
+                style={{ transform: "translateY(100%)" }}
+                type="target"
+                position={Position.Right}
+                id="right-target"
+            />
+        </>
+    );
+}
+function DraggableEditableNode({
+    data,
+    id,
+    showInputNode,
+}: DraggableEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Draggable Node"
     );
 
     const { getNodes, getNode, setViewport } = useReactFlow();
     const { handleTokenClick, showExplanation } = useTokenInteraction();
-
+    const [isNodeMenuVisible, setIsNodeMenuVisible] = useState(false);
     // Sync local state with prop changes (e.g., when AI response updates data)
     useEffect(() => {
-        if (!isEditing) {
-            setSummary(data.summary || data.label || "Draggable Node");
-        }
-    }, [data.summary, data.label, isEditing]);
+        setSummary(data.summary || data.label || "Draggable Node");
+    }, [data.summary, data.label]);
 
     // Parse text into tokens
     const tokens = parseTextIntoTokens(summary);
@@ -75,30 +119,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             data.summary || data.label || "Draggable Node"
         );
         return color; // Can be null if token is already colored
-    };
-
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsEditing(true);
-    };
-
-    const handleSave = () => {
-        setIsEditing(false);
-    };
-
-    const handleInputClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        e.stopPropagation();
-        if (e.key === "Enter") {
-            handleSave();
-        }
-        if (e.key === "Escape") {
-            setSummary(data.summary || data.label || "Draggable Node");
-            setIsEditing(false);
-        }
     };
 
     const handleShowExplanation = (e: React.MouseEvent) => {
@@ -163,24 +183,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     }
 
     const renderContent = useMemo(() => {
-        if (isEditing) {
-            return (
-                <input
-                    type="text"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyPress}
-                    onClick={handleInputClick}
-                    className="w-full bg-gray-700/50 border border-white/15 rounded-lg px-4 py-3 text-gray-100 
-                             placeholder-gray-500 focus:outline-none focus:border-blue-500/60 focus:bg-gray-600/50 
-                             focus:ring-2 focus:ring-blue-500/25 transition-all duration-200 nodrag"
-                    placeholder="Enter node content..."
-                    autoFocus
-                />
-            );
-        }
-
         return (
             <>
                 {data.isLoading && (
@@ -223,10 +225,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                         </div>
                     </div>
                     <div className="flex-1">
-                        <div
-                            className="cursor-text leading-relaxed break-words"
-                            onClick={handleClick}
-                        >
+                        <div className="cursor-text leading-relaxed break-words">
                             {displayTokens.map((token, index) => {
                                 const tokenColors = data.tokenColors || {};
                                 const tokenKey = token.myConcept || token.word;
@@ -366,15 +365,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             </>
         );
     }, [
-        isEditing,
         summary,
         displayTokens,
         tokens,
         groupedTokens,
-        handleClick,
-        handleSave,
-        handleKeyPress,
-        handleInputClick,
         handleShowExplanation,
         handleTokenClickLocal,
         isTokenClickable,
@@ -384,6 +378,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         data.myColor,
         data.isLoading,
     ]);
+
+    const onModeSelected = (inputMode: string) => {
+        showInputNode(true, inputMode);
+    };
 
     return (
         <div
@@ -397,23 +395,18 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                     ? getContrastTextColor(data.myColor)
                     : "#f0f4f8",
                 border: data.myColor
-                    ? `1px solid ${darkenColor(data.myColor, 20)}`
-                    : "1px solid rgba(255, 255, 255, 0.12)",
+                    ? `2px solid ${darkenColor(data.myColor, 0.5)}`
+                    : "2px solid rgba(255, 255, 255, 0.12)",
             }}
         >
             <div className="relative pointer-events-auto text-[#f0f4f8] text-[17px] leading-[1.7] font-medium">
                 {renderContent}
             </div>
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="bottom-source"
+            <Handles />
+            <InputMenu
+                displayed={isNodeMenuVisible}
+                onModeSelected={onModeSelected}
             />
-            <Handle type="target" position={Position.Top} id="top-target" />
-            <Handle type="source" position={Position.Left} id="left-source" />
-            <Handle type="target" position={Position.Left} id="left-target" />
-            <Handle type="source" position={Position.Right} id="right-source" />
-            <Handle type="target" position={Position.Right} id="right-target" />
         </div>
     );
 }

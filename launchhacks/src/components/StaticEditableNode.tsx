@@ -27,20 +27,16 @@ interface StaticEditableNodeProps {
 }
 
 function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
-    const [isEditing, setIsEditing] = useState<boolean>(false);
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Static Node"
     );
 
     const { handleTokenClick, showExplanation } = useTokenInteraction();
-    const { getNode, setViewport } = useReactFlow();
 
     // Sync local state with prop changes (e.g., when AI response updates data)
     useEffect(() => {
-        if (!isEditing) {
-            setSummary(data.summary || data.label || "Static Node");
-        }
-    }, [data.summary, data.label, isEditing]);
+        setSummary(data.summary || data.label || "Static Node");
+    }, [data.summary, data.label]);
 
     // Parse text into tokens
     const tokens = parseTextIntoTokens(summary);
@@ -64,30 +60,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         );
     };
 
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsEditing(true);
-    };
-
-    const handleSave = () => {
-        setIsEditing(false);
-    };
-
-    const handleInputClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        e.stopPropagation();
-        if (e.key === "Enter") {
-            handleSave();
-        }
-        if (e.key === "Escape") {
-            setSummary(data.summary || data.label || "Static Node");
-            setIsEditing(false);
-        }
-    };
-
     const handleShowExplanation = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (showExplanation) {
@@ -95,22 +67,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 data.title || "Explanation",
                 data.full_text || "No detailed information available."
             );
-        }
-    };
-
-    // Navigate to previous node
-    const navigateToPreviousNode = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (data.previousNode) {
-            const previousNode = getNode(data.previousNode);
-            if (previousNode) {
-                const { x, y } = previousNode.position;
-                // Center the viewport on the previous node with smooth animation
-                setViewport(
-                    { x: -x + 200, y: -y + 100, zoom: 1 },
-                    { duration: 500 }
-                );
-            }
         }
     };
 
@@ -160,15 +116,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     // Memoize node buttons separately
     const nodeButtons = (
         <div className="node-buttons">
-            {data.previousNode && (
-                <button
-                    className="node-expand-btn previous-node-btn"
-                    onClick={navigateToPreviousNode}
-                    title="Go to previous node"
-                >
-                    ←
-                </button>
-            )}
             <button
                 className="node-expand-btn explanation-btn-icon"
                 onClick={handleShowExplanation}
@@ -195,24 +142,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             );
         }
 
-        if (isEditing) {
-            return (
-                <input
-                    type="text"
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyPress}
-                    onClick={handleInputClick}
-                    className="w-full bg-gray-700/50 border border-white/15 rounded-lg px-4 py-3 text-gray-100 
-                             placeholder-gray-500 focus:outline-none focus:border-blue-500/60 focus:bg-gray-600/50 
-                             focus:ring-2 focus:ring-blue-500/25 transition-all duration-200 nodrag"
-                    placeholder="Enter node content..."
-                    autoFocus
-                />
-            );
-        }
-
         return (
             <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center pb-2 border-b border-white/10">
@@ -220,17 +149,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         {data.title || "Node"}
                     </div>
                     <div className="flex gap-2">
-                        {data.previousNode && (
-                            <button
-                                className="w-8 h-8 bg-gray-500/25 text-gray-400 border border-gray-500/35 rounded-lg 
-                                         hover:bg-gray-500/35 hover:border-gray-500/55 hover:-translate-y-0.5 
-                                         transition-all duration-150 flex items-center justify-center text-sm font-semibold"
-                                onClick={navigateToPreviousNode}
-                                title="Go to previous node"
-                            >
-                                ←
-                            </button>
-                        )}
                         <button
                             className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
                                      hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
@@ -243,10 +161,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                     </div>
                 </div>
                 <div className="flex-1">
-                    <div
-                        className="cursor-text leading-relaxed break-words text-lg font-medium"
-                        onClick={handleClick}
-                    >
+                    <div className="cursor-text leading-relaxed break-words text-lg font-medium">
                         {tokenElements}
                     </div>
                 </div>
@@ -301,11 +216,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                                         {index < data.suggestions!.length - 1
                                             ? " "
                                             : ""}
-                                        <Handle
-                                            type="source"
-                                            position={Position.Right}
-                                            id={data.label + suggestion + index}
-                                        />
                                     </span>
                                 );
                             })
@@ -318,17 +228,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 </div>
             </div>
         );
-    }, [
-        isEditing,
-        summary,
-        tokens.length,
-        handleClick,
-        handleSave,
-        handleKeyPress,
-        handleInputClick,
-        tokenElements,
-        nodeButtons,
-    ]);
+    }, [summary, tokens.length, tokenElements, nodeButtons]);
 
     return (
         <div

@@ -67,19 +67,20 @@ export const getContrastColor = (hexColor: string): string => {
 
 export const darkenColor = (hexColor: string, amount: number): string => {
     if (!hexColor) return "#000000";
-    let color = hexColor.startsWith("#") ? hexColor.substring(1) : hexColor;
-    const f = parseInt(color, 16);
-    const t = amount < 0 ? 0 : 255;
-    const p = amount < 0 ? amount * -1 : amount;
-    const R = f >> 16;
-    const G = (f >> 8) & 0x00ff;
-    const B = f & 0x0000ff;
-    const newR = Math.round((t - R) * p) + R;
-    const newG = Math.round((t - G) * p) + G;
-    const newB = Math.round((t - B) * p) + B;
-    return `#${(0x1000000 + newR * 0x10000 + newG * 0x100 + newB)
-        .toString(16)
-        .slice(1)}`;
+    let color = hexColor.startsWith("#") ? hexColor.slice(1) : hexColor;
+
+    let r = parseInt(color.slice(0, 2), 16);
+    let g = parseInt(color.slice(2, 4), 16);
+    let b = parseInt(color.slice(4, 6), 16);
+
+    const clamp = (val: number) => Math.max(0, Math.min(255, val));
+    const factor = 1 - amount;
+
+    r = clamp(Math.round(r * factor));
+    g = clamp(Math.round(g * factor));
+    b = clamp(Math.round(b * factor));
+
+    return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 };
 
 export const generateColorVariation = (baseColor: string): string => {

@@ -17,7 +17,6 @@ function AuthWindow() {
         e.preventDefault();
         setLoading(true);
         setError("");
-
         try {
             // Validate inputs
             if (!email || !password) {
@@ -33,20 +32,14 @@ function AuthWindow() {
             if (password.length < 6) {
                 throw new Error(ERROR_MESSAGES.WEAK_PASSWORD);
             }
-
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
                 email,
                 password
             );
-            // Authentication state is now handled by useAuth hook
             console.log("User created successfully:", userCredential.user.uid);
         } catch (error: any) {
-            console.error("Sign up error:", error);
-
-            // Handle specific Firebase auth errors
             let errorMessage = "Failed to create account";
-
             if (error.code === "auth/email-already-in-use") {
                 errorMessage = ERROR_MESSAGES.EMAIL_IN_USE;
             } else if (error.code === "auth/invalid-email") {
@@ -59,7 +52,6 @@ function AuthWindow() {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -70,7 +62,6 @@ function AuthWindow() {
         e.preventDefault();
         setLoading(true);
         setError("");
-
         try {
             // Validate inputs
             if (!email || !password) {
@@ -82,23 +73,17 @@ function AuthWindow() {
             if (!emailRegex.test(email)) {
                 throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
             }
-
             const userCredential = await signInWithEmailAndPassword(
                 auth,
                 email,
                 password
             );
-            // Authentication state is now handled by useAuth hook
             console.log(
                 "User signed in successfully:",
                 userCredential.user.uid
             );
         } catch (error: any) {
-            console.error("Sign in error:", error);
-
-            // Handle specific Firebase auth errors
             let errorMessage = "Failed to sign in";
-
             if (error.code === "auth/user-not-found") {
                 errorMessage = ERROR_MESSAGES.USER_NOT_FOUND;
             } else if (error.code === "auth/wrong-password") {
@@ -113,7 +98,6 @@ function AuthWindow() {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -122,22 +106,20 @@ function AuthWindow() {
 
     return (
         <div className="fixed inset-0 bg-[#1a1a1d]/90 dark:bg-[#1a1a1d]/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div
-                className="bg-[#222226] dark:bg-[#222226] rounded-2xl shadow-[0_24px_48px_rgba(0,0,0,0.7),0_10px_20px_rgba(0,0,0,0.5)] 
-                          p-8 w-full max-w-md border border-white/12 dark:border-white/12"
-            >
-                <div className="text-center mb-8">
-                    <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="max-w-md w-full p-8 bg-gradient-to-br from-indigo-900/95 via-purple-900/95 to-indigo-900/95 rounded-3xl shadow-2xl border-2 border-indigo-700/60 dark:border-purple-700/60 backdrop-blur-sm animate-fade-in hover:shadow-3xl hover:shadow-indigo-500/10 transition-all duration-500">
+                {/* Header */}
+                <div className="text-center mb-8 animate-slide-in">
+                    <div className="inline-block p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full mb-4 border border-indigo-500/30 animate-pulse-glow">
+                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                             <span className="text-white font-bold text-lg">
                                 T
                             </span>
                         </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-[#f8faff] dark:text-[#f8faff] mb-2">
+                    <h2 className="text-4xl font-bold text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text mb-3">
                         {isSignUp ? "Join TinkFlow" : "Welcome Back"}
                     </h2>
-                    <p className="text-[#b0b3b8] dark:text-[#b0b3b8] text-sm">
+                    <p className="text-[#b0b3b8] dark:text-[#b0b3b8] text-sm leading-relaxed">
                         {isSignUp
                             ? "Start your AI-powered learning journey"
                             : "Continue exploring concepts with AI"}
@@ -148,77 +130,193 @@ function AuthWindow() {
                     onSubmit={isSignUp ? handleSignUp : handleSignIn}
                     className="space-y-6"
                 >
-                    <div>
+                    {/* Email Field */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="email"
+                            className="text-sm font-semibold text-indigo-300 dark:text-purple-300 flex items-center gap-2"
+                        >
+                            <svg
+                                className="w-4 h-4 text-indigo-400 dark:text-purple-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                            </svg>
+                            Email Address
+                        </label>
                         <input
+                            id="email"
                             type="email"
-                            placeholder="Email address"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-white/15 dark:border-white/15 
-                                     rounded-lg text-[#f8faff] dark:text-[#f8faff] placeholder-[#8b949e] dark:placeholder-[#8b949e] 
-                                     focus:outline-none focus:border-[#5a9cf8] dark:focus:border-[#5a9cf8] focus:shadow-[0_0_0_3px_rgba(90,156,248,0.25)]
-                                     transition-all duration-200"
+                            aria-describedby="email-hint"
+                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-indigo-600/30 dark:border-purple-600/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-purple-400/50 focus:border-indigo-400/50 dark:focus:border-purple-400/50 text-white placeholder-indigo-400 dark:placeholder-purple-400 transition-all duration-300 backdrop-blur-sm shadow-inner hover:border-indigo-500/80 dark:hover:border-purple-500/80 focus:scale-[1.02] active:scale-[0.98]"
+                            placeholder="Enter your email address"
                         />
                     </div>
 
-                    <div>
+                    {/* Password Field */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="password"
+                            className="text-sm font-semibold text-indigo-300 dark:text-purple-300 flex items-center gap-2"
+                        >
+                            <svg
+                                className="w-4 h-4 text-indigo-400 dark:text-purple-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                            </svg>
+                            Password
+                        </label>
                         <input
+                            id="password"
                             type="password"
-                            placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-white/15 dark:border-white/15 
-                                     rounded-lg text-[#f8faff] dark:text-[#f8faff] placeholder-[#8b949e] dark:placeholder-[#8b949e] 
-                                     focus:outline-none focus:border-[#5a9cf8] dark:focus:border-[#5a9cf8] focus:shadow-[0_0_0_3px_rgba(90,156,248,0.25)]
-                                     transition-all duration-200"
+                            aria-describedby="password-hint"
+                            className="w-full px-4 py-3 bg-[#2a2a2e] dark:bg-[#2a2a2e] border border-indigo-600/30 dark:border-purple-600/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-purple-400/50 focus:border-indigo-400/50 dark:focus:border-purple-400/50 text-white placeholder-indigo-400 dark:placeholder-purple-400 transition-all duration-300 backdrop-blur-sm shadow-inner hover:border-indigo-500/80 dark:hover:border-purple-500/80 focus:scale-[1.02] active:scale-[0.98]"
+                            placeholder="Enter your password"
                         />
                     </div>
 
+                    {/* Error Message */}
+                    {error && (
+                        <div
+                            className="bg-red-900/20 dark:bg-red-900/30 border border-red-500/30 dark:border-red-500/40 rounded-xl p-4 backdrop-blur-sm animate-fade-in"
+                            role="alert"
+                            aria-live="polite"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-6 h-6 bg-red-500/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg
+                                        className="w-4 h-4 text-red-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                </div>
+                                <div className="text-red-300 text-sm leading-relaxed">
+                                    {error}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 
-                                   ${
-                                       loading
-                                           ? "bg-[#3a3a3e] dark:bg-[#3a3a3e] cursor-not-allowed opacity-60"
-                                           : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:from-indigo-700 active:to-purple-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                   }
-                                   focus:outline-none focus:shadow-[0_0_0_3px_rgba(99,102,241,0.4)]`}
+                        aria-label={
+                            isSignUp
+                                ? "Create new account"
+                                : "Sign in to your account"
+                        }
+                        className="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-400/40 disabled:shadow-slate-500/25 disabled:cursor-not-allowed backdrop-blur-sm animate-float active:scale-95"
                     >
                         {loading ? (
-                            <div className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : isSignUp ? (
-                            "Create Account"
+                            <div className="flex items-center justify-center gap-3">
+                                <div className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <span>
+                                    {isSignUp
+                                        ? "Creating account..."
+                                        : "Signing in..."}
+                                </span>
+                            </div>
                         ) : (
-                            "Sign In"
+                            <div className="flex items-center justify-center gap-2">
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d={
+                                            isSignUp
+                                                ? "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                                                : "M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                                        }
+                                    />
+                                </svg>
+                                <span>
+                                    {isSignUp ? "Create Account" : "Sign In"}
+                                </span>
+                            </div>
                         )}
                     </button>
-
-                    {error && (
-                        <div
-                            className="bg-red-900/20 dark:bg-red-900/30 border border-red-500/30 dark:border-red-500/40 
-                                       rounded-lg p-3 text-red-400 dark:text-red-400 text-sm"
-                        >
-                            {error}
-                        </div>
-                    )}
                 </form>
 
-                <div className="auth-switch text-center mt-6">
-                    <span className="auth-switch-text text-gray-400 dark:text-gray-400 text-sm">
-                        {isSignUp
-                            ? "Already have an account?"
-                            : "Don't have an account?"}
-                    </span>
+                {/* Toggle Form Type */}
+                <div className="mt-8 text-center">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-indigo-600/50 dark:border-purple-600/50"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-4 bg-gradient-to-r from-indigo-900/95 via-purple-900/95 to-indigo-900/95 text-indigo-400 dark:text-purple-400">
+                                {isSignUp
+                                    ? "Already have an account?"
+                                    : "New to TinkFlow?"}
+                            </span>
+                        </div>
+                    </div>
                     <button
                         type="button"
                         onClick={() => setIsSignUp(!isSignUp)}
-                        className="auth-switch-btn ml-2 text-blue-400 dark:text-blue-400 hover:text-blue-300 dark:hover:text-blue-300 
-                                 text-sm font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer"
+                        aria-label={
+                            isSignUp
+                                ? "Switch to sign in"
+                                : "Switch to create new account"
+                        }
+                        className="mt-4 w-full py-3 px-6 bg-[#2a2a2e] dark:bg-[#2a2a2e] hover:bg-indigo-700/90 dark:hover:bg-purple-700/90 text-indigo-300 dark:text-purple-300 hover:text-white font-semibold rounded-xl transition-all duration-300 border border-indigo-600/60 dark:border-purple-600/60 hover:border-indigo-500/80 dark:hover:border-purple-500/80 backdrop-blur-sm transform hover:scale-105 active:scale-95 shadow-lg"
                     >
-                        {isSignUp ? "Sign In" : "Sign Up"}
+                        <div className="flex items-center justify-center gap-2">
+                            <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                                />
+                            </svg>
+                            <span>
+                                {isSignUp
+                                    ? "Sign In Instead"
+                                    : "Create New Account"}
+                            </span>
+                        </div>
                     </button>
                 </div>
             </div>

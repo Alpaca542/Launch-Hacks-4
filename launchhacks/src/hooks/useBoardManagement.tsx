@@ -39,7 +39,8 @@ export interface UseBoardManagementReturn {
 
 export const useBoardManagement = (
     user: User | null,
-    notifications: Partial<UseNotificationsReturn> = {}
+    notifications: Partial<UseNotificationsReturn> = {},
+    onInputFinished: (value: string) => void
 ): UseBoardManagementReturn => {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -464,7 +465,20 @@ export const useBoardManagement = (
 
     return {
         // State
-        nodes,
+        // Always include the extra hidden node if not present
+        nodes: nodes.some((n) => n.id === "hidden_input")
+            ? nodes
+            : [
+                  ...nodes,
+                  {
+                      id: "hidden_input",
+                      type: "input",
+                      data: { label: "", onInputFinished: onInputFinished },
+                      position: { x: -1000, y: -1000 },
+                      hidden: true,
+                      draggable: false,
+                  },
+              ],
         edges,
         allBoards,
         currentBoard,
