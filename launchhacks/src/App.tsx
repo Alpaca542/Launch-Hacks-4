@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, memo } from "react";
+import { useState, useCallback, useMemo, useRef, memo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -18,13 +18,20 @@ import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
 import "./index.css"; // Ensure this is imported for styles
+import TempInputNode from "./components/TempInputNode";
+
 // Hooks
 import { useAuth } from "./hooks/useAuth";
 import { useBoardManagement } from "./hooks/useBoardManagement";
 import { useNotifications } from "./hooks/useNotifications";
 
 // Configuration
-import { nodeTypes } from "./config/nodeTypes";
+import { nodeTypes as baseNodeTypes } from "./config/nodeTypes";
+
+const nodeTypes = {
+    ...baseNodeTypes,
+    tempInput: TempInputNode,
+};
 
 // Context
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
@@ -62,33 +69,12 @@ const MemoizedExplanationSidebar = memo(function MemoizedExplanationSidebar({
                 left: true,
             }}
         >
-            <div
-                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
-                           border border-gray-200/50 dark:border-gray-700/50
-                           animate-in slide-in-from-right-3 fade-in duration-500
-                           transition-all ease-out
-                           ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
-                           before:absolute before:inset-0 before:bg-gradient-to-br 
-                           before:from-white/40 before:to-transparent before:pointer-events-none
-                           dark:before:from-gray-800/40 dark:before:to-transparent
-                           relative overflow-auto"
-                style={{
-                    maxHeight: "calc(100vh - 100px)",
-                    height: "auto",
-                    minHeight: "200px",
-                }}
-            >
-                {/* Subtle top accent */}
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
-
-                {/* Content container with improved styling */}
-                <div className="relative z-10 overflow-auto h-full">
-                    <ExplanationSidebar
-                        explanation={explanation}
-                        onClose={onClose}
-                        isVisible={isVisible}
-                    />
-                </div>
+            <div className="relative z-10 overflow-auto h-full">
+                <ExplanationSidebar
+                    explanation={explanation}
+                    onClose={onClose}
+                    isVisible={isVisible}
+                />
             </div>
         </Resizable>
     );
@@ -98,6 +84,7 @@ function AppContent() {
     // Explanation sidebar state
     const [isExplanationVisible, setIsExplanationVisible] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isFloatingInputVisible, setIsFloatingInputVisible] = useState(false);
 
     const [currentExplanation, setCurrentExplanation] = useState<{
         title: string;
@@ -170,11 +157,104 @@ function AppContent() {
         },
         [onEdgesChange]
     );
+    // Handle node creation callback
+    const handleNodeCallback = useCallback(
+        (
+            _nodeId: string,
+            _data: any,
+            mode?: string,
+            parent?: string,
+            position?: { x: number; y: number }
+        ) => {
+            if (!mode || !position) {
+                console.warn(
+                    "handleNodeCallback called without mode or position",
+                    mode,
+                    position
+                );
+                return;
+            }
+
+            const id = `temp-${Date.now()}-${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+
+            setNodes((prev) => [
+                ...prev,
+                {
+                    id,
+                    type: "tempInput",
+                    position,
+                    data: { mode },
+                },
+            ]);
+            // Attach the new node to the parent with an edge if parent is provided
+            if (parent) {
+                onEdgesChange([
+                    {
+                        type: "add",
+                        item: {
+                            id: `e${parent}-${id}`,
+                            source: parent,
+                            target: id,
+                        },
+                    },
+                ]);
+            }
+        },
+        [setNodes]
+    );
+
+    // Inject callback into all nodes' data
+    const nodesWithCallback = useMemo(() => {
+        return nodes.map((node) => {
+            let data = { ...node.data };
+            // Inject onNodeCallback as before
+            data.onNodeCallback = (
+                mode?: string,
+                parent?: string,
+                position?: { x: number; y: number }
+            ) => handleNodeCallback(node.id, node.data, mode, parent, position);
+            // If this is a tempInput node, inject onSubmit callback
+            if (node.type === "tempInput") {
+                data.onSubmit = (value: string, parentID: string) => {
+                    setNodes((nodes) =>
+                        nodes.map((n) =>
+                            n.id === node.id
+                                ? {
+                                      ...n,
+                                      type: "draggableEditable",
+                                      data: { ...n.data, label: value },
+                                  }
+                                : n
+                        )
+                    );
+                    // Attach the new node to the parent with an edge
+                    if (parentID) {
+                        onEdgesChange([
+                            {
+                                type: "add",
+                                item: {
+                                    id: `e${parentID}-${node.id}`,
+                                    source: parentID,
+                                    target: node.id,
+                                },
+                            },
+                        ]);
+                    }
+                };
+            }
+            return {
+                ...node,
+                data,
+            };
+        });
+    }, [nodes, handleNodeCallback, setNodes]);
 
     const ReactFlowComponent = useMemo(
         () => (
             <ReactFlow
-                nodes={nodes}
+                nodes={nodesWithCallback}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
@@ -195,7 +275,7 @@ function AppContent() {
                 />
             </ReactFlow>
         ),
-        [nodes, edges, onNodesChange, onEdgesChange, onConnect]
+        [nodesWithCallback, edges, onNodesChange, onEdgesChange, onConnect]
     );
 
     // Render authentication screen if not logged in
@@ -217,7 +297,6 @@ function AppContent() {
                 notifications={notifications}
                 onRemove={removeNotification}
             />
-
             <div style={{ height: "100%", position: "relative" }}>
                 {/* Simple flex layout */}
                 <PanelGroup direction="horizontal">

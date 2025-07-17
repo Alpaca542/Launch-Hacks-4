@@ -19,14 +19,20 @@ interface NodeData {
     isLoading?: boolean;
     tokenColors?: { [key: string]: string };
     previousNode?: string; // ID of the node that created this one
+    onNodeCallback?: (mode?: string) => void;
 }
 
 interface StaticEditableNodeProps {
     data: NodeData;
     id: string;
+    onNodeCallback?: (nodeId: string, data?: any) => void;
 }
 
-function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
+function StaticEditableNode({
+    data,
+    id,
+    onNodeCallback,
+}: StaticEditableNodeProps) {
     const [summary, setSummary] = useState<string>(
         data.summary || data.label || "Static Node"
     );
