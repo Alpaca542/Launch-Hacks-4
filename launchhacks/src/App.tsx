@@ -62,12 +62,33 @@ const MemoizedExplanationSidebar = memo(function MemoizedExplanationSidebar({
                 left: true,
             }}
         >
-            <div className="relative z-10 overflow-auto h-full">
-                <ExplanationSidebar
-                    explanation={explanation}
-                    onClose={onClose}
-                    isVisible={isVisible}
-                />
+            <div
+                className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
+                           border border-gray-200/50 dark:border-gray-700/50
+                           animate-in slide-in-from-right-3 fade-in duration-500
+                           transition-all ease-out
+                           ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
+                           before:absolute before:inset-0 before:bg-gradient-to-br 
+                           before:from-white/40 before:to-transparent before:pointer-events-none
+                           dark:before:from-gray-800/40 dark:before:to-transparent
+                           relative overflow-auto"
+                style={{
+                    maxHeight: "calc(100vh - 100px)",
+                    height: "auto",
+                    minHeight: "200px",
+                }}
+            >
+                {/* Subtle top accent */}
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
+
+                {/* Content container with improved styling */}
+                <div className="relative z-10 overflow-auto h-full">
+                    <ExplanationSidebar
+                        explanation={explanation}
+                        onClose={onClose}
+                        isVisible={isVisible}
+                    />
+                </div>
             </div>
         </Resizable>
     );
@@ -82,7 +103,7 @@ function AppContent() {
         title: string;
         text: string;
     } | null>(null);
-    const [inputNodeMode, setInputNodeMode] = useState<string>("");
+
     // Optimized explanation handlers
     const showExplanation = useCallback((title: string, text: string) => {
         setCurrentExplanation({ title, text });
@@ -104,9 +125,7 @@ function AppContent() {
         showError,
         showInfo,
     } = useNotifications();
-    const onInputFinished = (value: string) => {
-        // Handle input submission logic here
-    };
+
     // Board Management
     const {
         nodes,
@@ -123,11 +142,7 @@ function AppContent() {
         deleteBoard,
         updateBoardName,
         clearBoardState,
-    } = useBoardManagement(
-        user,
-        { showSuccess, showError, showInfo },
-        onInputFinished
-    );
+    } = useBoardManagement(user, { showSuccess, showError, showInfo });
 
     // // Handle sign out with state cleanup
     const handleSignOut = async () => {
@@ -155,14 +170,7 @@ function AppContent() {
         },
         [onEdgesChange]
     );
-    const showInputNode = (show: boolean, mode: string) => {
-        setNodes((prevNodes) =>
-            prevNodes.map((node) =>
-                node.id === "hidden_input" ? { ...node, hidden: show } : node
-            )
-        );
-        setInputNodeMode(mode);
-    };
+
     const ReactFlowComponent = useMemo(
         () => (
             <ReactFlow
@@ -171,9 +179,7 @@ function AppContent() {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                nodeTypes={nodeTypes((show: boolean, value: string) => {
-                    showInputNode(show, value);
-                })}
+                nodeTypes={nodeTypes}
                 connectionMode={ConnectionMode.Loose}
                 fitView
                 className="bg-gray-50 dark:bg-gray-900 w-full h-full"
