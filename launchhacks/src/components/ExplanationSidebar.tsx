@@ -16,9 +16,7 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
 }: ExplanationSidebarProps) {
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isVisible);
-    useLayoutEffect(() => {
-        if (isVisible) window.processAllMermaidDiagrams!();
-    });
+
     useEffect(() => {
         if (isVisible) {
             setShouldRender(true);
