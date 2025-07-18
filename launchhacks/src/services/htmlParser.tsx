@@ -339,7 +339,20 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                     .slice(2)}`;
                 const diagramCode = value as string;
                 try {
-                    const svgElement = await mermaidToSvg(diagramCode);
+                    const svgElement = await mermaidToSvg(
+                        `---
+config:
+    theme: 'base'
+    themeVariables:
+        primaryColor: '#2D2A32'
+        primaryTextColor: '#C084FC'
+        primaryBorderColor: '#6D28D9'
+        lineColor: '#A78BFA'
+        secondaryColor: '#3B2F4A'
+        tertiaryColor: '#C084FC'
+---
+                        ${diagramCode}`
+                    );
                     // Serialize SVG element to string for HTML insertion
                     const svgHtml = svgElement.outerHTML;
                     return `
