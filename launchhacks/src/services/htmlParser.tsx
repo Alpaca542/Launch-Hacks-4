@@ -50,10 +50,10 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
 
         switch (key) {
             case "large_header":
-                return `<h1 class="text-4xl lg:text-5xl font-bold my-8 text-gray-900 dark:text-gray-100 leading-tight border-b-4 border-blue-600 dark:border-blue-400 pb-2 transition-colors duration-200">${value}</h1>`;
+                return `<h1 class="text-4xl lg:text-4xl font-bold my-8 text-gray-900 dark:text-gray-100 leading-tight border-b-4 border-blue-600 dark:border-blue-400 pb-2 transition-colors duration-200">${value}</h1>`;
 
             case "small_header":
-                return `<h2 class="text-2xl lg:text-3xl font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200 leading-snug transition-colors duration-200">${value}</h2>`;
+                return `<h2 class="text-3xl lg:text-3xl font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200 leading-snug transition-colors duration-200">${value}</h2>`;
 
             case "ul":
                 const ulItems = (value as string[])

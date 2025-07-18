@@ -53,13 +53,13 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
                                            : "transform translate-x-full"
                                    }`}
             style={{
-                maxHeight: "calc(100vh - 100px)",
-                height: "auto",
+                transition: "max-height 0.3s ease",
+                maxHeight: "800px",
                 minHeight: "200px",
             }}
         >
             <div
-                className={`w-full h-full flex flex-col fixed top-0 right-0 z-50 transition-all duration-300 ease-out ${
+                className={`w-full h-full flex flex-col top-0 right-0 z-50 transition-all duration-300 ease-out ${
                     isAnimating
                         ? "transform translate-x-0 opacity-100"
                         : "transform translate-x-full opacity-0"

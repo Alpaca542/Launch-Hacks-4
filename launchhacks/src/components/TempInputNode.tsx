@@ -2,29 +2,39 @@ import { Handle, Position } from "reactflow";
 import { useEffect, useRef, useState } from "react";
 
 interface TempInputNodeProps {
-    id: string;
     data: {
         mode: string;
-        onSubmit: (id: string, value: string) => void;
+        onSubmit: (value: string) => void;
+        onReady?: () => void; // optional, for parent sync
     };
 }
 
-export default function TempInputNode({ id, data }: TempInputNodeProps) {
+export default function TempInputNode({ data }: TempInputNodeProps) {
     const [value, setValue] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        inputRef.current?.focus();
+        const raf = requestAnimationFrame(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+                data.onReady?.();
+                // Debug info (optional)
+                // console.log("Focused input:", inputRef.current);
+            }
+        });
+
+        return () => cancelAnimationFrame(raf);
     }, []);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = value.trim();
+        if (trimmed) data.onSubmit(trimmed);
+    };
 
     return (
         <div className="bg-white border border-blue-400 rounded-lg p-3 shadow-md min-w-[180px]">
-            <form
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    if (value.trim()) data.onSubmit(id, value);
-                }}
-            >
+            <form onSubmit={handleSubmit}>
                 <input
                     ref={inputRef}
                     className="border rounded px-2 py-1 text-sm w-full"

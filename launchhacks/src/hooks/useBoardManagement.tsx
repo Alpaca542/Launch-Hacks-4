@@ -30,6 +30,7 @@ export interface UseBoardManagementReturn {
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
+    setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void;
     switchToBoard: (boardId: string) => Promise<void>;
     createNewBoard: (boardName?: string) => Promise<BoardData | null>;
     deleteBoard: (boardId: string) => Promise<void>;
@@ -476,6 +477,7 @@ export const useBoardManagement = (
         onNodesChange,
         onEdgesChange,
         setNodes,
+        setEdges,
         switchToBoard,
         createNewBoard,
         deleteBoard,

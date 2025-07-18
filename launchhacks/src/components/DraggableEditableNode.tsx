@@ -5,8 +5,6 @@ import LoadingSpinner from "./LoadingSpinner";
 import { createPortal } from "react-dom";
 
 import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
-import { FiMoreHorizontal } from "react-icons/fi";
-import FloatingInput from "./FloatingInput";
 
 interface NodeData {
     label?: string;
@@ -134,6 +132,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         const currentNodes = getNodes();
         const currentNode = currentNodes.find((node) => node.id === id);
         if (!currentNode) {
+            console.error("Shit went south");
             return;
         }
 
@@ -459,21 +458,6 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         };
     };
 
-    // Utility to deeply remove all function properties from an object (for Firestore safety)
-    function stripFunctions(obj: any): any {
-        if (Array.isArray(obj)) return obj.map(stripFunctions);
-        if (obj && typeof obj === "object") {
-            const out: any = {};
-            for (const key in obj) {
-                if (typeof obj[key] !== "function") {
-                    out[key] = stripFunctions(obj[key]);
-                }
-            }
-            return out;
-        }
-        return obj;
-    }
-
     return (
         <div
             ref={nodeRef}
@@ -495,14 +479,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 {renderContent}
             </div>
             <Handles />
-            <div
-                className="absolute top-0 right-0 p-2 text-gray-400 hover:text-gray-200 cursor-pointer"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <FiMoreHorizontal className="w-20 h-20" />
-            </div>
+
             <div
                 className="input-menu"
                 style={{ position: "relative", zIndex: 10 }}

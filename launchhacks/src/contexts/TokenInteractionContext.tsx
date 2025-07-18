@@ -40,33 +40,32 @@ interface TokenInteractionProviderProps {
     showExplanation?: (title: string, text: string) => void;
 }
 
-export const TokenInteractionProvider: React.FC<
-    TokenInteractionProviderProps
-> = ({
-    children,
-    nodes,
-    onNodesChange,
-    onEdgesChange,
-    setNodes,
-    showExplanation,
-}) => {
-    const handleTokenClick = (
-        token: Token,
-        sourceNodeId: string,
-        sourceNodePosition: { x: number; y: number },
-        sourceNodeType: string,
-        sourceNodeColor?: string,
-        sourceNodeText?: string,
-        suggestionID?: string
-    ) => {
-        // Find the source node to check token colors
-        const sourceNode = nodes.find((node) => node.id === sourceNodeId);
-        if (!sourceNode) return null;
-
-        // Initialize tokenColors if it doesn't exist
-        const tokenColors = sourceNode.data.tokenColors || {};
-
-        // Check if this token is already colored
+export const handleTokenClick = (
+    token: Token,
+    sourceNodeId: string,
+    sourceNodePosition: { x: number; y: number },
+    sourceNodeType: string,
+    nodes: Node[],
+    setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void,
+    onNodesChange: (changes: any) => void,
+    onEdgesChange: (changes: any) => void,
+    sourceNodeColor?: string,
+    sourceNodeText?: string,
+    suggestionID?: string,
+    isInput?: boolean,
+    inputNode?: Node,
+    inputMode?: string,
+    showExplanation?: (title: string, text: string) => void
+) => {
+    console.log(1);
+    const sourceNode = nodes.find((node) => node.id === sourceNodeId);
+    if (!sourceNode) return null;
+    console.log(2);
+    // Initialize tokenColors if it doesn't exist
+    const tokenColors = sourceNode.data.tokenColors || {};
+    console.log(3);
+    // Check if this token is already colored
+    if (!isInput) {
         const tokenKey = token.myConcept || token.word;
         if (tokenColors[tokenKey]) {
             // Token is already colored, don't allow clicking
@@ -75,17 +74,21 @@ export const TokenInteractionProvider: React.FC<
             );
             return null;
         }
-
-        // Determine color based on source node type
-        let color: string;
-        if (sourceNodeType === "staticEditable") {
-            color = generateRandomColor();
-        } else {
-            color = sourceNodeColor
-                ? generateColorVariation(sourceNodeColor)
-                : generateRandomColor();
-        }
-
+    }
+    console.log(4);
+    // Determine color based on source node type
+    let color: string;
+    if (sourceNodeType === "staticEditable") {
+        color = generateRandomColor();
+    } else {
+        color = sourceNodeColor
+            ? generateColorVariation(sourceNodeColor)
+            : generateRandomColor();
+    }
+    let newNode: Node | null = null;
+    if (isInput) {
+        newNode = inputNode!;
+    } else {
         // Update the source node's tokenColors
         const updatedTokenColors = { ...tokenColors };
         if (token.myConcept) {
@@ -115,7 +118,7 @@ export const TokenInteractionProvider: React.FC<
         // Calculate position for new node
         const newPosition = calculateNewNodePosition(sourceNodePosition);
 
-        const newNode = createNewNode(
+        newNode = createNewNode(
             newPosition,
             token.word, // Use the token word as initial label
             "Loading...", // full_text placeholder
@@ -124,10 +127,6 @@ export const TokenInteractionProvider: React.FC<
             sourceNodeType,
             sourceNodeId // Pass the source node ID as previousNode
         );
-
-        // Add loading indicator flag to node data
-        newNode.data.isLoading = true;
-
         // Create new edge
         const newEdge = createNewEdge(
             sourceNodeId,
@@ -139,88 +138,159 @@ export const TokenInteractionProvider: React.FC<
         // Add the new node and edge immediately
         onNodesChange([{ type: "add", item: newNode }]);
         onEdgesChange([{ type: "add", item: newEdge }]);
+    }
 
-        // Always ask AI for concept and update node when response arrives
-        askAITwice(
-            token.word,
-            sourceNodeText || "",
-            // Progressive summary update callback
-            (chunk: string) => {
-                setNodes((nds) =>
-                    nds.map((node) => {
-                        if (node.id === newNode.id) {
-                            const currentSummary = node.data.summary || "";
-                            return {
-                                ...node,
-                                data: {
-                                    ...node.data,
-                                    label: currentSummary + chunk,
-                                    summary: currentSummary + chunk,
-                                },
-                            };
-                        }
-                        return node;
-                    })
-                );
-            }
-        )
-            .then((response) => {
-                const full_text =
-                    response.firstResponse?.response || token.word;
-                const summary = response.secondResponse?.response || token.word;
-                const suggestions = response.thirdResponse?.response || {};
-                // Final update with all responses when everything is complete
-                setNodes((nds) =>
-                    nds.map((node) => {
-                        if (node.id === newNode.id) {
-                            // Create a new node object to notify React Flow about the change
-                            return {
-                                ...node,
-                                data: {
-                                    ...node.data,
-                                    label: summary,
-                                    title: token.word, // Use the original token as title
-                                    summary: summary,
-                                    full_text: full_text,
-                                    suggestions: suggestions, // Could be populated by AI later
-                                    isLoading: false,
-                                },
-                            };
-                        }
-                        return node;
-                    })
-                );
+    if (newNode) {
+        newNode.data.isLoading = true;
+    }
+
+    if (isInput) {
+        console.log(5);
+        // Update the source node with new token colors
+        setNodes((nds) =>
+            nds.map((node) => {
+                if (node.id === newNode?.id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            label: "Loading...",
+                            summary: "",
+                            full_text: "",
+                        },
+                    };
+                }
+                return node;
             })
-            .catch(() => {
-                // Fallback to original word if AI request fails
-                setNodes((nds) =>
-                    nds.map((node) => {
-                        if (node.id === newNode.id) {
-                            // Create a new node object to notify React Flow about the change
-                            return {
-                                ...node,
-                                data: {
-                                    ...node.data,
-                                    label: token.word,
-                                    title: token.word,
-                                    summary: token.word,
-                                    full_text: token.word,
-                                    suggestions: [],
-                                    isLoading: false,
-                                },
-                            };
-                        }
-                        return node;
-                    })
-                );
-            });
+        );
+    }
 
-        return color;
-    };
+    // Always ask AI for concept and update node when response arrives
+    askAITwice(
+        token.word,
+        sourceNodeText || "",
+        inputMode || "default",
+        // Progressive summary update callback
+        (chunk: string) => {
+            setNodes((nds) =>
+                nds.map((node) => {
+                    if (node.id === newNode?.id) {
+                        const currentSummary = node.data.summary || "";
+                        return {
+                            ...node,
+                            data: {
+                                ...node.data,
+                                label: currentSummary + chunk,
+                                summary: currentSummary + chunk,
+                            },
+                        };
+                    }
+                    return node;
+                })
+            );
+        }
+    )
+        .then((response) => {
+            const full_text = response.firstResponse?.response || token.word;
+            const summary = response.secondResponse?.response || token.word;
+            const suggestions = response.thirdResponse?.response || {};
+            // Final update with all responses when everything is complete
+            setNodes((nds) =>
+                nds.map((node) => {
+                    if (node.id === newNode?.id) {
+                        // Create a new node object to notify React Flow about the change
+                        return {
+                            ...node,
+                            data: {
+                                ...node.data,
+                                label: summary,
+                                title: token.word, // Use the original token as title
+                                summary: summary,
+                                full_text: full_text,
+                                suggestions: suggestions, // Could be populated by AI later
+                                isLoading: false,
+                            },
+                        };
+                    }
+                    return node;
+                })
+            );
+        })
+        .catch(() => {
+            // Fallback to original word if AI request fails
+            setNodes((nds) =>
+                nds.map((node) => {
+                    if (node.id === newNode?.id) {
+                        // Create a new node object to notify React Flow about the change
+                        return {
+                            ...node,
+                            data: {
+                                ...node.data,
+                                label: token.word,
+                                title: token.word,
+                                summary: token.word,
+                                full_text: token.word,
+                                suggestions: [],
+                                isLoading: false,
+                            },
+                        };
+                    }
+                    return node;
+                })
+            );
+        });
+
+    return color;
+};
+
+export const TokenInteractionProvider: React.FC<
+    TokenInteractionProviderProps
+> = ({
+    children,
+    nodes,
+    onNodesChange,
+    onEdgesChange,
+    setNodes,
+    showExplanation,
+}) => {
+    // Replace local handleTokenClick with a wrapper that calls the exported function
+    const handleTokenClickWrapper = (
+        token: Token,
+        sourceNodeId: string,
+        sourceNodePosition: { x: number; y: number },
+        sourceNodeType: string,
+        sourceNodeColor?: string,
+        sourceNodeText?: string,
+        solutionID?: string,
+        isInput?: boolean,
+        inputNode?: Node,
+        inputMode?: string
+    ) =>
+        handleTokenClick(
+            token,
+            sourceNodeId,
+            sourceNodePosition,
+            sourceNodeType,
+            nodes,
+            setNodes,
+            onNodesChange,
+            onEdgesChange,
+            sourceNodeColor,
+            sourceNodeText,
+            solutionID,
+            isInput,
+            inputNode,
+            inputMode,
+            showExplanation
+        );
 
     return (
         <TokenInteractionContext.Provider
-            value={{ handleTokenClick, setNodes, showExplanation }}
+            value={{
+                handleTokenClick: handleTokenClickWrapper,
+                setNodes,
+                showExplanation,
+            }}
         >
             {children}
         </TokenInteractionContext.Provider>

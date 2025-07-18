@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "firebase": "^11.9.1",
+    "jsonrepair": "^3.13.0",
     "mermaid": "^11.8.1",
     "re-resizable": "^6.11.2",
     "react": "^19.1.0",

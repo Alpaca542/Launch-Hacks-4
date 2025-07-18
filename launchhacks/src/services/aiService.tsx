@@ -1,6 +1,14 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // Adjust path to your Firebase config
 import { parseJsonToHtml } from "./htmlParser";
+import { jsonrepair } from "jsonrepair";
+import {
+    detailedExplanationPrompt,
+    suggestionsPrompt,
+    summaryPrompt,
+} from "./prompts";
+
+import { SCHEMA } from "./prompts";
 const askAI = async (message: string): Promise<any> => {
     try {
         // Add validation
@@ -99,6 +107,7 @@ const askAIStream = async (
 export const askAITwice = async (
     message: string,
     context: string,
+    inputMode: string,
     onSummaryChunk: (chunk: string) => void
 ): Promise<{
     firstResponse: any;
@@ -106,166 +115,23 @@ export const askAITwice = async (
     thirdResponse: any;
 }> => {
     try {
-        const SCHEMA = [
-            {
-                large_header: "Large Header Text",
-            },
-            {
-                small_header: "Small Header Text",
-            },
-            {
-                ul: ["Item one", "Item 2", "Item 3"],
-            },
-            {
-                quiz: [
-                    {
-                        question: "What is the capital of France?",
-                        answers: [
-                            {
-                                Berlin: "It's germany!",
-                            },
-                            {
-                                Madrid: "It is spain :(",
-                            },
-                            {
-                                Paris: "Correct! It's Paris!",
-                            },
-                        ],
-                        correctAnswer: 2,
-                    },
-                    {
-                        question: "What is the capital of Poland?",
-                        answers: [
-                            {
-                                Berlin: "It's germany!",
-                            },
-                            {
-                                Warshava: "Yahoo! It's Poland!",
-                            },
-                            {
-                                Paris: "No!",
-                            },
-                        ],
-                        correctAnswer: 1,
-                    },
-                ],
-            },
-            {
-                img: [
-                    "very short image description(e.g. funny cats)",
-                    "The image shows a group of cats doing something amusing.",
-                ],
-            },
-            {
-                vid: [
-                    "very short video description(e.g. playing footbal)",
-                    "This video shows a group of people playing football in a park.",
-                ],
-            },
-            {
-                gif: [
-                    "very short gif description(e.g. frogs jumping)",
-                    "This gif shows frogs jumping around in a pond.",
-                ],
-            },
-            {
-                textblock: "text, **text**, (text)[text.com]",
-            },
-            {
-                ol: ["Heyyo", "Nice", "That's a list"],
-            },
-            {
-                codeblock: "console.log('Hello World');",
-            },
-            {
-                quote: "This is a quote",
-            },
-            {
-                link: "https://example.com",
-            },
-            {
-                table: [
-                    ["Header1", "Header2"],
-                    ["Row1Col1", "Row1Col2"],
-                    ["Row2Col1", "Row2Col2"],
-                ],
-            },
-            {
-                diagram:
-                    "a mermaid-based diagram: graph TD; A-->B; A-->C; B-->D; C-->D;",
-            },
-            {
-                note: "This is a note.",
-            },
-            {
-                warning: "This is a warning note.",
-            },
-            {
-                tip: "This is a tip note.",
-            },
-            {
-                htmlCanvas: "js code for HTML canvas",
-            },
-        ];
-
-        const detailedExplanationPrompt = `
-        Return ONLY a valid JSON array.
-
-        RULES
-        • Each object = exactly one tag from SCHEMA; no new tags.
-        • Include:
-        – Only one of {quiz} with multiple questions
-        – At least one of {codeblock or diagram or htmlCanvas or table}
-        – At least two of of {img or vid or gif}
-        - At least five of of {textblock or ul or ol }
-        - ONLY ONE of { tip or note or warning or quote or link}
-        • You should educate the user about the concept and then ask the quiz about the material you taught.
-        • Use different tags to make the studying experience diverse and engaging
-        • Cover, somewhere in the set: definition, deep explanation, worked example, real-world analogy and links at what to look up next.
-        • If you have a long explanation, break it into multiple textblocks.
-        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space.
-        • Tone: encouraging, professional
-        • Make the text of the explanations long and detailed! You need to educate the user
-        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, htmlCanvas, table.
-        • Make sure to put the concept over the context, not focusing on the context but rather on what actually needs to be explained.
-
-        OUTPUT
-        VALID JSON array only — no comments, or extra text. All the braces must be properly closed.
-
-        SCHEMA = ${JSON.stringify(SCHEMA)}\n
-        CONTEXT = ${context}
-        CONCEPT = ${message}
-        `;
-        const summaryPrompt = `Provide a brief explanation in 50 words or less.
-
-        CRITICAL:
-        - Highlight EVERY key term with [square-braces], e.g., [artificial intelligence], [mammal], [vector product]
-        - NO introductory phrases like "Here is..." or "Summary..."
-        - NO bullet points or formatting except [square-braces]
-        - Start immediately with explanation content
-        - ONLY the explanation text
-
-        Topic to explain: `;
-
-        const suggestionsPrompt = `You are an expert educator. Respond ONLY with a valid JSON array in the following format: ["concept1", "concept2", "concept3"]. 
-
-        Instructions:
-        - Suggest exactly 3-5 topics that are logical next steps for learning the given concept.
-        - Each topic must be no more than 5 words.
-        - Each topic MUST be enclosed in double quotes, e.g., "example topic".
-        - Do NOT include any explanation, commentary, or formatting outside the JSON array.
-        - Only output the JSON array as specified.
-
-        Concept: `;
-
         // Start all three requests concurrently
-        const detailedPromise = askAI(detailedExplanationPrompt);
-        const suggestionsPromise = askAI(suggestionsPrompt + message);
+        const detailedPromise = askAI(
+            detailedExplanationPrompt(
+                context ?? "",
+                message ?? "",
+                SCHEMA ?? [],
+                inputMode ?? ""
+            )
+        );
+        const suggestionsPromise = askAI(
+            suggestionsPrompt(message, inputMode) + message
+        );
 
         // Stream the summary with progressive updates
         let summaryAccumulator = "";
         const summaryPromise = askAIStream(
-            summaryPrompt + message,
+            summaryPrompt(message, context, inputMode) + message,
             (chunk: string) => {
                 summaryAccumulator += chunk;
                 // Call the callback with each chunk for progressive updates
@@ -302,10 +168,25 @@ export const askAITwice = async (
             );
         }
 
+        // Helper to safely parse JSON, repairing if needed
+        const safeParseJson = (jsonStr: string) => {
+            try {
+                return JSON.parse(jsonStr);
+            } catch {
+                try {
+                    const repaired = jsonrepair(jsonStr);
+                    return JSON.parse(repaired);
+                } catch (err) {
+                    console.error("JSON parsing and repair failed:", err);
+                    throw err;
+                }
+            }
+        };
+
         const processedResult = {
             firstResponse: {
                 response: await parseJsonToHtml(
-                    JSON.parse(
+                    safeParseJson(
                         detailedExplanation
                             .replace(/^```json\s*/i, "")
                             .replace(/^```\s*/i, "")
@@ -319,7 +200,13 @@ export const askAITwice = async (
                     .replace(/\]/g, "_"),
             },
             thirdResponse: {
-                response: parsedTopics,
+                response: (() => {
+                    try {
+                        return safeParseJson(cleanedSuggestionsData);
+                    } catch {
+                        return parsedTopics;
+                    }
+                })(),
             },
         };
 

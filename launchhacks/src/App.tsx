@@ -5,10 +5,12 @@ import ReactFlow, {
     ConnectionMode,
     Connection,
     BackgroundVariant,
+    MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Resizable } from "re-resizable";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
+import { handleTokenClick } from "./contexts/TokenInteractionContext";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -124,6 +126,7 @@ function AppContent() {
         onNodesChange,
         onEdgesChange,
         setNodes,
+        setEdges,
         switchToBoard,
         createNewBoard,
         deleteBoard,
@@ -184,8 +187,8 @@ function AppContent() {
                 {
                     id,
                     type: "tempInput",
-                    position,
-                    data: { mode },
+                    position: { x: position.x - 15, y: position.y - 15 },
+                    data: { mode: mode, parent: parent },
                 },
             ]);
             // Attach the new node to the parent with an edge if parent is provided
@@ -197,6 +200,14 @@ function AppContent() {
                             id: `e${parent}-${id}`,
                             source: parent,
                             target: id,
+                            style: {
+                                stroke: "#FFFFFF", // blue-600 hex
+                                strokeWidth: 3,
+                            },
+                            markerEnd: {
+                                type: MarkerType.ArrowClosed,
+                                color: "#FFFFFF", // blue-600 hex
+                            },
                         },
                     },
                 ]);
@@ -217,7 +228,7 @@ function AppContent() {
             ) => handleNodeCallback(node.id, node.data, mode, parent, position);
             // If this is a tempInput node, inject onSubmit callback
             if (node.type === "tempInput") {
-                data.onSubmit = (value: string, parentID: string) => {
+                data.onSubmit = (value: string) => {
                     setNodes((nodes) =>
                         nodes.map((n) =>
                             n.id === node.id
@@ -229,18 +240,72 @@ function AppContent() {
                                 : n
                         )
                     );
-                    // Attach the new node to the parent with an edge
-                    if (parentID) {
-                        onEdgesChange([
-                            {
-                                type: "add",
-                                item: {
-                                    id: `e${parentID}-${node.id}`,
-                                    source: parentID,
-                                    target: node.id,
-                                },
-                            },
-                        ]);
+                    const parentNode = nodes.find(
+                        (n) => n.id === node.data.parent
+                    );
+                    const parentColor = parentNode?.data?.color;
+                    const parentText = parentNode?.data?.summary;
+                    console.log(parentNode);
+                    const token = { word: value };
+                    const sourceNodeId = node.data.parent;
+                    const sourceNodePosition = {
+                        x: node.position.x,
+                        y: node.position.y,
+                    };
+                    const sourceNodeType = "draggableEditable";
+                    const isInput = true;
+                    const suggestionID = undefined;
+
+                    const color = handleTokenClick(
+                        token,
+                        sourceNodeId,
+                        sourceNodePosition,
+                        sourceNodeType,
+                        nodes,
+                        setNodes,
+                        onNodesChange,
+                        onEdgesChange,
+                        parentColor,
+                        parentText,
+                        suggestionID,
+                        isInput,
+                        node,
+                        node.data.mode,
+                        showExplanation
+                    );
+                    console.log("Color from handleTokenClick:", color);
+                    // Update the node's color
+                    setNodes((nodes) =>
+                        nodes.map((n) =>
+                            n.id === node.id
+                                ? {
+                                      ...n,
+                                      data: { ...n.data, myColor: color },
+                                  }
+                                : n
+                        )
+                    );
+                    // Update the edge's color if parent exists
+                    if (node.data.parent) {
+                        if (!color) return; // or handle fallback here
+                        setEdges((edges) =>
+                            edges.map((e) =>
+                                e.id === `e${node.data.parent}-${node.id}`
+                                    ? {
+                                          ...e,
+                                          style: {
+                                              ...(e.style || {}),
+                                              stroke: color,
+                                              strokeWidth: 3,
+                                          },
+                                          markerEnd: {
+                                              type: MarkerType.ArrowClosed,
+                                              color: color,
+                                          },
+                                      }
+                                    : e
+                            )
+                        );
                     }
                 };
             }
