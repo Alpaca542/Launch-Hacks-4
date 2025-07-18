@@ -3,7 +3,9 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import OpenAI from "openai";
 
-const openai = new OpenAI({});
+const openai = new OpenAI({
+    apiKey: "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",
+});
 
 export const groqChat = onCall(
     {
@@ -35,7 +37,7 @@ export const groqChat = onCall(
                 );
                 // Handle streaming response using Responses API
                 const streamResponse = await openai.responses.create({
-                    model: "gpt-4o-mini",
+                    model: "gpt-4o",
                     stream: true,
                     instructions: "You are a helpful assistant.",
                     input: [
@@ -81,7 +83,7 @@ export const groqChat = onCall(
             } else {
                 // Handle non-streaming response using Responses API
                 const chatCompletion = await openai.responses.create({
-                    model: "gpt-4o-mini",
+                    model: "gpt-4o",
                     stream: false,
                     instructions: "You are a helpful assistant.",
                     input: [

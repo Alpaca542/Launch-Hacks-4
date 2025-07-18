@@ -33,6 +33,8 @@ interface SchemaItem {
 const parseTextblock = (text: string): string => {
     // Parse markdown-style formatting: **bold**, (text)[url]
     return text
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
         .replace(
             /\*\*(.*?)\*\*/g,
             "<strong class='font-semibold text-gray-900 dark:text-gray-100'>$1</strong>"
@@ -332,144 +334,21 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                     </div>`;
 
             case "diagram":
-                const diagramId = `diagram${Math.random()
+                const diagramId = `diagram_${Math.random()
                     .toString(36)
-                    .substr(2, 9)}`;
-
-                // Encode the diagram code properly for HTML data attribute
+                    .slice(2)}`; // Encode the diagram code properly for HTML data attribute
                 const diagramCode = (value as string)
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
                     .replace(/"/g, "&quot;")
                     .replace(/'/g, "&#39;");
-
+                // Only output the container, no inline script
                 return `
-                        <div class="my-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center transition-colors duration-200" 
-                             id="${diagramId}" 
-                             data-diagram-code="${diagramCode}"
-                             data-diagram-id="${diagramId}">
-                            <div class="text-gray-600 dark:text-gray-400 italic loading-text">Rendering diagram...</div>
-                            <script type="text/javascript">
-                                (function() {
-                                    function processDiagram() {
-                                        const diagramDiv = document.getElementById('${diagramId}');
-                                        if (!diagramDiv) {
-                                            console.warn('Diagram div not found: ${diagramId}');
-                                            return;
-                                        }
-                                        
-                                        const loadingText = diagramDiv.querySelector('.loading-text');
-                                        let code = diagramDiv.getAttribute('data-diagram-code');
-                                        
-                                        if (!code) {
-                                            console.error('No diagram code found');
-                                            diagramDiv.innerHTML = '<div class="text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg"><strong>Error:</strong> No diagram code provided</div>';
-                                            return;
-                                        }
-                                        
-                                        // Decode the diagram code
-                                        code = code
-                                            .replace(/&amp;/g, '&')
-                                            .replace(/&lt;/g, '<')
-                                            .replace(/&gt;/g, '>')
-                                            .replace(/&quot;/g, '"')
-                                            .replace(/&#39;/g, "'");
-                                        
-                                        const id = diagramDiv.getAttribute('data-diagram-id');
-                                        
-                                        function showError(message) {
-                                            console.error('Mermaid diagram error:', message);
-                                            diagramDiv.innerHTML = '<div class="text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg"><strong>Diagram Error:</strong> ' + message + '</div>';
-                                        }
-                                        
-                                        function initializeMermaid() {
-                                            if (window.mermaid) {
-                                                try {
-                                                    if (!window.mermaidInitialized) {
-                                                        window.mermaid.initialize({ 
-                                                            startOnLoad: false, 
-                                                            theme: 'default', 
-                                                            securityLevel: 'loose',
-                                                            fontFamily: 'inherit',
-                                                            suppressErrorRendering: false
-                                                        });
-                                                        window.mermaidInitialized = true;
-                                                    }
-                                                    return true;
-                                                } catch (e) {
-                                                    showError('Failed to initialize Mermaid: ' + e.message);
-                                                    return false;
-                                                }
-                                            }
-                                            return false;
-                                        }
-                                        
-                                        function renderDiagram() {
-                                            if (!initializeMermaid()) {
-                                                showError('Mermaid library not available');
-                                                return;
-                                            }
-                                            
-                                            try {
-                                                // Validate the diagram code first
-                                                if (!code.trim()) {
-                                                    showError('Empty diagram code');
-                                                    return;
-                                                }
-                                                
-                                                const svgId = id + '_svg';
-                                                
-                                                // Use mermaid.render with proper error handling
-                                                window.mermaid.render(svgId, code).then(function(result) {
-                                                    if (result && result.svg) {
-                                                        diagramDiv.innerHTML = result.svg;
-                                                    } else {
-                                                        showError('Mermaid render returned no SVG');
-                                                    }
-                                                }).catch(function(error) {
-                                                    showError(error.message || 'Unknown render error');
-                                                });
-                                            } catch (e) {
-                                                showError(e.message || 'Unknown execution error');
-                                            }
-                                        }
-                                        
-                                        // Load Mermaid if not already loaded
-                                        if (!window.mermaid) {
-                                            if (loadingText) {
-                                                loadingText.textContent = 'Loading Mermaid library...';
-                                            }
-                                            
-                                            const script = document.createElement('script');
-                                            script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
-                                            script.onload = function() {
-                                                if (loadingText) {
-                                                    loadingText.textContent = 'Rendering diagram...';
-                                                }
-                                                // Give the library time to fully load
-                                                setTimeout(renderDiagram, 500);
-                                            };
-                                            script.onerror = function() {
-                                                showError('Failed to load Mermaid library from CDN');
-                                            };
-                                            document.head.appendChild(script);
-                                        } else {
-                                            renderDiagram();
-                                        }
-                                    }
-                                    
-                                    // Wait for DOM to be ready and process the diagram
-                                    if (document.readyState === 'loading') {
-                                        document.addEventListener('DOMContentLoaded', processDiagram);
-                                    } else {
-                                        // Use a small delay to ensure the DOM element is fully rendered
-                                        setTimeout(processDiagram, 50);
-                                    }
-                                })();
-                            </script>
-                        </div>
-                    `;
+                    <div class="my-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center transition-colors duration-200"
+                         id="${diagramId}"
+                         data-diagram-code="${diagramCode}"
+                         data-diagram-id="${diagramId}">
+                        <div class="text-gray-600 dark:text-gray-400 italic loading-text">Rendering diagram...</div>
+                    </div>
+                `;
 
             case "note":
                 return `<div class="my-4 flex items-start p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 rounded-r-lg transition-colors duration-200">
@@ -571,6 +450,7 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
     });
 
     const parsedContent = await Promise.all(parsedContentPromises);
+    window.processAllMermaidDiagrams!();
     return parsedContent.join("\n");
 };
 
@@ -803,3 +683,132 @@ const fetchYouTubeVideo = async (searchTerm: string): Promise<string> => {
 };
 
 export const parseJsonToHtml = parseSchemaArray;
+
+// TypeScript global window declarations for Mermaid
+declare global {
+    interface Window {
+        mermaid?: {
+            initialize: (config: any) => void;
+            render: (id: string, code: string) => Promise<{ svg: string }>;
+        };
+        mermaidInitialized?: boolean;
+        renderMermaidDiagram?: (diagramDiv: HTMLElement) => void;
+        processAllMermaidDiagrams?: () => void;
+    }
+}
+
+// At the end of the file, add the global diagram rendering logic
+if (typeof window !== "undefined") {
+    console.log("Rendering Mermaid diagram in:");
+    window.renderMermaidDiagram = function (diagramDiv: HTMLElement) {
+        console.log("Rendering Mermaid diagram in:", diagramDiv);
+        if (!diagramDiv) return;
+        console.log("Rendering Mermaid diagram in:", diagramDiv);
+        const loadingText = diagramDiv.querySelector(
+            ".loading-text"
+        ) as HTMLElement | null;
+        let code = diagramDiv.getAttribute("data-diagram-code") || "";
+        if (!code) {
+            diagramDiv.innerHTML =
+                '<div class="text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg"><strong>Error:</strong> No diagram code provided</div>';
+            return;
+        }
+        code = code.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        const id = diagramDiv.getAttribute("data-diagram-id") || "";
+        function showError(message: string) {
+            console.error("Mermaid Error:", message);
+            diagramDiv.innerHTML =
+                '<div class="text-red-600 dark:text-red-400 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg"><strong>Diagram Error:</strong> ' +
+                message +
+                "</div>";
+        }
+        function initializeMermaid() {
+            if (window.mermaid) {
+                try {
+                    if (!window.mermaidInitialized) {
+                        window.mermaid.initialize({
+                            startOnLoad: false,
+                            theme: "default",
+                            securityLevel: "loose",
+                            fontFamily: "inherit",
+                            suppressErrorRendering: false,
+                        });
+                        window.mermaidInitialized = true;
+                    }
+                    return true;
+                } catch (e) {
+                    const errMsg =
+                        typeof e === "object" && e && "message" in e
+                            ? (e as any).message
+                            : String(e);
+                    showError("Failed to initialize Mermaid: " + errMsg);
+                    return false;
+                }
+            }
+            return false;
+        }
+        function renderDiagram() {
+            console.log("Rendering Mermaid diagram in:", diagramDiv);
+            if (!initializeMermaid()) {
+                showError("Mermaid library not available");
+                return;
+            }
+            try {
+                if (!code.trim()) {
+                    showError("Empty diagram code");
+                    return;
+                }
+                const svgId = id;
+                window
+                    .mermaid!.render(svgId, code)
+                    .then(function (result: { svg: string }) {
+                        if (result && result.svg) {
+                            diagramDiv.innerHTML = result.svg;
+                        } else {
+                            showError("Mermaid render returned no SVG");
+                        }
+                    })
+                    .catch(function (error: any) {
+                        const errMsg =
+                            error && error.message
+                                ? error.message
+                                : String(error);
+                        showError(errMsg || "Unknown render error");
+                    });
+            } catch (e) {
+                const errMsg =
+                    typeof e === "object" && e && "message" in e
+                        ? (e as any).message
+                        : String(e);
+                showError(errMsg || "Unknown execution error");
+            }
+        }
+        if (!window.mermaid) {
+            if (loadingText)
+                loadingText.textContent = "Loading Mermaid library...";
+            const script = document.createElement("script");
+            script.src =
+                "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+            script.onload = function () {
+                if (loadingText)
+                    loadingText.textContent = "Rendering diagram...";
+                setTimeout(renderDiagram, 500);
+            };
+            script.onerror = function () {
+                showError("Failed to load Mermaid library from CDN");
+            };
+            document.head.appendChild(script);
+        } else {
+            renderDiagram();
+        }
+    };
+    window.processAllMermaidDiagrams = function () {
+        console.log("Processing all Mermaid diagrams");
+        document
+            .querySelectorAll("[data-diagram-code]")
+            .forEach(function (diagramDiv) {
+                window.renderMermaidDiagram!(diagramDiv as HTMLElement);
+            });
+    };
+    window.processAllMermaidDiagrams();
+}

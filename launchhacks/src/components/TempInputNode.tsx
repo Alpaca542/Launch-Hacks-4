@@ -74,7 +74,7 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder={placeholder}
-                    className="flex-1 bg-transparent outline-none text-sm placeholder-gray-400 dark:placeholder-gray-500 caret-gray-900 dark:caret-gray-100"
+                    className="flex-1 bg-transparent outline-none text-sm placeholder-gray-400 dark:placeholder-gray-500 caret-gray-900 dark:caret-gray-100 text-gray-900 dark:text-gray-100"
                 />
             </form>
 

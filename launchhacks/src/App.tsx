@@ -255,7 +255,7 @@ function AppContent() {
                         (n) => n.id === node.data.parent
                     );
                     const parentColor = parentNode?.data?.color;
-                    const parentText = parentNode?.data?.summary;
+                    const parentText = parentNode?.data?.label;
                     console.log(parentNode);
                     const token = { word: value };
                     const sourceNodeId = node.data.parent;

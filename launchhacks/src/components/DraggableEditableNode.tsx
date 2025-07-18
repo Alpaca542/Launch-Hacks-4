@@ -144,7 +144,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             currentNode.position,
             currentNode.type || "draggableEditable",
             data.myColor,
-            data.summary || data.label || "Draggable Node"
+            data.label || "Draggable Node"
         );
         return color; // Can be null if token is already colored
     };

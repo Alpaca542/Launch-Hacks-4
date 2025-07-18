@@ -21,9 +21,10 @@ export const detailedExplanationPrompt = (
         • Each object = exactly one tag from SCHEMA; no new tags.
         • Include:
         • You should educate the user about the concept and then ask the quiz about the material you taught.
-        • Use different tags to make the reading experience diverse and engaging
+        • Use tags to make the reading experience diverse and engaging
         • If you have a long text, break it into multiple textblocks.
         • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space.
+        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space. Code snippets should ONLY BE USED IF THE CONCEPT IS TECHNICAL AND REQUIRES A CODE EXAMPLE
         • Tone: encouraging, professional
         • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, htmlCanvas, table.
         • Make sure to put the concept over the context, not focusing on the context but rather on what actually needs to be explained.
@@ -37,15 +38,14 @@ export const detailedExplanationPrompt = (
     if (inputMode === "default") {
         return `${COMMON_RULES}
     REQUIREMENTS:
-    • Include exactly ONE {quiz} with 3‑5 questions.
-    • Include ≥1 of {codeblock | diagram | htmlCanvas | table}.
-    • Include ≥2 of {img | vid | gif}.
-    • Include ≥5 of {textblock | ul | ol}.
+    • Include exactly ONE {quiz} with 2-3 questions.
+    • Include at least one of either {diagram | htmlCanvas | table}.
+    • Include at least one of either {img | vid | gif}.
+    • Include at least five of either {textblock | ul | ol}.
     • Include exactly ONE of {tip | note | warning | quote | link}.
     • Cover: definition → explanation → worked example → real‑world analogy → what to explore next.
     • Break long texts into multiple textblocks.
     • Avoid filler tags.
-    • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space. A code snippet should be used only if the concept is relevant to the code it and helps explain it better
   
     OUTPUT VALID JSON ARRAY ONLY.
     SCHEMA = ${JSON.stringify(SCHEMA)}
@@ -57,12 +57,12 @@ export const detailedExplanationPrompt = (
     if (inputMode === "explain") {
         return `${COMMON_RULES}
     DEEP MODE REQUIREMENTS (layer‑by‑layer dive)
-    • Exactly ONE {quiz} with ≥5 challenging questions (conceptual + applied).
-    • Include ≥2 of {codeblock | diagram | htmlCanvas | table}.
-    • Include ≥3 of {img | vid | gif} for abstract ↔ concrete bridges.
-    • Include ≥8 of {textblock | ul | ol}, organised as: Definition → Foundation → Mechanics → Edge‑cases → Misconceptions → Applications.
+    • Exactly ONE {quiz} with 2-3 challenging questions (conceptual/applied).
+    • Include at least one of either {diagram | htmlCanvas | table}.
+    • Include at least three of {img | vid | gif} for visual clarity
+    • Include at least eight of {textblock | ul | ol}, organised as: Definition → Foundation → Mechanics → Edge‑cases → Misconceptions → Applications.
     • Exactly ONE of {tip | note | warning | quote | link}.
-    • Highlight at least two common misconceptions explicitly.
+    • Total objects: 12-16.
   
     OUTPUT VALID JSON ARRAY ONLY.
     SCHEMA = ${JSON.stringify(SCHEMA)}
@@ -74,9 +74,9 @@ export const detailedExplanationPrompt = (
     if (inputMode === "argue") {
         return `${COMMON_RULES}
     YOU SHOULD STRICTLY EVALUATE THE CONCEPT FROM MULTIPLE ANGLES
-    • Include AT LEAST ONE {codeblock | diagram | htmlCanvas | table} to clarify the opinion.
+    • Include AT LEAST ONE {diagram | htmlCanvas | table} to clarify the opinion.
     • Include AT LEAST ONE of {img | vid | gif} to illustrate the IDEA.
-    • Include exactly ONE {quiz} with 3‑5 questions to test understanding.
+    • Include exactly ONE {quiz} with 2-3 questions to test understanding.
     • Include AS MANY of {textblock | ul | ol} AS NEEDED TO COVER THE OPINION
     • Keep total objects 8-12.
   
@@ -92,7 +92,7 @@ export const detailedExplanationPrompt = (
     YOU SHOULD ANSWER THE USER'S QUESTION DIRECTLY
     • Focus on answering the user's question directly.
     • Include exactly ONE {quiz} with 2‑3 questions.
-    • Include exactly ONE of {codeblock | diagram | htmlCanvas | table} ONLY IF it clarifies the answer.
+    • Include exactly ONE of {diagram | htmlCanvas | table} ONLY IF it clarifies the answer.
     • Include exactly ONE of {img | vid | gif} ONLY IF it clarifies the answer.
     • Include AT LEAST TWO of {textblock | ul | ol}
     • Keep it concise and focused on the question.
@@ -158,7 +158,7 @@ export const suggestionsPrompt = (message: string, inputMode: string) => {
     ) => `Respond ONLY with a valid JSON array like ["topic1", "topic2"].
         Instructions:
         - Suggest exactly ${min}-${max} logical next topics.
-        - Each topic ≤5 words, double‑quoted.
+        - Each topic <4 words, double‑quoted.
         - No explanation or extra text.
   
     Concept: ${message}`;

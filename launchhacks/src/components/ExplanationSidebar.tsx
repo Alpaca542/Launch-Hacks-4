@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useLayoutEffect, memo } from "react";
 
 interface ExplanationSidebarProps {
     explanation?: {
@@ -16,7 +16,9 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
 }: ExplanationSidebarProps) {
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isVisible);
-
+    useLayoutEffect(() => {
+        if (isVisible) window.processAllMermaidDiagrams!();
+    });
     useEffect(() => {
         if (isVisible) {
             setShouldRender(true);
