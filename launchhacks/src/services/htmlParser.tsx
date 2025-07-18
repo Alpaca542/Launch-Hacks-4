@@ -332,8 +332,10 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                     <div class="lg:hidden my-4 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm leading-relaxed text-gray-700 dark:text-gray-300 transition-colors duration-200">
                         ${value}
                     </div>`;
-
+            case "flow":
+            case "flowchart":
             case "diagram":
+            case "mindmap":
                 const diagramId = `diagram_${Math.random()
                     .toString(36)
                     .slice(2)}`;
@@ -344,14 +346,14 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
 config:
     theme: 'base'
     themeVariables:
-        primaryColor: '#2D2A32'
-        primaryTextColor: '#C084FC'
-        primaryBorderColor: '#6D28D9'
+        primaryColor: '#6D28D9'
+        primaryTextColor: '#F3F4F6'
+        primaryBorderColor: '#4C1D95'
         lineColor: '#A78BFA'
-        secondaryColor: '#3B2F4A'
-        tertiaryColor: '#C084FC'
+        secondaryColor: '#1E1B4B'
+        tertiaryColor: '#312E81'
 ---
-                        ${diagramCode}`
+                    ${diagramCode}`
                     );
                     // Serialize SVG element to string for HTML insertion
                     const svgHtml = svgElement.outerHTML;

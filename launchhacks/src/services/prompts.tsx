@@ -26,7 +26,7 @@ export const detailedExplanationPrompt = (
         • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space.
         • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space. Code snippets should ONLY BE USED IF THE CONCEPT IS TECHNICAL AND REQUIRES A CODE EXAMPLE
         • Tone: encouraging, professional
-        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, htmlCanvas, table.
+        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, mindmap, htmlCanvas, table.
         • Make sure to put the concept over the context, not focusing on the context but rather on what actually needs to be explained.
 
         OUTPUT
@@ -39,7 +39,7 @@ export const detailedExplanationPrompt = (
         return `${COMMON_RULES}
     REQUIREMENTS:
     • Include exactly ONE {quiz} with 2-3 questions.
-    • Include at least one of either {diagram | htmlCanvas | table}.
+    • Include at least one of either {diagram | mindmap | htmlCanvas | table}.
     • Include at least one of either {img | vid | gif}.
     • Include at least five of either {textblock | ul | ol}.
     • Include exactly ONE of {tip | note | warning | quote | link}.
@@ -58,7 +58,7 @@ export const detailedExplanationPrompt = (
         return `${COMMON_RULES}
     DEEP MODE REQUIREMENTS (layer‑by‑layer dive)
     • Exactly ONE {quiz} with 2-3 challenging questions (conceptual/applied).
-    • Include at least one of either {diagram | htmlCanvas | table}.
+    • Include at least one of either {diagram | mindmap | htmlCanvas | table}.
     • Include at least three of {img | vid | gif} for visual clarity
     • Include at least eight of {textblock | ul | ol}, organised as: Definition → Foundation → Mechanics → Edge‑cases → Misconceptions → Applications.
     • Exactly ONE of {tip | note | warning | quote | link}.
@@ -74,7 +74,7 @@ export const detailedExplanationPrompt = (
     if (inputMode === "argue") {
         return `${COMMON_RULES}
     YOU SHOULD STRICTLY EVALUATE THE CONCEPT FROM MULTIPLE ANGLES
-    • Include AT LEAST ONE {diagram | htmlCanvas | table} to clarify the opinion.
+    • Include AT LEAST ONE {diagram | mindmap | htmlCanvas | table} to clarify the opinion.
     • Include AT LEAST ONE of {img | vid | gif} to illustrate the IDEA.
     • Include exactly ONE {quiz} with 2-3 questions to test understanding.
     • Include AS MANY of {textblock | ul | ol} AS NEEDED TO COVER THE OPINION
@@ -92,7 +92,7 @@ export const detailedExplanationPrompt = (
     YOU SHOULD ANSWER THE USER'S QUESTION DIRECTLY
     • Focus on answering the user's question directly.
     • Include exactly ONE {quiz} with 2‑3 questions.
-    • Include exactly ONE of {diagram | htmlCanvas | table} ONLY IF it clarifies the answer.
+    • Include exactly ONE of {diagram | mindmap | htmlCanvas | table} ONLY IF it clarifies the answer.
     • Include exactly ONE of {img | vid | gif} ONLY IF it clarifies the answer.
     • Include AT LEAST TWO of {textblock | ul | ol}
     • Keep it concise and focused on the question.
@@ -234,7 +234,27 @@ export const SCHEMA = [
             ["Row2Col1", "Row2Col2"],
         ],
     },
-    { diagram: "graph TD; A-->B; A-->C; B-->D; C-->D;" },
+    {
+        diagram: `flowchart TD
+        A[Christmas] -->|Get money| B(Go shopping)
+        B --> C{Let me think}
+        C -->|One| D[Laptop]
+        C -->|Two| E[iPhone]
+        C -->|Three| F[fa:fa-car Car]`,
+    },
+    {
+        mindmap: `
+mindmap
+  root((mindmapname))
+    Branch1
+      id((Sub1))
+      Sub2
+      ::icon(fa fa-book)
+    Branch2
+      id)Sub3(
+      Sub4
+    `,
+    },
     { note: "This is a note." },
     { warning: "This is a warning note." },
     { tip: "This is a tip note." },
