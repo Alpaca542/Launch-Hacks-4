@@ -5,6 +5,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import { createPortal } from "react-dom";
 
 import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
+import ModeMenu from "./ModeChooseMenu";
 
 interface NodeData {
     label?: string;
@@ -82,11 +83,11 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     const [isNodeMenuVisible, setIsNodeMenuVisible] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const [dragState, setDragState] = useState<{
-        mode: string | null;
+        mode?: "explain" | "answer" | "argue";
         x: number;
         y: number;
         isDragging: boolean;
-    }>({ mode: null, x: 0, y: 0, isDragging: false });
+    }>({ mode: undefined, x: 0, y: 0, isDragging: false });
     // Add a ref to always have the latest dragState
     const dragStateRef = useRef(dragState);
     useEffect(() => {
@@ -410,7 +411,10 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
     ]);
 
     // Mouse event handlers for drag
-    const handleDragStart = (mode: string, e: MouseEvent | PointerEvent) => {
+    const handleDragStart = (
+        mode: "explain" | "answer" | "argue",
+        e: MouseEvent | PointerEvent
+    ) => {
         // Find the handle's DOM node
         const handleDiv = e.target as HTMLElement;
         const rect = handleDiv.getBoundingClientRect();
@@ -442,7 +446,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
             console.log("Calling onNodeCallback", latestDragState.mode, rfPos);
             data.onNodeCallback(latestDragState.mode || undefined, id, rfPos);
         }
-        setDragState({ mode: null, x: 0, y: 0, isDragging: false });
+        setDragState({ mode: "explain", x: 0, y: 0, isDragging: false });
         setHandleOrigin(null);
         document.removeEventListener("pointermove", handleDragMove);
         document.removeEventListener("pointerup", handleDragEnd);
@@ -462,7 +466,7 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         <div
             ref={nodeRef}
             className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[600px] 
-                       transition-all duration-200 ease-in-out cursor-grab select-none overflow-hidden
+                       transition-all duration-200 ease-in-out cursor-grab select-none
                        hover:transform hover:-translate-y-[3px]
                        hover:border-white/[0.18] hover:bg-[#242427]"
             style={{
@@ -479,94 +483,12 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
                 {renderContent}
             </div>
             <Handles />
-
-            <div
-                className="input-menu"
-                style={{ position: "relative", zIndex: 10 }}
-            >
-                {["explain", "answer", "argue"].map((mode) => (
-                    <div
-                        key={mode}
-                        style={{
-                            cursor: "grab",
-                            userSelect: "none",
-                            position: "relative",
-                            zIndex: 11,
-                            textAlign: "center",
-                        }}
-                        draggable={false}
-                        onPointerDown={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            if (e.button !== 0) return;
-                            handleDragStart(mode, e.nativeEvent);
-                        }}
-                    >
-                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </div>
-                ))}
-            </div>
-            {/* Draggable handle visual and SVG line, rendered globally */}
-            {dragState.isDragging &&
-                typeof window !== "undefined" &&
-                createPortal(
-                    <>
-                        <svg
-                            style={{
-                                position: "fixed",
-                                left: 0,
-                                top: 0,
-                                width: "100vw",
-                                height: "100vh",
-                                pointerEvents: "none",
-                                zIndex: 9998,
-                            }}
-                        >
-                            <line
-                                x1={
-                                    handleOrigin
-                                        ? handleOrigin.x
-                                        : getParentCenter().x
-                                }
-                                y1={
-                                    handleOrigin
-                                        ? handleOrigin.y
-                                        : getParentCenter().y
-                                }
-                                x2={dragState.x}
-                                y2={dragState.y}
-                                stroke="#60a5fa"
-                                strokeWidth={3}
-                                strokeDasharray="6 4"
-                            />
-                        </svg>
-                        <div
-                            style={{
-                                position: "fixed",
-                                left: dragState.x - 40,
-                                top: dragState.y - 20,
-                                pointerEvents: "none",
-                                zIndex: 9999,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    background: "#222",
-                                    color: "#fff",
-                                    padding: "8px 16px",
-                                    borderRadius: "8px",
-                                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                                    fontWeight: 600,
-                                }}
-                            >
-                                {dragState.mode &&
-                                    dragState.mode.charAt(0).toUpperCase() +
-                                        dragState.mode.slice(1)}
-                            </div>
-                        </div>
-                    </>,
-                    document.body
-                )}
+            <ModeMenu
+                dragState={dragState}
+                handleDragStart={handleDragStart}
+                handleOrigin={handleOrigin}
+                getParentCenter={getParentCenter}
+            />
         </div>
     );
 }

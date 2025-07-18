@@ -124,14 +124,12 @@ export const askAITwice = async (
                 inputMode ?? ""
             )
         );
-        const suggestionsPromise = askAI(
-            suggestionsPrompt(message, inputMode) + message
-        );
+        const suggestionsPromise = askAI(suggestionsPrompt(message, inputMode));
 
         // Stream the summary with progressive updates
         let summaryAccumulator = "";
         const summaryPromise = askAIStream(
-            summaryPrompt(message, context, inputMode) + message,
+            summaryPrompt(message, context, inputMode),
             (chunk: string) => {
                 summaryAccumulator += chunk;
                 // Call the callback with each chunk for progressive updates

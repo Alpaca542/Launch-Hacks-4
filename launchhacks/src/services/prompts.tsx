@@ -1,6 +1,6 @@
 // ========================================================================
 // Prompt generators for AI educational platform
-// Modes: "default" | "deep" | "argue" | "answer"
+// Modes: "default" | "explain" | "argue" | "answer"
 // Core principles (apply to EVERY mode):
 //   1. Concept‑first — CONTEXT may appear ONLY if it clarifies the term or can be woven into a single concrete example.
 //   2. Valid JSON array output, no stray text or comments.
@@ -54,7 +54,7 @@ export const detailedExplanationPrompt = (
     REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
     }
 
-    if (inputMode === "deep") {
+    if (inputMode === "explain") {
         return `${COMMON_RULES}
     DEEP MODE REQUIREMENTS (layer‑by‑layer dive)
     • Exactly ONE {quiz} with ≥5 challenging questions (conceptual + applied).
@@ -129,7 +129,7 @@ export const summaryPrompt = (
         REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
 
     switch (inputMode) {
-        case "deep":
+        case "explain":
             return base(60);
         case "argue":
             return `Balanced abstract (≤60 words) covering pros & cons of the TOPIC. USE THE PROVIDED CONTEXT TO GUIDE YOUR RESPONSE.
@@ -164,7 +164,7 @@ export const suggestionsPrompt = (message: string, inputMode: string) => {
     Concept: ${message}`;
 
     switch (inputMode) {
-        case "deep":
+        case "explain":
             return template(4, 5);
         case "argue":
             return template(3, 5);

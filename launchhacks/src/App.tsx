@@ -187,11 +187,24 @@ function AppContent() {
                 {
                     id,
                     type: "tempInput",
-                    position: { x: position.x - 15, y: position.y - 15 },
+                    position: { x: position.x - 80, y: position.y - 40 },
                     data: { mode: mode, parent: parent },
                 },
             ]);
-            // Attach the new node to the parent with an edge if parent is provided
+            const colorSceheme = {
+                default: "#FFFFFF", // blue-600 hex
+                explain: "#3b82f6", // blue-600 hex
+                answer: "#10b981", // emerald-600 hex
+                argue: "#fb7185", // rose-600 hex
+            };
+
+            const color =
+                colorSceheme[
+                    (mode as keyof typeof colorSceheme) in colorSceheme
+                        ? (mode as keyof typeof colorSceheme)
+                        : "default"
+                ];
+
             if (parent) {
                 onEdgesChange([
                     {
@@ -200,13 +213,14 @@ function AppContent() {
                             id: `e${parent}-${id}`,
                             source: parent,
                             target: id,
+                            sourceHandle: mode,
                             style: {
-                                stroke: "#FFFFFF", // blue-600 hex
+                                stroke: color, // blue-600 hex
                                 strokeWidth: 3,
                             },
                             markerEnd: {
                                 type: MarkerType.ArrowClosed,
-                                color: "#FFFFFF", // blue-600 hex
+                                color: color, // blue-600 hex
                             },
                         },
                     },
