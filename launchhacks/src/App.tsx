@@ -49,8 +49,6 @@ const MemoizedExplanationSidebar = memo(function MemoizedExplanationSidebar({
     explanation: { title: string; text: string } | null;
     onClose: () => void;
 }) {
-    if (!isVisible) return null;
-
     return (
         <Resizable
             defaultSize={{
@@ -86,7 +84,6 @@ function AppContent() {
     // Explanation sidebar state
     const [isExplanationVisible, setIsExplanationVisible] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [isFloatingInputVisible, setIsFloatingInputVisible] = useState(false);
 
     const [currentExplanation, setCurrentExplanation] = useState<{
         title: string;

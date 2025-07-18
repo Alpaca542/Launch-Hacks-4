@@ -53,7 +53,7 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
                                            : "transform translate-x-full"
                                    }`}
             style={{
-                transition: "max-height 0.3s ease",
+                height: "auto",
                 maxHeight: "800px",
                 minHeight: "200px",
             }}
