@@ -116,15 +116,16 @@ export const calculateNewNodePosition = (sourceNodePosition: {
     x: number;
     y: number;
 }): { x: number; y: number } => {
-    const yOffset = 200; // Fixed distance below the source node
-    const xVariation = 150; // Maximum random horizontal variation
-
-    // Generate random horizontal offset within limits
+    const baseYOffset = 650;
+    const yVariation = 30;
+    const xVariation = 400;
     const randomXOffset = (Math.random() - 0.5) * xVariation * 2;
+
+    const randomYOffset = (Math.random() - 0.5) * yVariation * 2;
 
     return {
         x: sourceNodePosition.x + randomXOffset,
-        y: sourceNodePosition.y + yOffset,
+        y: sourceNodePosition.y + baseYOffset + randomYOffset,
     };
 };
 

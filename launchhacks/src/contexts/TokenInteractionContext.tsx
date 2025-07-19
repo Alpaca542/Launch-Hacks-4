@@ -120,7 +120,7 @@ export const handleTokenClick = (
 
         newNode = createNewNode(
             newPosition,
-            token.word, // Use the token word as initial label
+            token.myConcept || token.word, // Use the token word as initial label
             "Loading...", // full_text placeholder
             "", // Start with empty summary for progressive streaming
             color,
@@ -142,6 +142,7 @@ export const handleTokenClick = (
 
     if (newNode) {
         newNode.data.isLoading = true;
+        newNode.data.parentID = sourceNodeId;
     }
 
     if (isInput) {
@@ -162,7 +163,7 @@ export const handleTokenClick = (
 
     // Always ask AI for concept and update node when response arrives
     askAITwice(
-        token.word,
+        token.myConcept || token.word,
         sourceNodeText || "",
         inputMode || "default",
         // Progressive summary update callback

@@ -225,7 +225,7 @@ export const SCHEMA = [
     { ol: ["Heyyo", "Nice", "That's a list"] },
     { codeblock: "console.log('Hello World');" },
     { quote: "This is a quote" },
-    { link: "https://example.com" },
+    { link: "https://en.wikipedia.org/wiki/example" },
     {
         table: [
             ["Header1", "Header2"],
