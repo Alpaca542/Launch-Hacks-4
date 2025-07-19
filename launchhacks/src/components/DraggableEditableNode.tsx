@@ -481,14 +481,14 @@ function DraggableEditableNode({ data, id }: DraggableEditableNodeProps) {
         >
             <div className="relative pointer-events-auto text-[#f0f4f8] text-[17px] leading-[1.7] font-medium">
                 {renderContent}
+                <ModeMenu
+                    dragState={dragState}
+                    handleDragStart={handleDragStart}
+                    handleOrigin={handleOrigin}
+                    getParentCenter={getParentCenter}
+                />
             </div>
             <Handles />
-            <ModeMenu
-                dragState={dragState}
-                handleDragStart={handleDragStart}
-                handleOrigin={handleOrigin}
-                getParentCenter={getParentCenter}
-            />
         </div>
     );
 }

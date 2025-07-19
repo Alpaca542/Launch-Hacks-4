@@ -23,10 +23,9 @@ export const detailedExplanationPrompt = (
         • You should educate the user about the concept and then ask the quiz about the material you taught.
         • Use tags to make the reading experience diverse and engaging
         • If you have a long text, break it into multiple textblocks.
-        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space.
-        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space. Code snippets should ONLY BE USED IF THE CONCEPT IS TECHNICAL AND REQUIRES A CODE EXAMPLE
+        • Only include tags that genuinely help explain the concept. Don't add tags unnecessarily or just to fill space. Code snippets should BE USED IF AND ONLY IF THE CONCEPT IS TECHNICAL
         • Tone: encouraging, professional
-        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, mindmap, htmlCanvas, table.
+        • You need to have textblocks or lists separating each visual tag, e.g. img, vid, gif, codeblock, diagram, mindmap, table.
         • Make sure to put the concept over the context, not focusing on the context but rather on what actually needs to be explained.
 
         OUTPUT
@@ -39,7 +38,7 @@ export const detailedExplanationPrompt = (
         return `${COMMON_RULES}
     REQUIREMENTS:
     • Include exactly ONE {quiz} with 2-3 questions.
-    • Include at least one of either {diagram | mindmap | htmlCanvas | table}.
+    • Include at least one of either {diagram | mindmap | table}.
     • Include at least one of either {img | vid | gif}.
     • Include at least five of either {textblock | ul | ol}.
     • Include exactly ONE of {tip | note | warning | quote | link}.
@@ -51,14 +50,14 @@ export const detailedExplanationPrompt = (
     SCHEMA = ${JSON.stringify(SCHEMA)}
     CONTEXT = ${context}
     CONCEPT = ${message}
-    REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
+    REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely.`;
     }
 
     if (inputMode === "explain") {
         return `${COMMON_RULES}
     DEEP MODE REQUIREMENTS (layer‑by‑layer dive)
     • Exactly ONE {quiz} with 2-3 challenging questions (conceptual/applied).
-    • Include at least one of either {diagram | mindmap | htmlCanvas | table}.
+    • Include at least one of either {diagram | mindmap | table}.
     • Include at least three of {img | vid | gif} for visual clarity
     • Include at least eight of {textblock | ul | ol}, organised as: Definition → Foundation → Mechanics → Edge‑cases → Misconceptions → Applications.
     • Exactly ONE of {tip | note | warning | quote | link}.
@@ -68,13 +67,13 @@ export const detailedExplanationPrompt = (
     SCHEMA = ${JSON.stringify(SCHEMA)}
     CONTEXT = ${context}
     CONCEPT = ${message}
-    REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
+    REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely.`;
     }
 
     if (inputMode === "argue") {
         return `${COMMON_RULES}
-    YOU SHOULD STRICTLY EVALUATE THE CONCEPT FROM MULTIPLE ANGLES
-    • Include AT LEAST ONE {diagram | mindmap | htmlCanvas | table} to clarify the opinion.
+    YOU SHOULD STRICTLY EVALUATE THE CONCEPT FROM MULTIPLE ANGLES providing PROS AND CONS
+    • Include AT LEAST ONE {diagram | mindmap | table} to clarify the opinion.
     • Include AT LEAST ONE of {img | vid | gif} to illustrate the IDEA.
     • Include exactly ONE {quiz} with 2-3 questions to test understanding.
     • Include AS MANY of {textblock | ul | ol} AS NEEDED TO COVER THE OPINION
@@ -84,7 +83,7 @@ export const detailedExplanationPrompt = (
     SCHEMA = ${JSON.stringify(SCHEMA)}
     CONTEXT = ${context}
     CONCEPT = ${message}
-    REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
+    REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely.`;
     }
 
     if (inputMode === "answer") {
@@ -92,7 +91,7 @@ export const detailedExplanationPrompt = (
     YOU SHOULD ANSWER THE USER'S QUESTION DIRECTLY
     • Focus on answering the user's question directly.
     • Include exactly ONE {quiz} with 2‑3 questions.
-    • Include exactly ONE of {diagram | mindmap | htmlCanvas | table} ONLY IF it clarifies the answer.
+    • Include exactly ONE of {diagram | mindmap | table} ONLY IF it clarifies the answer.
     • Include exactly ONE of {img | vid | gif} ONLY IF it clarifies the answer.
     • Include AT LEAST TWO of {textblock | ul | ol}
     • Keep it concise and focused on the question.
@@ -102,7 +101,7 @@ export const detailedExplanationPrompt = (
     SCHEMA = ${JSON.stringify(SCHEMA)}
     CONTEXT = ${context}
     CONCEPT = ${message}
-    REMEMBER: THIS IS REALLY IMPORTANT TO FOCUS ON THE TOPIC AND NOT ON THE CONTEXT. THE CONTEXT MAY BE USED TO CLARIFY THE TOPIC OR TO PROVIDE A CONCRETE EXAMPLE, BUT NOT TO FOCUS ON IT. IF IT IS NOT POSSIBLE TO FOCUS ON THE TOPIC, THEN DO COMPLETELY IGNORE THE CONTEXT.`;
+    REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely.`;
     }
     return "";
 };
@@ -206,20 +205,20 @@ export const SCHEMA = [
     },
     {
         img: [
-            "very short image description(e.g. funny cats)",
-            "The image shows a group of cats doing something amusing.",
+            "very short image description(e.g. cats, play)",
+            "The cats like to play with each other.",
         ],
     },
     {
         vid: [
-            "very short video description(e.g. playing footbal)",
-            "This video shows a group of people playing football in a park.",
+            "video request(e.g. children playing in a football tournament)",
+            "Plating football is a great way to stay active and have fun.",
         ],
     },
     {
         gif: [
-            "very short gif description(e.g. frogs jumping)",
-            "This gif shows frogs jumping around in a pond.",
+            "very short gif description(e.g. frogs, jump)",
+            "Frogs are amazing creatures that can jump really high.",
         ],
     },
     { textblock: "text, **text**, (text)[text.com]" },
@@ -258,15 +257,4 @@ mindmap
     { note: "This is a note." },
     { warning: "This is a warning note." },
     { tip: "This is a tip note." },
-    {
-        htmlCanvas: `
-  function draw(ctx) {
-    // Drawing a simple circle (example)
-    ctx.beginPath();
-    ctx.arc(50, 50, 30, 0, 2 * Math.PI);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-    ctx.closePath();
-  }`,
-    },
 ];

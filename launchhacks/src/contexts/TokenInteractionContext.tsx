@@ -151,12 +151,7 @@ export const handleTokenClick = (
                     return {
                         ...node,
                         data: {
-                            ...node.data,
-                            label: "Loading...",
-                            summary: "",
-                            full_text: "",
-                            previousNode: sourceNodeId,
-                            isLoading: true,
+                            ...newNode.data,
                         },
                     };
                 }

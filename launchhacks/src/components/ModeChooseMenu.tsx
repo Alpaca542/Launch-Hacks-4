@@ -51,8 +51,10 @@ export default function ModeMenu({
         <>
             {/* bottom‑docked menu --------------------------------------------------- */}
             <div
-                className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2 select-none"
-                /* keep this relative to the node container */
+                className="absolute left-1/2 z-10 flex gap-2 select-none"
+                style={{
+                    transform: "translateX(-50%) translateY(24px)", // center by x, shift down by y (48px as example)
+                }}
             >
                 {(["explain", "answer", "argue"] as const).map((mode) => {
                     const { classes, Icon } = MODE_STYLES[mode];
@@ -68,7 +70,7 @@ export default function ModeMenu({
                                 if (e.button !== 0) return;
                                 handleDragStart(mode, e.nativeEvent);
                             }}
-                            className={`px-2 py-1 rounded-lg border text-sm font-medium flex items-center gap-1 shadow-sm cursor-grab transition-all duration-150 ${classes} ${
+                            className={`px-2 py-1 rounded-lg border text-sm font-medium flex items-center gap-1 shadow-sm cursor-grab transition-opacity duration-150 ${classes} ${
                                 isHidden ? "opacity-0" : "opacity-100"
                             }`}
                             style={{ position: "relative", zIndex: 11 }}

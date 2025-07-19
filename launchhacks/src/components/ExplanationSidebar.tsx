@@ -75,7 +75,7 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
                 >
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         <span className="text-blue-500">📄</span>
-                        Explanation
+                        {explanation ? explanation.title : "Explanation"}
                     </h3>
                     <button
                         className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 
@@ -107,11 +107,7 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
                                         ? "transform translate-y-0 opacity-100"
                                         : "transform translate-y-4 opacity-0"
                                 }`}
-                            >
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                                    {explanation.title}
-                                </h3>
-                            </div>
+                            ></div>
                             <div
                                 className={`prose prose-gray dark:prose-invert max-w-none text-gray-700 dark:text-gray-300
                                       [&>h1]:text-gray-900 [&>h1]:dark:text-gray-100 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:mt-6

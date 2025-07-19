@@ -260,7 +260,10 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                             </iframe>
                         </div>
                         <figcaption class="mt-2 text-sm italic text-gray-600 dark:text-gray-400">${vidDesc}</figcaption>
-                        <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Search: "${vidReq}" • <a href="https://developers.google.com/youtube/v3" target="_blank" class="text-red-600 dark:text-red-400 hover:underline">Powered by YouTube Data API</a></div>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-500 opacity-75">
+                            <span class="inline-block mr-2">🔍 ${vidReq}</span>
+                            <a href="https://youtube.com/" target="_blank" class="text-red-500 dark:text-red-400 hover:underline">YouTube</a>
+                        </div>
                     </figure>`;
 
             case "gif":
@@ -270,8 +273,11 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                         <img src="${gifSrc}" alt="${gifDesc}" 
                              class="max-w-full h-auto rounded-lg shadow-lg mx-auto transition-transform duration-200 hover:scale-105"
                              onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/ef4444/ffffff?text=GIF+Error'; this.alt='Fallback GIF (original failed to load)';" />
-                        <figcaption class="mt-2 text-sm italic text-gray-600 dark:text-gray-400">${gifDesc}</figcaption>
-                        <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Search: "${gifReq}" • <a href="https://tenor.com/" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">Powered by Tenor</a></div>
+                        <figcaption class="mt-2 text-sm text-gray-600 dark:text-gray-400">${gifDesc}</figcaption>
+                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-500 opacity-75">
+                            <span class="inline-block mr-2">🔍 ${gifReq}</span>
+                            <a href="https://tenor.com/" target="_blank" class="text-purple-500 dark:text-purple-400 hover:underline">Tenor</a>
+                        </div>
                     </figure>`;
 
             case "textblock":
