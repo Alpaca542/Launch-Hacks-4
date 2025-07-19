@@ -22,19 +22,19 @@ const MODE_STYLES: Record<
     explain: {
         border: "border-blue-400",
         ring: "ring-blue-100 dark:ring-blue-500/30",
-        placeholder: "Enter explanation…",
+        placeholder: "Explain this concept...",
         Icon: Info,
     },
     answer: {
         border: "border-emerald-400",
         ring: "ring-emerald-100 dark:ring-emerald-500/30",
-        placeholder: "Enter answer…",
+        placeholder: "Answer this question...",
         Icon: Lightbulb,
     },
     argue: {
         border: "border-rose-400",
         ring: "ring-rose-100 dark:ring-rose-500/30",
-        placeholder: "Enter argument…",
+        placeholder: "Argue this point...",
         Icon: Gavel,
     },
 };
@@ -45,8 +45,18 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const raf = requestAnimationFrame(() => inputRef.current?.focus());
-        return () => cancelAnimationFrame(raf);
+        const el = inputRef.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                el.focus();
+                observer.disconnect();
+            }
+        });
+
+        observer.observe(el);
+        return () => observer.disconnect();
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {

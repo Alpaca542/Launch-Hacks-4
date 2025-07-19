@@ -295,7 +295,7 @@ function LandingPage({ onLogin }: LoadingPageProps) {
                         <div className="text-white">
                             {" "}
                             <div className="text-4xl font-bold mb-2">
-                                10K+
+                                27K+
                             </div>{" "}
                             <div className="text-indigo-100">
                                 Concepts Explored
@@ -304,7 +304,7 @@ function LandingPage({ onLogin }: LoadingPageProps) {
                         <div className="text-white">
                             {" "}
                             <div className="text-4xl font-bold mb-2">
-                                5K+
+                                2.4K+
                             </div>{" "}
                             <div className="text-indigo-100">
                                 Active Learners
@@ -583,7 +583,7 @@ function LandingPage({ onLogin }: LoadingPageProps) {
                         {" "}
                         <p className="text-gray-400 text-sm">
                             {" "}
-                            © 2024 TinkFlow. All rights reserved.{" "}
+                            © 2025 TinkFlow. All rights reserved.{" "}
                         </p>{" "}
                         <div className="flex space-x-6 mt-4 md:mt-0">
                             {" "}
