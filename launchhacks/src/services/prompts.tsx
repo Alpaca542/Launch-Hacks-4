@@ -205,7 +205,7 @@ export const SCHEMA = [
     },
     {
         img: [
-            "very short image description(e.g. cats, play)",
+            "very short image description(e.g. cats play game kitten)",
             "The cats like to play with each other.",
         ],
     },
@@ -217,7 +217,7 @@ export const SCHEMA = [
     },
     {
         gif: [
-            "very short gif description(e.g. frogs, jump)",
+            "very short gif description(e.g. frogs jump toad)",
             "Frogs are amazing creatures that can jump really high.",
         ],
     },

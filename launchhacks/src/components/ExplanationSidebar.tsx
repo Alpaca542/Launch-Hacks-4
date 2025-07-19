@@ -98,7 +98,7 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
                         </svg>
                     </button>
                 </div>
-                <div className="p-6 overflow-y-auto flex-1 scrollbar-thin">
+                <div className="p-6 overflow-y-auto flex-1 scrollbar-thin pt-0.5">
                     {explanation ? (
                         <>
                             <div

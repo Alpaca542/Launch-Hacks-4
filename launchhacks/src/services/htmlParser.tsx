@@ -75,163 +75,242 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                     .join("");
                 return `<ol class="my-4 pl-6 space-y-2 list-decimal list-inside text-gray-700 dark:text-gray-300 transition-colors duration-200">${olItems}</ol>`;
 
-            case "quiz":
+            case "quiz": {
                 const quizArray = value as QuizData[];
                 const quizSetId = `quiz-set-${Math.random()
                     .toString(36)
                     .substr(2, 9)}`;
 
+                /* ========== BUILD EACH QUESTION ========== */
                 const quizHtml = quizArray
                     .map((quizData, quizIndex) => {
                         const quizId = `${quizSetId}-q${quizIndex}`;
+                        const progress = Math.round(
+                            ((quizIndex + 1) / quizArray.length) * 100
+                        );
 
+                        /* ----- answers ----- */
                         const answerButtons = quizData.answers
-                            .map((answer, index) => {
+                            .map((answer, idx) => {
                                 const answerText = Object.keys(answer)[0];
                                 const hint = answer[answerText];
                                 const isCorrect =
-                                    index === quizData.correctAnswer;
+                                    idx === quizData.correctAnswer;
 
                                 const clickHandler = `
-                                        const quiz = document.getElementById('${quizId}');
+                                        const quiz    = document.getElementById('${quizId}');
                                         const hintDiv = document.getElementById('${quizId}-hint');
-                                        const resultDiv = document.getElementById('${quizId}-result');
+                                        const result  = document.getElementById('${quizId}-result');
                                         const nextBtn = document.getElementById('${quizId}-next');
                                         const buttons = quiz.querySelectorAll('.quiz-answer');
-                                        const selectedButton = this;
-                                        
+                                        const me      = this;
+                
                                         if (${isCorrect}) {
-                                            // Correct answer
                                             hintDiv.classList.add('hidden');
-                                            resultDiv.classList.remove('hidden');
-                                            if (nextBtn) nextBtn.classList.remove('hidden');
-                                            buttons.forEach(btn => btn.disabled = true);
-                                            selectedButton.classList.add('quiz-correct');
-                                            selectedButton.classList.remove('hover:bg-blue-50', 'dark:hover:bg-gray-700');
+                                            result.classList.remove('hidden');
+                                            nextBtn && nextBtn.classList.remove('hidden');
+                                            buttons.forEach(b => b.disabled = true);
+                
+                                            me.classList.add('bg-green-50','dark:bg-green-900/20',
+                                                             'border-green-500','text-green-800','dark:text-green-100',
+                                                             'shadow-inner');
+                                            me.classList.remove('hover:bg-slate-50','dark:hover:bg-slate-800');
+                                            me.classList.add('scale-105');
                                         } else {
-                                            // Wrong answer - show hint
                                             hintDiv.textContent = '${hint.replace(
                                                 /'/g,
                                                 "\\'"
                                             )}';
                                             hintDiv.classList.remove('hidden');
-                                            selectedButton.classList.add('quiz-incorrect');
-                                            selectedButton.classList.remove('hover:bg-blue-50', 'dark:hover:bg-gray-700');
-                                            selectedButton.disabled = true;
+                
+                                            me.classList.add('bg-red-50','dark:bg-red-900/20',
+                                                             'border-red-500','text-red-800','dark:text-red-100',
+                                                             'animate-pulse');
+                                            me.classList.remove('hover:bg-slate-50','dark:hover:bg-slate-800');
+                                            me.disabled = true;
                                         }
                                     `;
 
-                                return `<button class="quiz-answer w-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 text-left font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200 transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60" onclick="${clickHandler}">${answerText}</button>`;
+                                return `
+                                        <button
+                                            class="quiz-answer w-full border-2 border-slate-300 dark:border-slate-600
+                                                   bg-white dark:bg-slate-800 rounded-xl p-4 text-left
+                                                   font-medium text-slate-700 dark:text-slate-200
+                                                   transition-all duration-200 ease-out
+                                                   hover:-translate-y-0.5 hover:shadow-lg
+                                                   hover:bg-slate-50 dark:hover:bg-slate-800
+                                                   focus:outline-none focus:ring-2 focus:ring-offset-2
+                                                   focus:ring-blue-500 dark:focus:ring-blue-400
+                                                   disabled:cursor-not-allowed disabled:opacity-60"
+                                            onclick="${clickHandler}"
+                                        >
+                                            ${answerText}
+                                        </button>`;
                             })
                             .join("");
 
-                        const retryHandler = `
-                                const quiz = document.getElementById('${quizId}');
-                                const hintDiv = document.getElementById('${quizId}-hint');
-                                const resultDiv = document.getElementById('${quizId}-result');
-                                const nextBtn = document.getElementById('${quizId}-next');
-                                const buttons = quiz.querySelectorAll('.quiz-answer');
-                                
-                                // Reset all states
-                                hintDiv.classList.add('hidden');
-                                hintDiv.textContent = '';
-                                resultDiv.classList.add('hidden');
-                                if (nextBtn) nextBtn.classList.add('hidden');
-                                
-                                buttons.forEach(btn => {
-                                    btn.disabled = false;
-                                    btn.classList.remove('quiz-correct', 'quiz-incorrect');
-                                    btn.classList.add('hover:bg-blue-50', 'dark:hover:bg-gray-700');
-                                });
-                            `;
-
+                        /* ----- next / finish ----- */
                         const nextHandler =
                             quizIndex < quizArray.length - 1
                                 ? `
-                                document.getElementById('${quizSetId}-q${quizIndex}').classList.add('hidden');
-                                document.getElementById('${quizSetId}-q${
+                                        document.getElementById('${quizSetId}-q${quizIndex}').classList.add('hidden');
+                                        document.getElementById('${quizSetId}-q${
                                       quizIndex + 1
                                   }').classList.remove('hidden');
-                            `
+                                        window.scrollTo({ top: document.getElementById('${quizSetId}-q${
+                                      quizIndex + 1
+                                  }').offsetTop - 20, behavior: 'smooth' });`
                                 : `
-                                document.getElementById('${quizSetId}-completion').classList.remove('hidden');
-                                document.getElementById('${quizId}').classList.add('hidden');
-                            `;
+                                        document.getElementById('${quizSetId}-completion').classList.remove('hidden');
+                                        document.getElementById('${quizId}').classList.add('hidden');
+                                        window.scrollTo({ top: document.getElementById('${quizSetId}-completion').offsetTop - 20, behavior: 'smooth' });`;
 
                         const nextButton =
                             quizIndex < quizArray.length - 1
-                                ? `<button id="${quizId}-next" class="hidden bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200" onclick="${nextHandler}">Next Question →</button>`
-                                : `<button id="${quizId}-next" class="hidden bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200" onclick="${nextHandler}">Finish Quiz ✓</button>`;
+                                ? `<button id="${quizId}-next"
+                                               class="hidden inline-flex items-center gap-2
+                                                      bg-blue-600 hover:bg-blue-700
+                                                      dark:bg-blue-500 dark:hover:bg-blue-600
+                                                      text-white px-6 py-2 rounded-lg font-semibold
+                                                      transition-colors duration-200 drop-shadow-md"
+                                               onclick="${nextHandler}">
+                                           Next <i class="fa-solid fa-arrow-right"></i>
+                                       </button>`
+                                : `<button id="${quizId}-next"
+                                               class="hidden inline-flex items-center gap-2
+                                                      bg-green-600 hover:bg-green-700
+                                                      dark:bg-green-500 dark:hover:bg-green-600
+                                                      text-white px-6 py-2 rounded-lg font-semibold
+                                                      transition-colors duration-200 drop-shadow-md"
+                                               onclick="${nextHandler}">
+                                           Finish <i class="fa-solid fa-circle-check"></i>
+                                       </button>`;
 
+                        /* ----- card ----- */
                         return `
-                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200 ${
-                                    quizIndex === 0 ? "" : "hidden"
-                                }" id="${quizId}">
-                                    <div class="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2 text-center">Question ${
-                                        quizIndex + 1
-                                    } of ${quizArray.length}</div>
-                                    <div class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 text-center leading-relaxed">${
-                                        quizData.question
-                                    }</div>
-                                    <div class="space-y-3 mb-4">
+                                <div id="${quizId}"
+                                     class="${quizIndex === 0 ? "" : "hidden"}
+                                            bg-gradient-to-br from-white via-slate-50 to-white
+                                            dark:from-slate-800 dark:via-slate-800/70 dark:to-slate-900
+                                            border border-slate-200 dark:border-slate-700
+                                            shadow-xl rounded-3xl p-8 max-w-2xl mx-auto
+                                            animate-fade-in">
+                
+                                    <div class="w-full bg-slate-200/60 dark:bg-slate-700/40 h-2 rounded-full mb-6">
+                                        <div class="h-2 bg-blue-500 rounded-full transition-all duration-500"
+                                             style="width:${progress}%"></div>
+                                    </div>
+                
+                                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400 text-center mb-2">
+                                        Question ${quizIndex + 1} / ${
+                            quizArray.length
+                        }
+                                    </p>
+                
+                                    <h2 class="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100
+                                               text-center mb-8 leading-relaxed">
+                                        ${quizData.question}
+                                    </h2>
+                
+                                    <div class="grid gap-4 sm:grid-cols-2 mb-6">
                                         ${answerButtons}
                                     </div>
-                                    <div id="${quizId}-hint" class="hidden bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 text-yellow-800 dark:text-yellow-200 text-sm italic animate-fade-in"></div>
-                                    <div id="${quizId}-result" class="hidden bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-6 text-center">
-                                        <p class="text-xl font-bold text-green-800 dark:text-green-200 mb-4">🎉 Excellent! 🎉</p>
-                                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                                            <button class="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200" onclick="${retryHandler}">↻ Try Again</button>
-                                            ${nextButton}
-                                        </div>
+                
+                                    <div id="${quizId}-hint"
+                                         class="hidden bg-yellow-50 dark:bg-yellow-900/20
+                                                border border-yellow-300 dark:border-yellow-600
+                                                rounded-lg p-4 text-yellow-800 dark:text-yellow-200
+                                                text-sm italic mb-6 animate-fade-in"></div>
+                
+                                    <div id="${quizId}-result"
+                                         class="hidden flex flex-col items-center gap-6 mb-4 animate-fade-in">
+                
+                                        <i class="fa-solid fa-circle-check text-green-500 text-6xl drop-shadow-lg animate-bounce duration-[2s]"></i>
+                
+                                        <p class="text-2xl font-bold text-green-800 dark:text-green-200">
+                                            Correct!
+                                        </p>
+                
+                                        ${nextButton}
                                     </div>
-                                </div>
-                            `;
+                                </div>`;
                     })
                     .join("");
 
+                /* ========== START‑OVER HANDLER ========== */
                 const restartHandler = `
-                        document.getElementById('${quizSetId}-completion').classList.add('hidden');
+                        // completion -> hidden, first question -> visible
+                        const comp = document.getElementById('${quizSetId}-completion');
+                        comp.classList.add('hidden');
                         document.getElementById('${quizSetId}-q0').classList.remove('hidden');
-                        // Reset all questions
+                        window.scrollTo({ top: document.getElementById('${quizSetId}-q0').offsetTop - 20, behavior: 'smooth' });
+                
+                        // iterate through every question
                         ${quizArray
                             .map(
-                                (_, index) => `
-                            const quiz${index} = document.getElementById('${quizSetId}-q${index}');
-                            if (quiz${index}) {
-                                const hintDiv = document.getElementById('${quizSetId}-q${index}-hint');
-                                const resultDiv = document.getElementById('${quizSetId}-q${index}-result');
-                                const nextBtn = document.getElementById('${quizSetId}-q${index}-next');
-                                const buttons = quiz${index}.querySelectorAll('.quiz-answer');
-                                
-                                hintDiv.classList.add('hidden');
-                                hintDiv.textContent = '';
-                                resultDiv.classList.add('hidden');
-                                if (nextBtn) nextBtn.classList.add('hidden');
-                                
-                                buttons.forEach(btn => {
-                                    btn.disabled = false;
-                                    btn.classList.remove('quiz-correct', 'quiz-incorrect');
-                                    btn.classList.add('hover:bg-blue-50', 'dark:hover:bg-gray-700');
+                                (_, i) => `
+                            (function() {
+                                const q     = document.getElementById('${quizSetId}-q${i}');
+                                const hint  = document.getElementById('${quizSetId}-q${i}-hint');
+                                const res   = document.getElementById('${quizSetId}-q${i}-result');
+                                const next  = document.getElementById('${quizSetId}-q${i}-next');
+                                const btns  = q.querySelectorAll('.quiz-answer');
+                
+                                hint.classList.add('hidden'); hint.textContent = '';
+                                res.classList.add('hidden');  next && next.classList.add('hidden');
+                
+                                btns.forEach(b => {
+                                    b.disabled = false;
+                                    b.classList.remove(
+                                        'bg-green-50','dark:bg-green-900/20','border-green-500','text-green-800','dark:text-green-100',
+                                        'bg-red-50','dark:bg-red-900/20','border-red-500','text-red-800','dark:text-red-100',
+                                        'animate-pulse','shadow-inner','scale-105'
+                                    );
+                                    b.classList.add('hover:bg-slate-50','dark:hover:bg-slate-800');
                                 });
-                                
-                                if (${index} > 0) quiz${index}.classList.add('hidden');
-                            }
-                        `
+                
+                                if (${i} > 0) q.classList.add('hidden');
+                            })();
+                            `
                             )
                             .join("")}
                     `;
 
+                /* ========== FINAL RETURN ========== */
                 return `
-                        <div class="my-8" id="${quizSetId}">
+                        <div id="${quizSetId}" class="my-12 space-y-10">
                             ${quizHtml}
-                            <div id="${quizSetId}-completion" class="hidden bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl p-8 text-center">
-                                <div class="text-4xl mb-4">🎊</div>
-                                <h3 class="text-2xl font-bold text-green-800 dark:text-green-200 mb-2">Quiz Completed!</h3>
-                                <p class="text-green-700 dark:text-green-300 mb-6">Congratulations! You've successfully completed all ${quizArray.length} questions.</p>
-                                <button class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg transform hover:scale-105 transition-all duration-200" onclick="${restartHandler}">🔄 Start Over</button>
+                
+                            <!-- completion card -->
+                            <div id="${quizSetId}-completion"
+                                 class="hidden bg-gradient-to-br from-green-50 to-blue-50
+                                        dark:from-green-900/25 dark:to-blue-900/25
+                                        border-2 border-green-200 dark:border-green-700
+                                        rounded-3xl p-12 text-center max-w-xl mx-auto
+                                        shadow-2xl space-y-8 animate-fade-in">
+                
+                                <i class="fa-solid fa-trophy text-yellow-400 text-7xl drop-shadow-lg animate-bounce duration-[2s]"></i>
+                
+                                <h3 class="text-3xl font-extrabold text-green-800 dark:text-green-200">
+                                    You finished the quiz!
+                                </h3>
+                
+                                <p class="text-lg text-green-700 dark:text-green-300">
+                                    Perfect score on ${quizArray.length} questions - great job!
+                                </p>
+                
+                                <button onclick="${restartHandler}"
+                                        class="inline-flex items-center gap-3
+                                               bg-gradient-to-r from-green-600 to-blue-600
+                                               hover:from-green-700 hover:to-blue-700
+                                               text-white px-8 py-3 rounded-full font-semibold
+                                               shadow-lg transform hover:scale-105
+                                               transition-all duration-200">
+                                    <i class="fa-solid fa-rotate-right"></i> Start over
+                                </button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
+            }
 
             case "img":
                 const [imgReq, imgDesc] = value as [string, string];
@@ -288,15 +367,6 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
             case "codeblock":
                 return `<pre class="my-6 bg-gray-900 dark:bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto border-l-4 border-blue-500 shadow-lg"><code class="font-mono text-sm leading-relaxed">${value}</code></pre>`;
 
-            case "quote":
-                return `<blockquote class="my-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded-r-lg relative">
-                        <div class="text-blue-600 dark:text-blue-400 text-4xl absolute -top-2 -left-1 font-serif">"</div>
-                        <div class="italic text-gray-700 dark:text-gray-300 pl-6">${value}</div>
-                    </blockquote>`;
-
-            case "link":
-                return `<a href="${value}" class="inline-block my-2 px-4 py-2 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white dark:hover:bg-blue-500 transition-all duration-200 font-medium" target="_blank">${value}</a>`;
-
             case "table":
                 const tableData = value as string[][];
                 const headerRow = tableData[0];
@@ -327,9 +397,6 @@ const parseSchemaArray = async (schemaArray: SchemaItem[]): Promise<string> => {
                 return `<div class="my-6 overflow-x-auto shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
                         <table class="w-full border-collapse">${headerHtml}${bodyHtml}</table>
                     </div>`;
-
-            case "purehtml":
-                return `<div class="my-4 p-2 rounded-md bg-gray-50 dark:bg-gray-800 transition-colors duration-200">${value}</div>`;
 
             case "sidecontainer":
                 return `<aside class="float-right w-80 max-w-[40%] ml-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm leading-relaxed text-gray-700 dark:text-gray-300 transition-colors duration-200 lg:block hidden">
@@ -379,97 +446,80 @@ config:
                         </div>
                     `;
                 }
+            /* ────────────────────────────────────────────────────────── */
+            /*  SMALL BLOCKS  (note | warning | tip | quote | link)      */
+            /* ────────────────────────────────────────────────────────── */
 
             case "note":
-                return `<div class="my-4 flex items-start p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 rounded-r-lg transition-colors duration-200">
-                        <div class="text-blue-600 dark:text-blue-400 text-xl mr-3 flex-shrink-0 mt-0.5">📝</div>
-                        <div class="text-blue-800 dark:text-blue-200 leading-relaxed">${value}</div>
-                    </div>`;
+                return `
+        <div class="my-4 flex items-start gap-3 p-4
+                    bg-blue-50/60 dark:bg-blue-900/25
+                    border-l-4 border-blue-500 dark:border-blue-400
+                    rounded-2xl shadow-sm transition
+                    hover:shadow-md hover:-translate-y-0.5 animate-fade-in">
+            <i class="fa-solid fa-note-sticky text-blue-600 dark:text-blue-400
+                       text-2xl flex-shrink-0 mt-0.5"></i>
+            <div class="text-blue-800 dark:text-blue-200 leading-relaxed">
+                ${value}
+            </div>
+        </div>`;
 
             case "warning":
-                return `<div class="my-4 flex items-start p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-400 rounded-r-lg transition-colors duration-200">
-                        <div class="text-yellow-600 dark:text-yellow-400 text-xl mr-3 flex-shrink-0 mt-0.5">⚠️</div>
-                        <div class="text-yellow-800 dark:text-yellow-200 leading-relaxed">${value}</div>
-                    </div>`;
+                return `
+        <div class="my-4 flex items-start gap-3 p-4
+                    bg-yellow-50/70 dark:bg-yellow-900/25
+                    border-l-4 border-yellow-500 dark:border-yellow-400
+                    rounded-2xl shadow-sm transition
+                    hover:shadow-md hover:-translate-y-0.5 animate-fade-in">
+            <i class="fa-solid fa-triangle-exclamation
+                       text-yellow-600 dark:text-yellow-400
+                       text-2xl flex-shrink-0 mt-0.5 animate-pulse"></i>
+            <div class="text-yellow-800 dark:text-yellow-200 leading-relaxed">
+                ${value}
+            </div>
+        </div>`;
 
             case "tip":
-                return `<div class="my-4 flex items-start p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-400 rounded-r-lg transition-colors duration-200">
-                        <div class="text-green-600 dark:text-green-400 text-xl mr-3 flex-shrink-0 mt-0.5">💡</div>
-                        <div class="text-green-800 dark:text-green-200 leading-relaxed">${value}</div>
-                    </div>`;
-
-            case "htmlCanvas":
-                const canvasId = `canvas_${Math.random()
-                    .toString(36)
-                    .substr(2, 9)}_${Date.now()}`;
-
-                // Store canvas code in data attribute instead of inline JS
-                const canvasCode = (value as string)
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
-
                 return `
-                        <div class="my-6 bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-6 transition-colors duration-200" data-canvas-code="${canvasCode}" data-canvas-id="${canvasId}">
-                            <canvas id="${canvasId}" width="400" height="300" class="border border-gray-300 dark:border-gray-600 rounded-lg max-w-full mx-auto block bg-white dark:bg-gray-900"></canvas>
-                            <div class="flex flex-wrap gap-2 mt-4 justify-center">
-                                <button class="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2" onclick="
-                                    (function() {
-                                        const canvasDiv = this.closest('[data-canvas-code]');
-                                        const code = canvasDiv.getAttribute('data-canvas-code');
-                                        const canvasId = canvasDiv.getAttribute('data-canvas-id');
-                                        const canvasElement = document.getElementById(canvasId);
-                                        const canvasContext = canvasElement.getContext('2d');
-                                        const errorDiv = document.getElementById(canvasId + 'Error');
-                                        
-                                        errorDiv.classList.add('hidden');
-                                        errorDiv.textContent = '';
-                                        
-                                        try {
-                                            canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                                            const canvasFunction = new Function('canvas', 'ctx', code);
-                                            canvasFunction(canvasElement, canvasContext);
-                                        } catch (error) {
-                                            console.error('Canvas error:', error);
-                                            errorDiv.textContent = 'Error: ' + error.message;
-                                            errorDiv.classList.remove('hidden');
-                                        }
-                                    }).call(this);
-                                ">▶ Run Code</button>
-                                <button class="bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2" onclick="
-                                    (function() {
-                                        const canvasDiv = this.closest('[data-canvas-code]');
-                                        const canvasId = canvasDiv.getAttribute('data-canvas-id');
-                                        const canvasElement = document.getElementById(canvasId);
-                                        const canvasContext = canvasElement.getContext('2d');
-                                        const errorDiv = document.getElementById(canvasId + 'Error');
-                                        
-                                        canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                                        errorDiv.classList.add('hidden');
-                                    }).call(this);
-                                ">🗑️ Clear</button>
-                                <button class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2" onclick="
-                                    (function() {
-                                        const canvasDiv = this.closest('[data-canvas-code]');
-                                        const canvasId = canvasDiv.getAttribute('data-canvas-id');
-                                        const canvasElement = document.getElementById(canvasId);
-                                        
-                                        if (!document.fullscreenElement) {
-                                            canvasElement.requestFullscreen().catch(err => {
-                                                console.warn('Fullscreen failed:', err);
-                                            });
-                                        } else {
-                                            document.exitFullscreen();
-                                        }
-                                    }).call(this);
-                                ">⛶ Fullscreen</button>
-                            </div>
-                            <details class="mt-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-200">
-                                <summary class="p-3 font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">📝 View Code</summary>
-                                <pre class="p-4 bg-gray-900 dark:bg-gray-800 text-gray-100 rounded-b-lg overflow-x-auto"><code class="font-mono text-sm">${value}</code></pre>
-                            </details>
-                            <div id="${canvasId}Error" class="hidden mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200"></div>
-                        </div>
-                    `;
+        <div class="my-4 flex items-start gap-3 p-4
+                    bg-green-50/60 dark:bg-green-900/25
+                    border-l-4 border-green-500 dark:border-green-400
+                    rounded-2xl shadow-sm transition
+                    hover:shadow-md hover:-translate-y-0.5 animate-fade-in">
+            <i class="fa-solid fa-lightbulb
+                       text-green-600 dark:text-green-400
+                       text-2xl flex-shrink-0 mt-0.5 animate-bounce duration-[2s]"></i>
+            <div class="text-green-800 dark:text-green-200 leading-relaxed">
+                ${value}
+            </div>
+        </div>`;
+
+            case "quote":
+                return `
+        <blockquote class="my-6 relative p-6
+                           bg-slate-50 dark:bg-slate-800/40
+                           border-l-4 border-blue-500 dark:border-blue-400
+                           rounded-2xl shadow-sm animate-fade-in">
+            <i class="fa-solid fa-quote-left absolute -top-10 -left-10
+                       text-blue-500 dark:text-blue-400 text-3xl opacity-90"></i>
+            <div class="italic text-slate-700 dark:text-slate-200 pl-6">
+                ${value}
+            </div>
+        </blockquote>`;
+
+            case "link":
+                return `
+        <a href="${value}"
+           target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 my-2 px-4 py-2
+                  text-blue-600 dark:text-blue-300 font-medium
+                  border-2 border-blue-600/80 dark:border-blue-400/80
+                  rounded-xl hover:bg-blue-600 hover:text-white
+                  dark:hover:bg-blue-500 transition
+                  shadow-sm hover:shadow-md">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            ${value}
+        </a>`;
 
             default:
                 return `<div class="my-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg text-red-800 dark:text-red-200 font-mono text-sm">
