@@ -145,8 +145,6 @@ export const handleTokenClick = (
     }
 
     if (isInput) {
-        console.log(5);
-        // Update the source node with new token colors
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === newNode?.id) {
@@ -157,6 +155,8 @@ export const handleTokenClick = (
                             label: "Loading...",
                             summary: "",
                             full_text: "",
+                            previousNode: sourceNodeId,
+                            isLoading: true,
                         },
                     };
                 }
