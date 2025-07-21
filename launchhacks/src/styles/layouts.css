@@ -1330,3 +1330,74 @@
         padding: var(--space-md);
     }
 }
+
+/* Suggestion Handle Animations */
+@keyframes suggestionPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes suggestionSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes modeSwitch {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes dragLineGlow {
+
+    0%,
+    100% {
+        stroke-opacity: 0.6;
+        stroke-width: 2px;
+    }
+
+    50% {
+        stroke-opacity: 1;
+        stroke-width: 4px;
+    }
+}
+
+.suggestion-handle-animate {
+    animation: suggestionSlideIn 0.3s var(--transition-bounce);
+}
+
+.suggestion-handle-pulse {
+    animation: suggestionPulse 2s ease-in-out infinite;
+}
+
+.mode-switch-animate {
+    animation: modeSwitch 0.2s var(--transition-fast);
+}
+
+.drag-line {
+    animation: dragLineGlow 1s ease-in-out infinite;
+}

@@ -4,10 +4,11 @@ import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { parseTextIntoTokens, Token } from "../utils/nodeHelpers";
-import ModeMenu from "./ModeChooseMenu";
+import SuggestionHandles from "./SuggestionHandles";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
 import "../styles/layouts.css";
+import ModeMenu from "./ModeChooseMenu";
 
 interface NodeData {
     label?: string;
@@ -25,7 +26,8 @@ interface NodeData {
     onNodeCallback?: (
         mode?: string,
         parent?: string,
-        position?: { x: number; y: number }
+        position?: { x: number; y: number },
+        extraData?: { initialText?: string }
     ) => void;
     layout?: number;
     contents?: string[];
@@ -99,11 +101,11 @@ export function DraggableEditableNode({
     const [isNodeMenuVisible, setIsNodeMenuVisible] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const [dragState, setDragState] = useState<{
-        mode?: "explain" | "answer" | "argue";
+        suggestion?: string;
         x: number;
         y: number;
         isDragging: boolean;
-    }>({ mode: undefined, x: 0, y: 0, isDragging: false });
+    }>({ suggestion: undefined, x: 0, y: 0, isDragging: false });
 
     // Add a ref to always have the latest dragState
     const dragStateRef = useRef(dragState);
@@ -112,11 +114,14 @@ export function DraggableEditableNode({
         dragStateRef.current = dragState;
     }, [dragState]);
 
-    // Add state for the handle's initial position
     const [handleOrigin, setHandleOrigin] = useState<{
         x: number;
         y: number;
     } | null>(null);
+
+    useEffect(() => {
+        dragStateRef.current = dragState;
+    }, [dragState]);
 
     // Show node menu on hover
     function handleMouseEnter() {
@@ -240,63 +245,12 @@ export function DraggableEditableNode({
                         })}
                     </div>
                 </div>
-
-                {/* Suggestions */}
-                {data.suggestions && data.suggestions.length > 0 && (
-                    <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/80">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Sparkles className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm font-medium text-gray-700">
-                                Explore Next
-                            </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {data.suggestions.map((suggestion, index) => (
-                                <button
-                                    key={index}
-                                    className="px-3 py-1.5 text-sm rounded-full bg-blue-50/80 text-blue-700 
-                                             border border-blue-200/60 backdrop-blur-sm transition-all duration-200
-                                             hover:bg-blue-100/80 hover:border-blue-300/80 hover:scale-105
-                                             active:scale-95"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (nodeRef.current) {
-                                            const rect =
-                                                nodeRef.current.getBoundingClientRect();
-                                            const nodePosition =
-                                                screenToFlowPosition({
-                                                    x: rect.left,
-                                                    y: rect.top,
-                                                });
-                                            const token: Token = {
-                                                word: suggestion,
-                                            };
-                                            handleTokenClick(
-                                                token,
-                                                id,
-                                                nodePosition,
-                                                "draggableEditable",
-                                                data.myColor,
-                                                data.full_text ||
-                                                    data.title ||
-                                                    suggestion
-                                            );
-                                        }
-                                    }}
-                                >
-                                    {suggestion}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         );
     }, [
         data.contents,
         data.isLoading,
         data.title,
-        data.suggestions,
         displayTokens,
         isTokenClickable,
         data.tokenColors,
@@ -315,30 +269,70 @@ export function DraggableEditableNode({
         if (data.previousNode) {
             const previousNode = getNode(data.previousNode);
             if (previousNode) {
-                setViewport({
-                    x: -previousNode.position.x + 200,
-                    y: -previousNode.position.y + 200,
-                    zoom: 1,
-                });
+                const { x, y } = previousNode.position;
+                // Center the viewport on the previous node with smooth animation
+                setViewport(
+                    { x: -x + 200, y: -y + 100, zoom: 1 },
+                    { duration: 500 }
+                );
             }
         }
     };
+    const handleDragStart = (suggestion: string, e: PointerEvent) => {
+        // Set handle origin like ModeChooseMenu does
+        setHandleOrigin({ x: e.clientX, y: e.clientY });
 
-    // Highlight.js code block highlighting
-    useEffect(() => {
-        if (data.contents && nodeRef.current) {
-            setTimeout(() => {
-                const codeBlocks =
-                    nodeRef.current?.querySelectorAll("pre code");
-                codeBlocks?.forEach((block) => {
-                    const htmlElement = block as HTMLElement;
-                    if (!htmlElement.dataset.highlighted) {
-                        hljs.highlightElement(htmlElement);
-                    }
+        setDragState({
+            suggestion,
+            x: e.clientX,
+            y: e.clientY,
+            isDragging: true,
+        });
+
+        // Set up global mouse event handlers for drag
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            setDragState((prev) => ({
+                ...prev,
+                x: moveEvent.clientX,
+                y: moveEvent.clientY,
+            }));
+        };
+
+        const handleMouseUp = (upEvent: MouseEvent) => {
+            // Create temp input node at drop position
+            if (data.onNodeCallback) {
+                const flowPosition = screenToFlowPosition({
+                    x: upEvent.clientX,
+                    y: upEvent.clientY,
                 });
-            }, 200);
-        }
-    }, [data.contents]);
+                data.onNodeCallback(
+                    "tempInput",
+                    id,
+                    {
+                        x: flowPosition.x,
+                        y: flowPosition.y,
+                    },
+                    {
+                        initialText: suggestion,
+                    }
+                );
+            }
+
+            // Clean up
+            setDragState({
+                suggestion: undefined,
+                x: 0,
+                y: 0,
+                isDragging: false,
+            });
+            setHandleOrigin(null);
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+    };
 
     const getParentCenter = () => {
         if (!nodeRef.current) return { x: 0, y: 0 };
@@ -347,23 +341,6 @@ export function DraggableEditableNode({
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2,
         };
-    };
-    // Mouse event handlers for drag
-    const handleDragStart = (
-        mode: "explain" | "answer" | "argue",
-        e: MouseEvent | PointerEvent
-    ) => {
-        // Find the handle's DOM node
-        const handleDiv = e.target as HTMLElement;
-        const rect = handleDiv.getBoundingClientRect();
-        // Use the center of the handle div as the origin
-        setHandleOrigin({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-        });
-        setDragState({ mode, x: e.clientX, y: e.clientY, isDragging: true });
-        document.addEventListener("pointermove", handleDragMove);
-        document.addEventListener("pointerup", handleDragEnd);
     };
 
     const handleDragMove = (e: PointerEvent) => {
@@ -381,10 +358,18 @@ export function DraggableEditableNode({
                 x: latestDragState.x,
                 y: latestDragState.y,
             });
-            console.log("Calling onNodeCallback", latestDragState.mode, rfPos);
-            data.onNodeCallback(latestDragState.mode || undefined, id, rfPos);
+            console.log(
+                "Calling onNodeCallback",
+                latestDragState.suggestion,
+                rfPos
+            );
+            data.onNodeCallback(
+                latestDragState.suggestion || undefined,
+                id,
+                rfPos
+            );
         }
-        setDragState({ mode: "explain", x: 0, y: 0, isDragging: false });
+        setDragState({ suggestion: "", x: 0, y: 0, isDragging: false });
         setHandleOrigin(null);
         document.removeEventListener("pointermove", handleDragMove);
         document.removeEventListener("pointerup", handleDragEnd);
@@ -487,12 +472,15 @@ export function DraggableEditableNode({
                 {/* Content */}
                 {!data.isLoading && renderContent}
 
-                <ModeMenu
-                    dragState={dragState}
-                    handleDragStart={handleDragStart}
-                    handleOrigin={handleOrigin}
-                    getParentCenter={getParentCenter}
-                />
+                {data.suggestions && data.suggestions.length > 0 && (
+                    <SuggestionHandles
+                        suggestions={data.suggestions}
+                        dragState={dragState}
+                        handleDragStart={handleDragStart}
+                        handleOrigin={handleOrigin}
+                        getParentCenter={getParentCenter}
+                    />
+                )}
             </div>
             <Handles />
         </div>
