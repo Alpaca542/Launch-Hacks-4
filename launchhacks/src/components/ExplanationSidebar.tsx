@@ -20,11 +20,9 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
     useEffect(() => {
         if (isVisible) {
             setShouldRender(true);
-            // Small delay to ensure DOM element is rendered before animation starts
-            setTimeout(() => setIsAnimating(true), 10);
+            setTimeout(() => setIsAnimating(true), 100);
         } else {
             setIsAnimating(false);
-            // Wait for animation to complete before removing from DOM
             setTimeout(() => setShouldRender(false), 300);
         }
     }, [isVisible]);
@@ -39,30 +37,28 @@ const ExplanationSidebar = memo(function ExplanationSidebar({
     return (
         <div
             className={`bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl
-                                   border border-gray-200/50 dark:border-gray-700/50
-                                   fade-in
-                                   transition-all duration-300 ease-out
-                                   ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
-                                   before:absolute before:inset-0 before:bg-gradient-to-br 
-                                   before:from-white/40 before:to-transparent before:pointer-events-none
-                                   dark:before:from-gray-800/40 dark:before:to-transparent
-                                   relative overflow-auto
-                                   ${
-                                       isAnimating
-                                           ? "transform translate-x-0"
-                                           : "transform translate-x-full"
-                                   }`}
+                       border border-gray-200/50 dark:border-gray-700/50
+                       fade-in
+                       transition-all duration-300 ease-out
+                       ring-1 ring-white/20 dark:ring-white/10 rounded-2xl
+                       before:absolute before:inset-0 before:bg-gradient-to-br 
+                       before:from-white/40 before:to-transparent before:pointer-events-none
+                       dark:before:from-gray-800/40 dark:before:to-transparent
+                       relative overflow-auto
+                       transform ${
+                           isAnimating ? "translate-x-0" : "translate-x-full"
+                       }`}
             style={{
                 height: "auto",
-                maxHeight: "800px",
+                maxHeight: "80vh",
                 minHeight: "200px",
             }}
         >
             <div
                 className={`w-full h-full flex flex-col top-0 right-0 z-50 transition-all duration-300 ease-out ${
                     isAnimating
-                        ? "transform translate-x-0 opacity-100"
-                        : "transform translate-x-full opacity-0"
+                        ? "transform opacity-100"
+                        : "transform opacity-0"
                 }`}
             >
                 <div

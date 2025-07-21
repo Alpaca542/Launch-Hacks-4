@@ -7,7 +7,8 @@ import {
     createNewNode,
     createNewEdge,
 } from "../utils/nodeHelpers";
-import { askAITwice } from "../services/aiService";
+import { generateNodeContent } from "../services/aiService";
+import { parseLayoutContent } from "../services/layoutParser";
 
 export interface Token {
     word: string;
@@ -142,7 +143,7 @@ export const handleTokenClick = (
 
     if (newNode) {
         newNode.data.isLoading = true;
-        newNode.data.parentID = sourceNodeId;
+        newNode.data.previousNode = sourceNodeId;
     }
 
     if (isInput) {
@@ -162,72 +163,65 @@ export const handleTokenClick = (
     }
 
     // Always ask AI for concept and update node when response arrives
-    askAITwice(
+    generateNodeContent(
         token.myConcept || token.word,
         sourceNodeText || "",
-        inputMode || "default",
-        // Progressive summary update callback
-        (chunk: string) => {
-            setNodes((nds) =>
-                nds.map((node) => {
-                    if (node.id === newNode?.id) {
-                        const currentSummary = node.data.summary || "";
-                        return {
-                            ...node,
-                            data: {
-                                ...node.data,
-                                label: currentSummary + chunk,
-                                summary: currentSummary + chunk,
-                            },
-                        };
-                    }
-                    return node;
-                })
-            );
-        }
+        inputMode || "default"
     )
-        .then((response) => {
-            const full_text = response.firstResponse?.response || token.word;
-            const summary = response.secondResponse?.response || token.word;
-            const suggestions = response.thirdResponse?.response || {};
-            // Final update with all responses when everything is complete
+        .then(async (result) => {
+            // Parse the layout content to HTML
+            const { html, mediaPromises } = await parseLayoutContent(
+                result.layout,
+                result.content,
+                newNode?.id || ""
+            );
+
+            // Update node with all the generated content
             setNodes((nds) =>
                 nds.map((node) => {
                     if (node.id === newNode?.id) {
-                        // Create a new node object to notify React Flow about the change
                         return {
                             ...node,
                             data: {
                                 ...node.data,
-                                label: summary,
-                                title: token.word, // Use the original token as title
-                                summary: summary,
-                                full_text: full_text,
-                                suggestions: suggestions, // Could be populated by AI later
+                                title: result.title,
+                                full_text: result.fullText,
+                                suggestions: result.suggestions,
+                                layout: result.layout,
+                                contents: [html], // Store the rendered HTML
                                 isLoading: false,
+                                icon: result.icon,
                             },
                         };
                     }
                     return node;
                 })
             );
+
+            // Execute media loading promises in background
+            Promise.all(mediaPromises).catch((error) => {
+                console.warn("Some media failed to load:", error);
+            });
         })
-        .catch(() => {
+        .catch((error) => {
+            console.error("Error generating node content:", error);
             // Fallback to original word if AI request fails
             setNodes((nds) =>
                 nds.map((node) => {
                     if (node.id === newNode?.id) {
-                        // Create a new node object to notify React Flow about the change
                         return {
                             ...node,
                             data: {
                                 ...node.data,
-                                label: token.word,
                                 title: token.word,
-                                summary: token.word,
                                 full_text: token.word,
                                 suggestions: [],
+                                layout: 1,
+                                contents: [
+                                    `<div class="error-content">Failed to load content for "${token.word}"</div>`,
+                                ],
                                 isLoading: false,
+                                icon: "❌",
                             },
                         };
                     }

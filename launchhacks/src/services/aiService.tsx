@@ -1,14 +1,31 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // Adjust path to your Firebase config
-import { parseJsonToHtml } from "./htmlParser";
-import { jsonrepair } from "jsonrepair";
 import {
-    detailedExplanationPrompt,
     suggestionsPrompt,
-    summaryPrompt,
+    iconPrompt,
+    layoutPrompt,
+    contentPrompt,
 } from "./prompts";
 
-import { SCHEMA } from "./prompts";
+// Helper function to clean AI responses that might have markdown formatting
+const cleanJsonResponse = (response: string): string => {
+    // Remove markdown code blocks
+    let cleaned = response
+        .replace(/```json\s*\n?/gi, "")
+        .replace(/```\s*$/gi, "");
+
+    // Remove any leading/trailing whitespace
+    cleaned = cleaned.trim();
+
+    // If response starts with text before JSON, try to extract just the JSON
+    const jsonMatch = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+
+    return cleaned;
+};
+
 const askAI = async (message: string): Promise<any> => {
     try {
         // Add validation
@@ -35,183 +52,133 @@ const askAI = async (message: string): Promise<any> => {
     }
 };
 
-const askAIStream = async (
-    message: string,
-    onChunk?: (chunk: string) => void
-): Promise<string> => {
+export const askAiForSuggestions = async (
+    message: string
+): Promise<string[]> => {
     try {
-        // Add validation
-        if (!message || typeof message !== "string") {
-            throw new Error("Message must be a non-empty string");
-        }
-
-        const trimmedMessage = message.trim();
-        if (!trimmedMessage) {
-            throw new Error("Message cannot be empty or just whitespace");
-        }
-
-        const groqChatFunction = httpsCallable(functions, "groqChat");
-
-        console.log("Starting streaming request...");
-        // Use Firebase callable function streaming - following the official pattern
-        const { stream, data } = await groqChatFunction.stream({
-            message: trimmedMessage,
-        });
-
-        console.log("Stream started, waiting for chunks...");
-        let fullResponse = "";
-
-        // The `stream` async iterable will yield a new value every time
-        // the callable function calls `sendChunk()`
-        for await (const chunk of stream) {
-            console.log("Received chunk:", chunk);
-            // The chunk is the data sent directly from response.sendChunk()
-            if (
-                chunk &&
-                typeof chunk === "object" &&
-                "type" in chunk &&
-                "content" in chunk
-            ) {
-                const typedChunk = chunk as { type: string; content: string };
-                console.log("Processing chunk:", typedChunk);
-                if (typedChunk.type === "chunk" && typedChunk.content) {
-                    fullResponse += typedChunk.content;
-                    onChunk?.(typedChunk.content);
-                }
-            }
-        }
-
-        // The `data` promise resolves when the callable function completes
-        console.log("Waiting for final result...");
-        const finalResult = await data;
-        console.log("Final result received:", finalResult);
-
-        // Return the response from the final result or the accumulated response
-        if (
-            finalResult &&
-            typeof finalResult === "object" &&
-            "response" in finalResult
-        ) {
-            console.log("Returning final result response");
-            return finalResult.response as string;
-        }
-
-        console.log("Returning accumulated response:", fullResponse);
-        return fullResponse;
-    } catch (err) {
-        console.error("Firebase function streaming error:", err);
-        throw err;
+        const response = await askAI(suggestionsPrompt(message, "default"));
+        console.log("Suggestions response:", response);
+        const cleanedResponse = cleanJsonResponse(response);
+        const parsed = JSON.parse(cleanedResponse);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error("Error fetching suggestions:", error);
+        return [];
     }
 };
 
-export const askAITwice = async (
-    message: string,
-    context: string,
-    inputMode: string,
-    onSummaryChunk: (chunk: string) => void
-): Promise<{
-    firstResponse: any;
-    secondResponse: any;
-    thirdResponse: any;
-}> => {
+export const askAIForIcon = async (message: string): Promise<string> => {
     try {
-        // Start all three requests concurrently
-        const detailedPromise = askAI(
-            detailedExplanationPrompt(
-                context ?? "",
-                message ?? "",
-                SCHEMA ?? [],
-                inputMode ?? ""
-            )
-        );
-        const suggestionsPromise = askAI(suggestionsPrompt(message, inputMode));
+        const response = await askAI(iconPrompt(message, "default"));
+        console.log("Icon response:", response);
+        return response || "✨";
+    } catch (error) {
+        console.error("Error fetching icon:", error);
+        return "✨";
+    }
+};
 
-        // Stream the summary with progressive updates
-        let summaryAccumulator = "";
-        const summaryPromise = askAIStream(
-            summaryPrompt(message, context, inputMode),
-            (chunk: string) => {
-                summaryAccumulator += chunk;
-                // Call the callback with each chunk for progressive updates
-                onSummaryChunk(chunk);
-            }
-        );
+export const askAiForLayout = async (message: string): Promise<number> => {
+    try {
+        const response = await askAI(layoutPrompt(message, "default"));
+        console.log("Layout response:", response);
+        // Clean the response to extract just the number
+        const cleanedResponse = response.replace(/[^\d]/g, "");
+        const layoutNumber = parseInt(cleanedResponse);
 
-        // Wait for all responses to complete
-        const [detailedExplanation, suggestionsData, summaryResponse] =
-            await Promise.all([
-                detailedPromise,
-                suggestionsPromise,
-                summaryPromise,
-            ]);
-
-        let cleanedSuggestionsData = suggestionsData ?? "";
-        cleanedSuggestionsData = cleanedSuggestionsData
-            .replace(/^```json\s*/i, "")
-            .replace(/^```\s*/i, "")
-            .replace(/```$/i, "")
-            .replace(/\\/g, "&#92;")
-            .replace(/\$/g, "&#36;")
-            .replace(/\^/g, "&#94;")
-            .replace(/_/g, "&#95;")
-            .replace(/~/g, "&#126;")
-            .replace(/&/g, "&#38;");
-
-        let parsedTopics: string[] = [];
-
-        const quotedStringMatches = cleanedSuggestionsData.match(/"(.*?)"/g);
-        if (quotedStringMatches) {
-            parsedTopics = quotedStringMatches.map((str: string) =>
-                str.replace(/"/g, "")
+        // Validate the layout number is within expected range
+        if (isNaN(layoutNumber) || layoutNumber < 1 || layoutNumber > 13) {
+            console.warn(
+                `Invalid layout number: ${layoutNumber}, defaulting to 1`
             );
+            return 1;
         }
 
-        // Helper to safely parse JSON, repairing if needed
-        const safeParseJson = (jsonStr: string) => {
-            try {
-                return JSON.parse(jsonStr);
-            } catch {
-                try {
-                    const repaired = jsonrepair(jsonStr);
-                    return JSON.parse(repaired);
-                } catch (err) {
-                    console.error("JSON parsing and repair failed:", err);
-                    throw err;
-                }
-            }
-        };
-
-        const processedResult = {
-            firstResponse: {
-                response: await parseJsonToHtml(
-                    safeParseJson(
-                        detailedExplanation
-                            .replace(/^```json\s*/i, "")
-                            .replace(/^```\s*/i, "")
-                            .replace(/```$/i, "")
-                    )
-                ),
-            },
-            secondResponse: {
-                response: summaryResponse // This is the complete streamed response
-                    ?.replace(/\[/g, "_")
-                    .replace(/\]/g, "_"),
-            },
-            thirdResponse: {
-                response: (() => {
-                    try {
-                        return safeParseJson(cleanedSuggestionsData);
-                    } catch {
-                        return parsedTopics;
-                    }
-                })(),
-            },
-        };
-
-        console.log("askAITwice response:", processedResult);
-        return processedResult;
+        return layoutNumber;
     } catch (error) {
-        console.error("Error in askAITwice:", error);
-        throw error;
+        console.error("Error fetching layout:", error);
+        return 1;
+    }
+};
+
+export const askAiForContent = async (
+    message: string,
+    context: string,
+    layoutNumber: number,
+    mode: string
+): Promise<any[]> => {
+    try {
+        // Import layouts directly instead of using dynamic import
+        const layouts = await import("./layouts");
+        const schema =
+            layouts.LAYOUT_SCHEMA[
+                layoutNumber.toString() as keyof typeof layouts.LAYOUT_SCHEMA
+            ];
+
+        const response = await askAI(
+            contentPrompt(context, message, mode, schema)
+        );
+        console.log("Content response:", response);
+        const cleanedResponse = cleanJsonResponse(response);
+        const parsed = JSON.parse(cleanedResponse);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error("Error fetching content:", error);
+        return [];
+    }
+};
+
+/**
+ * Enhanced AI service that handles the complete node generation workflow
+ * All AI calls are made concurrently for better performance
+ */
+export const generateNodeContent = async (
+    message: string,
+    context: string = "",
+    mode: string = "default"
+): Promise<{
+    layout: number;
+    content: any[];
+    suggestions: string[];
+    icon: string;
+    title: string;
+    fullText: string;
+}> => {
+    try {
+        // Step 1: Get layout recommendation first (needed for content)
+        const layout = await askAiForLayout(message);
+        console.log("Selected layout:", layout);
+
+        // Step 2: Make all remaining calls concurrently
+        const [content, suggestions, icon] = await Promise.all([
+            askAiForContent(message, context, layout, mode),
+            askAiForSuggestions(message),
+            askAIForIcon(message),
+        ]);
+
+        console.log("Generated content:", content);
+        console.log("Generated suggestions:", suggestions);
+        console.log("Generated icon:", icon);
+
+        return {
+            layout,
+            content,
+            suggestions,
+            icon,
+            title: message,
+            fullText: message, // The content IS the educational part, not separate text
+        };
+    } catch (error) {
+        console.error("Error in generateNodeContent:", error);
+
+        // Return fallback values
+        return {
+            layout: 1,
+            content: [message, "Content loading failed", []],
+            suggestions: [],
+            icon: "✨",
+            title: message,
+            fullText: message,
+        };
     }
 };

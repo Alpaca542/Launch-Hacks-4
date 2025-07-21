@@ -25,6 +25,15 @@
     </head>
     <body>
         <div id="root"></div>
+        <script>
+            window.addEventListener("DOMContentLoaded", function () {
+                const el = document.querySelector(
+                    "react-flow__panel react-flow__attribution bottom right"
+                );
+                if (el) el.style.opacity = "0";
+            });
+        </script>
+
         <script type="module" src="/src/main.jsx"></script>
     </body>
 </html>
