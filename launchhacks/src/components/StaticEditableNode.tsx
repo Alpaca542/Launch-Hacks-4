@@ -50,7 +50,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
         data.summary || data.label || "Static Node"
     );
     const { screenToFlowPosition } = useReactFlow();
-    const { handleTokenClick, showExplanation } = useTokenInteraction();
+    const { handleTokenClick } = useTokenInteraction();
     const nodeRef = useRef<HTMLDivElement>(null);
     // Drag state for draggable menu
     const [dragState, setDragState] = useState<{
@@ -88,16 +88,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             data.label || "Static Node",
             token.suggestionId
         );
-    };
-
-    const handleShowExplanation = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (showExplanation) {
-            showExplanation(
-                data.title || "Explanation",
-                data.full_text || "No detailed information available."
-            );
-        }
     };
 
     // Drag handlers
@@ -266,7 +256,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                             className="w-8 h-8 bg-blue-500/25 text-blue-400 border border-blue-500/35 rounded-lg 
                                 hover:bg-blue-500/35 hover:border-blue-500/55 hover:-translate-y-0.5 
                                 transition-all duration-150 flex items-center justify-center text-sm"
-                            onClick={handleShowExplanation}
                             title="Show full text"
                         >
                             📄

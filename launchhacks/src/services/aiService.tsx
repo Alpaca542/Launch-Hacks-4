@@ -99,7 +99,7 @@ export const askAiForLayout = async (message: string): Promise<number> => {
         const layoutNumber = parseInt(cleanedResponse);
 
         // Validate the layout number is within expected range
-        if (isNaN(layoutNumber) || layoutNumber < 1 || layoutNumber > 16) {
+        if (isNaN(layoutNumber) || layoutNumber < 1 || layoutNumber > 18) {
             console.warn(
                 `Invalid layout number: ${layoutNumber}, defaulting to 1`
             );

@@ -9,6 +9,7 @@
  * - Mermaid diagram rendering
  * - Video embedding support
  * - Timeline and card layouts
+ * - Markdown text rendering
  * - Consistent styling and animations
  */
 
@@ -19,6 +20,7 @@ import {
     getYouTubeEmbedUrl,
     mermaidToSvg,
 } from "./mediaQuery";
+import { renderMarkdown } from "../utils/markdown";
 
 export interface ParsedLayoutContent {
     html: string;
@@ -78,6 +80,12 @@ export const parseLayoutContent = async (
             case 16:
                 html = await parseLayout16(content, nodeId);
                 break;
+            case 17:
+                html = await parseLayout17(content, nodeId);
+                break;
+            case 18:
+                html = await parseLayout18(content, nodeId);
+                break;
             default:
                 html = await parseLayout1(content, nodeId);
         }
@@ -96,7 +104,9 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
     let html = `
         <div class="layout-1">
             <h2 class="layout-title">${title || "Title"}</h2>
-            <div class="layout-textbar">${textbar || "Content"}</div>
+            <div class="layout-textbar">${renderMarkdown(
+                textbar || "Content"
+            )}</div>
             <div class="layout-images">
     `;
 
@@ -197,7 +207,9 @@ async function parseLayout3(content: any[], nodeId: string): Promise<string> {
     let html = `
         <div class="layout-3">
             <div id="${diagramId}" class="layout-mermaid">Loading diagram...</div>
-            <p class="layout-description">${description || ""}</p>
+            <div class="layout-description">${renderMarkdown(
+                description || ""
+            )}</div>
         </div>
     `;
 
@@ -304,11 +316,25 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
                     <img id="${imageId}" class="layout-featured-image" src="${imageUrl}" alt="Featured Visual" />
                 </div>
                 <div class="layout-content-section">
-                    <h2 class="layout-title">${title || "Educational Topic"}</h2>
+                    <h2 class="layout-title">${
+                        title || "Educational Topic"
+                    }</h2>
                     <div class="layout-educational-content">
-                        ${paragraph1 ? `<p class="layout-paragraph">${paragraph1}</p>` : ""}
-                        ${paragraph2 ? `<p class="layout-paragraph">${paragraph2}</p>` : ""}
-                        ${paragraph3 ? `<p class="layout-paragraph">${paragraph3}</p>` : ""}
+                        ${
+                            paragraph1
+                                ? `<p class="layout-paragraph">${paragraph1}</p>`
+                                : ""
+                        }
+                        ${
+                            paragraph2
+                                ? `<p class="layout-paragraph">${paragraph2}</p>`
+                                : ""
+                        }
+                        ${
+                            paragraph3
+                                ? `<p class="layout-paragraph">${paragraph3}</p>`
+                                : ""
+                        }
                     </div>
                 </div>
             </div>
@@ -322,11 +348,25 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
                     <div class="image-error">Error loading featured image</div>
                 </div>
                 <div class="layout-content-section">
-                    <h2 class="layout-title">${title || "Educational Topic"}</h2>
+                    <h2 class="layout-title">${
+                        title || "Educational Topic"
+                    }</h2>
                     <div class="layout-educational-content">
-                        ${paragraph1 ? `<p class="layout-paragraph">${paragraph1}</p>` : ""}
-                        ${paragraph2 ? `<p class="layout-paragraph">${paragraph2}</p>` : ""}
-                        ${paragraph3 ? `<p class="layout-paragraph">${paragraph3}</p>` : ""}
+                        ${
+                            paragraph1
+                                ? `<p class="layout-paragraph">${paragraph1}</p>`
+                                : ""
+                        }
+                        ${
+                            paragraph2
+                                ? `<p class="layout-paragraph">${paragraph2}</p>`
+                                : ""
+                        }
+                        ${
+                            paragraph3
+                                ? `<p class="layout-paragraph">${paragraph3}</p>`
+                                : ""
+                        }
                     </div>
                 </div>
             </div>
@@ -437,7 +477,7 @@ async function parseLayout9(content: any[], nodeId: string): Promise<string> {
 
 // Layout 12: Central illustration with icon-driven key points
 async function parseLayout12(content: any[], nodeId: string): Promise<string> {
-    const [illustrationPrompt, iconPoints] = content;
+    const [illustrationPrompt, educationalContent] = content;
     const illustrationId = `illustration-${nodeId}`;
 
     try {
@@ -445,14 +485,20 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-12">
-                <div class="layout-central-visual">
-                    <img id="${illustrationId}" class="layout-central-image" src="${illustrationUrl}" alt="Central Illustration" />
+                <div class="layout-visual-section">
+                    <div class="layout-central-visual">
+                        <img id="${illustrationId}" class="layout-central-image" src="${illustrationUrl}" alt="Educational Illustration" />
+                    </div>
                 </div>
-                <div class="layout-icon-points">
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
         `;
 
-        if (Array.isArray(iconPoints)) {
-            iconPoints.forEach((point, index) => {
+        // Handle educational content - can be a string or array of points
+        if (typeof educationalContent === "string") {
+            html += `<p class="layout-text">${educationalContent}</p>`;
+        } else if (Array.isArray(educationalContent)) {
+            educationalContent.forEach((point) => {
                 // Extract icon hint if present (e.g., "🚀 Launch sequence initiated")
                 const iconMatch = point.match(
                     /^(\p{Emoji}|\p{Symbol})\s+(.+)$/u
@@ -461,7 +507,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
                 const text = iconMatch ? iconMatch[2] : point;
 
                 html += `
-                    <div class="layout-icon-point">
+                    <div class="layout-educational-point">
                         <span class="layout-point-icon">${icon}</span>
                         <span class="layout-point-text">${text}</span>
                     </div>
@@ -470,6 +516,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
         }
 
         html += `
+                    </div>
                 </div>
             </div>
         `;
@@ -478,14 +525,19 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
     } catch (error) {
         let html = `
             <div class="layout-12">
-                <div class="layout-central-visual">
-                    <div class="image-error">Error loading illustration</div>
+                <div class="layout-visual-section">
+                    <div class="layout-central-visual">
+                        <div class="image-error">Error loading illustration</div>
+                    </div>
                 </div>
-                <div class="layout-icon-points">
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
         `;
 
-        if (Array.isArray(iconPoints)) {
-            iconPoints.forEach((point, index) => {
+        if (typeof educationalContent === "string") {
+            html += `<p class="layout-text">${educationalContent}</p>`;
+        } else if (Array.isArray(educationalContent)) {
+            educationalContent.forEach((point) => {
                 const iconMatch = point.match(
                     /^(\p{Emoji}|\p{Symbol})\s+(.+)$/u
                 );
@@ -493,7 +545,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
                 const text = iconMatch ? iconMatch[2] : point;
 
                 html += `
-                    <div class="layout-icon-point">
+                    <div class="layout-educational-point">
                         <span class="layout-point-icon">${icon}</span>
                         <span class="layout-point-text">${text}</span>
                     </div>
@@ -502,6 +554,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
         }
 
         html += `
+                    </div>
                 </div>
             </div>
         `;
@@ -681,4 +734,229 @@ async function parseLayout16(content: any[], nodeId: string): Promise<string> {
 
     html += `</div>`;
     return html;
+}
+
+// Layout 17: Code tutorial with visual examples
+async function parseLayout17(content: any[], nodeId: string): Promise<string> {
+    const [
+        title,
+        code1,
+        explanation1,
+        diagramPrompt,
+        implementationExplanation,
+        code2,
+        explanation2,
+    ] = content;
+
+    try {
+        const diagramUrl = await fetchImage(diagramPrompt);
+
+        // Function to process code and detect language
+        const processCode = (codeBlock: string | undefined | null) => {
+            let lang = "javascript"; // Default language
+            let cleanCode = (codeBlock || "").toString();
+
+            if (cleanCode.startsWith("```")) {
+                // Extract language from code block if specified
+                const langMatch = cleanCode.match(
+                    /```(\w+)?\n?([\s\S]*?)\n?```$/
+                );
+                if (langMatch) {
+                    if (langMatch[1]) {
+                        lang = langMatch[1];
+                    }
+                    cleanCode = langMatch[2] || "";
+                } else {
+                    // Remove code fences if no proper match
+                    cleanCode = cleanCode
+                        .replace(/^```\w*\n?/, "")
+                        .replace(/\n?```$/, "");
+                }
+            } else {
+                // Auto-detect language based on content
+                if (
+                    cleanCode.includes("def ") ||
+                    cleanCode.includes("import ") ||
+                    cleanCode.includes("print(")
+                ) {
+                    lang = "python";
+                } else if (
+                    cleanCode.includes("function ") ||
+                    cleanCode.includes("const ") ||
+                    cleanCode.includes("let ")
+                ) {
+                    lang = "javascript";
+                } else if (
+                    cleanCode.includes("public class ") ||
+                    cleanCode.includes("System.out.println")
+                ) {
+                    lang = "java";
+                } else if (
+                    cleanCode.includes("#include") ||
+                    cleanCode.includes("int main")
+                ) {
+                    lang = "cpp";
+                } else if (
+                    cleanCode.includes("SELECT ") ||
+                    cleanCode.includes("FROM ")
+                ) {
+                    lang = "sql";
+                }
+            }
+
+            // Ensure cleanCode is never null or undefined
+            if (!cleanCode || cleanCode.trim() === "") {
+                cleanCode = "// No code provided";
+            }
+
+            return { lang, cleanCode };
+        };
+
+        const { lang: lang1, cleanCode: cleanCode1 } = processCode(code1);
+        const { lang: lang2, cleanCode: cleanCode2 } = processCode(code2);
+
+        let html = `
+            <div class="layout-17">
+                <h2 class="layout-title">${title || "Code Tutorial"}</h2>
+                <div class="layout-code-section">
+                    <pre class="layout-code-block language-${lang1}"><code class="language-${lang1}">${cleanCode1}</code></pre>
+                    <div class="layout-code-explanation">${renderMarkdown(
+                        explanation1 || ""
+                    )}</div>
+                </div>
+                <div class="layout-diagram-section">
+                    <img class="layout-diagram-image" src="${diagramUrl}" alt="Architecture Diagram" />
+                    <div class="layout-implementation-explanation">${renderMarkdown(
+                        implementationExplanation || ""
+                    )}</div>
+                </div>
+                <div class="layout-code-section">
+                    <pre class="layout-code-block language-${lang2}"><code class="language-${lang2}">${cleanCode2}</code></pre>
+                    <div class="layout-code-explanation">${renderMarkdown(
+                        explanation2 || ""
+                    )}</div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    } catch (error) {
+        return `<div class="layout-17"><div class="error-content">Error loading tutorial content</div></div>`;
+    }
+}
+
+// Layout 18: Technical documentation with API examples
+async function parseLayout18(content: any[], nodeId: string): Promise<string> {
+    const [
+        title,
+        codeSnippet,
+        documentation,
+        usageExamples,
+        diagramPrompt,
+        bestPractices,
+    ] = content;
+
+    try {
+        const diagramUrl = await fetchImage(diagramPrompt);
+
+        // Function to process code and detect language
+        const processCode = (codeBlock: string | undefined | null) => {
+            let lang = "javascript"; // Default language
+            let cleanCode = (codeBlock || "").toString();
+
+            if (cleanCode.startsWith("```")) {
+                // Extract language from code block if specified
+                const langMatch = cleanCode.match(
+                    /```(\w+)?\n?([\s\S]*?)\n?```$/
+                );
+                if (langMatch) {
+                    if (langMatch[1]) {
+                        lang = langMatch[1];
+                    }
+                    cleanCode = langMatch[2] || "";
+                } else {
+                    // Remove code fences if no proper match
+                    cleanCode = cleanCode
+                        .replace(/^```\w*\n?/, "")
+                        .replace(/\n?```$/, "");
+                }
+            } else {
+                // Auto-detect language based on content
+                if (
+                    cleanCode.includes("def ") ||
+                    cleanCode.includes("import ") ||
+                    cleanCode.includes("print(")
+                ) {
+                    lang = "python";
+                } else if (
+                    cleanCode.includes("function ") ||
+                    cleanCode.includes("const ") ||
+                    cleanCode.includes("let ")
+                ) {
+                    lang = "javascript";
+                } else if (
+                    cleanCode.includes("public class ") ||
+                    cleanCode.includes("System.out.println")
+                ) {
+                    lang = "java";
+                } else if (
+                    cleanCode.includes("#include") ||
+                    cleanCode.includes("int main")
+                ) {
+                    lang = "cpp";
+                } else if (
+                    cleanCode.includes("SELECT ") ||
+                    cleanCode.includes("FROM ")
+                ) {
+                    lang = "sql";
+                } else if (
+                    cleanCode.includes("curl ") ||
+                    cleanCode.includes("GET ") ||
+                    cleanCode.includes("POST ")
+                ) {
+                    lang = "bash";
+                }
+            }
+
+            // Ensure cleanCode is never null or undefined
+            if (!cleanCode || cleanCode.trim() === "") {
+                cleanCode = "// No code provided";
+            }
+
+            return { lang, cleanCode };
+        };
+
+        const { lang, cleanCode } = processCode(codeSnippet);
+
+        let html = `
+            <div class="layout-18">
+                <h2 class="layout-title">${title || "API Documentation"}</h2>
+                <div class="layout-api-section">
+                    <div class="layout-code-container">
+                        <pre class="layout-code-block language-${lang}"><code class="language-${lang}">${cleanCode}</code></pre>
+                    </div>
+                    <div class="layout-documentation">${renderMarkdown(
+                        documentation || ""
+                    )}</div>
+                </div>
+                <div class="layout-usage-section">
+                    <h3 class="layout-subtitle">Usage Examples</h3>
+                    <div class="layout-usage-examples">${renderMarkdown(
+                        usageExamples || ""
+                    )}</div>
+                </div>
+                <div class="layout-diagram-section">
+                    <img class="layout-api-diagram" src="${diagramUrl}" alt="API Flow Diagram" />
+                    <div class="layout-best-practices">
+                        <h3 class="layout-subtitle">Best Practices</h3>
+                        ${renderMarkdown(bestPractices || "")}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    } catch (error) {
+        return `<div class="layout-18"><div class="error-content">Error loading documentation content</div></div>`;
+    }
 }

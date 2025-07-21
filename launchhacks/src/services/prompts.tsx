@@ -21,15 +21,16 @@ export const contentPrompt = (
         • Paragraphs: Full explanations (3-5 sentences each, 20-40 words per sentence)
         • Descriptions: Detailed and informative (2-3 sentences minimum)
         • Content should flow logically and build understanding progressively
-        
+        • Markdown should be used for formatting
+
         IMAGE PROMPTS:
         • Educational and specific: "Detailed diagram of photosynthesis process in plant cells"
         • Include visual style: "realistic scientific illustration", "clean educational diagram"
         • Support the educational content meaningfully
         
         CONTENT BALANCE:
-        • 70% substantial educational text
-        • 30% compelling visuals that enhance learning
+        • 60% substantial educational text
+        • 40% compelling visuals that enhance learning
         • Ensure minimum 100 words total per node
         • Use markdown formatting in text (headings, bold, italics where appropriate)
         
@@ -77,22 +78,34 @@ export const iconPrompt = (message: string, inputMode: string) => {
 };
 
 export const layoutPrompt = (message: string, inputMode: string) => {
-    return `Choose the best educational layout for "${message}" - prioritize comprehensive learning with visual appeal.
+    return `Choose the best educational layout for "${message}" - prioritize diversity and optimal content presentation.
+        
+        CRITICAL: Avoid layout 14 unless absolutely necessary. Use diverse layouts for better user experience.
         
         SELECTION CRITERIA:
-        • Educational Depth: Which layout allows for most comprehensive explanation?
-        • Visual Learning: Which format combines visuals and text most effectively?
-        • Information Architecture: Which layout organizes information most clearly?
-        • Engagement: Which layout maintains interest while providing substantial content?
+        • Content Type Match: Which layout best fits the specific content structure?
+        • Visual Balance: Optimal text-to-visual ratio for the topic
+        • Learning Effectiveness: Best presentation for comprehension
+        • Layout Variety: Strongly prefer different layouts (avoid repeating same layout)
         
-        LAYOUT PRIORITIES:
-        • Use diagrams (3-6) for processes, systems, or data that need visual explanation
-        • Use hero layouts (1, 7, 8) for major concepts needing detailed explanation with strong visual
-        • Use story layouts (2, 14, 15) for step-by-step or chronological concepts
-        • Use comprehensive layouts (12, 13, 16) for multi-faceted topics
-        • Use media layouts (9, 13) for topics that benefit from video explanation
+        PRIORITY LAYOUT SELECTION GUIDE:
+        • **Technical/Programming topics**: Use layouts 17, 18 (code tutorials, API docs), 1, 8
+        • **Process/systems**: Use diagram layouts 3, 4, 5, 6
+        • **Comprehensive explanations**: Use hero layouts 1, 7, 12
+        • **Step-by-step content**: Use layouts 2, 15 (timeline), 17 (code tutorial)
+        • **Multi-aspect topics**: Use layouts 12, 13, 16
+        • **Media-heavy content**: Use layouts 9, 13
+        • **Quick concepts**: Use layouts 1, 6, 8
+        • **Historical/chronological**: Use layout 15
+        • **Comparison content**: Use layouts 8, 16, 14
         
-        Return ONLY the layout number as an integer.
+        DIVERSIFICATION RULES:
+        - Prioritize new code layouts (17, 18) for technical content
+        - Rotate between different layout families
+        - Match complexity of layout to complexity of content
+        - Consider visual appeal and educational effectiveness
+        
+        Return ONLY the layout number as an integer (1-18).
         
         LAYOUT TYPES:
         ${JSON.stringify(LAYOUT_TYPES)}`;

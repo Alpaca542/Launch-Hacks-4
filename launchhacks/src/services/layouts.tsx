@@ -26,6 +26,8 @@ export const LAYOUT_TYPES = {
     "14": "Comprehensive topic exploration - alternating visuals and detailed explanations for thorough understanding",
     "15": "Historical timeline with detailed context - chronological progression with substantial descriptions",
     "16": "Multi-concept comparison - grid layout with detailed descriptions for comparing related topics",
+    "17": "Code tutorial with visual examples - code snippets with explanations and visual diagrams",
+    "18": "Technical documentation - code examples with comprehensive API documentation and use cases",
 };
 
 export const LAYOUT_SCHEMA = {
@@ -81,4 +83,6 @@ export const LAYOUT_SCHEMA = {
     "14": "[educational_visual_1, detailed_explanation_1, educational_visual_2, detailed_explanation_2, educational_visual_3, detailed_explanation_3]",
     "15": "[date_1, historical_visual_1, comprehensive_event_description_1, date_2, historical_visual_2, comprehensive_event_description_2]",
     "16": "[topic_title_1, topic_visual_1, detailed_description_1, topic_title_2, topic_visual_2, detailed_description_2]",
+    "17": "[tutorial_title, code_example_1, code_explanation_1, architecture_diagram_prompt, implementation_explanation, code_example_2, code_explanation_2]",
+    "18": "[api_title, code_snippet, comprehensive_documentation, usage_examples, visual_diagram_prompt, best_practices_explanation]",
 };

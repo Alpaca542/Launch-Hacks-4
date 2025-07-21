@@ -1,24 +1,59 @@
-/* Layout Styles - Professional Design System */
-/* Inspired by Apple and Miro design principles */
+/* Layout Styles - Modern Educational Design System */
+/* Enhanced typography and readability focused */
 
 /* Design System Variables */
 :root {
-    /* Color Palette - Apple-inspired with enhanced contrast */
-    --color-primary: #007AFF;
-    --color-primary-hover: #0056B3;
-    --color-primary-light: #E3F2FF;
-    --color-accent: #FF3B30;
-    --color-accent-light: #FFE5E5;
-    --color-success: #34C759;
-    --color-success-light: #E8F8EC;
-    --color-warning: #FF9500;
-    --color-warning-light: #FFF3E0;
+    /* Typography - Enhanced for readability */
+    --font-primary: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-secondary: 'Source Code Pro', 'SF Mono', Consolas, monospace;
+    --font-serif: 'Charter', 'Georgia', serif;
 
-    /* Text Colors */
-    --text-primary: #1D1D1F;
-    --text-secondary: #86868B;
-    --text-tertiary: #C7C7CC;
-    --text-inverse: #FFFFFF;
+    /* Font Sizes - Refined scale for educational content */
+    --text-xs: 11px;
+    --text-sm: 13px;
+    --text-base: 15px;
+    --text-lg: 17px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 28px;
+    --text-4xl: 32px;
+
+    /* Line Heights - Optimized for readability */
+    --leading-tight: 1.2;
+    --leading-normal: 1.4;
+    --leading-relaxed: 1.6;
+    --leading-loose: 1.8;
+
+    /* Letter Spacing */
+    --tracking-tight: -0.02em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.02em;
+
+    /* Color Palette - Modern and accessible */
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-light: #dbeafe;
+    --color-accent: #dc2626;
+    --color-accent-light: #fee2e2;
+    --color-success: #16a34a;
+    --color-success-light: #dcfce7;
+    --color-warning: #d97706;
+    --color-warning-light: #fef3c7;
+
+    /* Text Colors - Enhanced contrast */
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-tertiary: #9ca3af;
+    --text-inverse: #ffffff;
+    --text-code: #1f2937;
+
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --bg-elevated: #ffffff;
+    --bg-code: #f8fafc;
+    --bg-overlay: rgba(0, 0, 0, 0.5);
 
     /* Background Colors */
     --bg-primary: #FFFFFF;
@@ -72,7 +107,7 @@
     --text-3xl: 24px;
 }
 
-/* Base Layout Container - Infographic Style */
+/* Base Layout Container - Enhanced Design */
 .layout-1,
 .layout-2,
 .layout-3,
@@ -86,13 +121,14 @@
 .layout-13,
 .layout-14,
 .layout-15,
-.layout-16 {
+.layout-16,
+.layout-17,
+.layout-18 {
     position: relative;
     width: 100%;
     max-width: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.3;
-    /* Tighter line height for infographic style */
+    font-family: var(--font-primary);
+    line-height: var(--leading-normal);
     color: var(--text-primary);
     background: var(--bg-primary);
     overflow: hidden;
@@ -101,109 +137,91 @@
 }
 
 /* Add subtle glow effect on hover for all layouts */
-.layout-1:hover,
-.layout-2:hover,
-.layout-3:hover,
-.layout-4:hover,
-.layout-5:hover,
-.layout-6:hover,
-.layout-7:hover,
-.layout-8:hover,
-.layout-9:hover,
-.layout-12:hover,
-.layout-13:hover,
-.layout-14:hover,
-.layout-15:hover,
-.layout-16:hover {
-    box-shadow: 0 8px 32px rgba(0, 122, 255, 0.08);
-    transform: translateY(-1px);
-}
-
-/* Infographic Typography System */
+/* Enhanced Educational Typography System */
 .layout-title {
+    font-family: var(--font-primary);
     font-size: var(--text-2xl);
-    /* Increased from var(--text-xl) */
     font-weight: 700;
-    /* Increased from 600 */
-    line-height: 1.1;
-    /* Tighter for impact */
-    letter-spacing: -0.02em;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
     color: var(--text-primary);
-    margin: 0 0 var(--space-md) 0;
+    margin: 0 0 var(--space-lg) 0;
     text-align: center;
-    animation: slideInUp var(--transition-normal);
 }
 
 .layout-subtitle {
-    font-size: var(--text-lg);
+    font-family: var(--font-primary);
+    font-size: var(--text-xl);
     font-weight: 600;
-    /* Increased from 500 */
-    line-height: 1.2;
-    /* Tighter */
+    line-height: var(--leading-normal);
     color: var(--text-primary);
-    /* Changed from secondary to primary */
-    margin: 0 0 var(--space-sm) 0;
+    margin: 0 0 var(--space-md) 0;
     text-align: center;
 }
 
 .layout-description,
-.layout-text,
-.layout-textbar {
-    font-size: var(--text-sm);
-    /* Reduced from var(--text-base) */
-    line-height: 1.4;
-    /* Reduced from 1.5 */
+.layout-text {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
     color: var(--text-secondary);
-    margin: var(--space-xs) 0;
-    /* Reduced margins */
+    margin: var(--space-sm) 0;
     font-weight: 400;
-    animation: fadeIn var(--transition-slow) 0.1s both;
+}
+
+.layout-textbar {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--text-secondary);
+    margin: var(--space-sm) 0;
+    font-weight: 400;
+    text-align: left;
+    transition: transform var(--transition-normal), opacity var(--transition-normal);
 }
 
 .layout-caption {
-    font-size: var(--text-xs);
-    /* Reduced from var(--text-sm) */
-    line-height: 1.3;
+    font-size: var(--text-sm);
+    line-height: 1.4;
     color: var(--text-tertiary);
     margin: var(--space-xs) 0 0 0;
     text-align: center;
     font-weight: 500;
     font-style: italic;
-    animation: fadeIn var(--transition-slow) 0.2s both;
-    max-width: 200px;
-    /* Limit caption width for better readability */
+    max-width: 300px;
     margin-left: auto;
     margin-right: auto;
-}
-
-/* Layout 1: Hero-style with large visuals and minimal text */
-.layout-1 {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-    padding: var(--space-lg);
-    max-width: 500px;
-    /* Increased from 420px */
-    margin: 0 auto;
+    transition: transform var(--transition-normal), opacity var(--transition-normal);
 }
 
 .layout-textbar {
-    padding: var(--space-md);
-    /* Reduced from var(--space-lg) */
+    padding: var(--space-lg);
     background: linear-gradient(145deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     border: 1px solid var(--border-secondary);
     border-radius: var(--radius-lg);
     font-weight: 400;
-    text-align: center;
-    /* Changed from left to center for impact */
+    text-align: left;
     transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
-    font-size: var(--text-sm);
-    /* Reduced from var(--text-base) */
-    line-height: 1.4;
-    /* Reduced from 1.5 */
+    font-size: var(--text-base);
+    line-height: 1.6;
+}
+
+/* Educational Layout System - Optimized for substantial content */
+
+/* Layout 1: Hero-style educational with large visuals and comprehensive text */
+.layout-1 {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
 }
 
 .layout-textbar::before {
@@ -218,43 +236,25 @@
     transition: opacity var(--transition-normal);
 }
 
-.layout-textbar:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--border-primary);
-}
 
-.layout-textbar:hover::before {
-    opacity: 1;
-}
 
 .layout-images {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    /* More flexible sizing */
     gap: var(--space-md);
-    /* Increased gap */
-    animation: staggerIn var(--transition-slow) 0.3s both;
 }
 
 .layout-small-image {
     width: 100%;
     height: 120px;
-    /* Increased from 75px */
     object-fit: cover;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-secondary);
     transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
     cursor: pointer;
-    animation: scaleIn var(--transition-bounce) calc(var(--index, 0) * 0.1s) both;
 }
 
-.layout-small-image:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary);
-}
 
 .layout-small-image:active {
     transform: translateY(-1px) scale(1.01);
@@ -286,7 +286,6 @@
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
-    animation: slideInUp var(--transition-slow) calc(var(--index, 0) * 0.1s) both;
 }
 
 .layout-image-caption::before {
@@ -301,15 +300,7 @@
     transition: opacity var(--transition-normal);
 }
 
-.layout-image-caption:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-primary);
-}
 
-.layout-image-caption:hover::before {
-    opacity: 1;
-}
 
 .layout-image {
     width: 100%;
@@ -321,9 +312,6 @@
     cursor: pointer;
 }
 
-.layout-image:hover {
-    transform: scale(1.02);
-}
 
 .layout-image:focus {
     outline: 2px solid var(--color-primary);
@@ -353,14 +341,11 @@
     padding: var(--space-xl);
     /* Increased padding */
     min-height: 220px;
-    /* Increased from 180px */
     display: flex;
     justify-content: center;
     align-items: center;
     box-shadow: var(--shadow-md);
-    /* Increased shadow */
     transition: all var(--transition-normal);
-    animation: scaleIn var(--transition-bounce) 0.2s both;
     position: relative;
     overflow: hidden;
 }
@@ -376,10 +361,6 @@
     opacity: 0.7;
 }
 
-.layout-mermaid:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
 
 .layout-mermaid svg {
     max-width: 100%;
@@ -389,27 +370,62 @@
     filter: drop-shadow(var(--shadow-sm));
 }
 
-/* Layout 12: Central visual with icon points */
+/* Layout 12: Educational central visual with comprehensive content sections */
 .layout-12 {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-xl);
-    padding: var(--space-lg);
-    max-width: 500px;
+    padding: var(--space-xl);
+    max-width: 700px;
     margin: 0 auto;
     background: var(--bg-elevated);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-secondary);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     position: relative;
     overflow: hidden;
+    align-items: start;
 }
+
+.layout-visual-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.layout-content-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.layout-educational-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.layout-educational-point {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
 
 .layout-central-visual {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    min-height: 200px;
 }
 
 .layout-central-image {
@@ -422,23 +438,22 @@
     transition: all var(--transition-normal);
 }
 
-.layout-central-image:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-lg);
-}
 
 .layout-icon-points {
     display: flex;
-    flex-direction: column; /* Stack vertically for better reading */
+    flex-direction: column;
+    /* Stack vertically for better reading */
     gap: var(--space-lg);
     padding: 0 var(--space-sm);
 }
 
 .layout-icon-point {
     display: flex;
-    align-items: flex-start; /* Align to top for multi-line text */
+    align-items: flex-start;
+    /* Align to top for multi-line text */
     gap: var(--space-md);
-    padding: var(--space-lg); /* Increased padding */
+    padding: var(--space-lg);
+    /* Increased padding */
     background: var(--bg-secondary);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-secondary);
@@ -446,26 +461,24 @@
     box-shadow: var(--shadow-sm);
 }
 
-.layout-icon-point:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary);
-}
 
 .layout-point-icon {
     font-size: var(--text-xl);
-    min-width: 24px;
+    min-width: 28px;
     text-align: center;
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.1));
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .layout-point-text {
-    font-size: var(--text-base); /* Increased from var(--text-sm) */
-    font-weight: 400; /* Normal weight for better readability */
-    color: var(--text-primary);
-    line-height: 1.5; /* Better line height for longer text */
-    flex: 1; /* Take up remaining space */
+    font-size: var(--text-base);
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    flex: 1;
 }
 
 /* Two-Column Layouts (8, 13) - Infographic Style */
@@ -489,9 +502,11 @@
 /* Hero Layout 7: Side-by-side educational layout */
 .layout-7 {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    grid-template-columns: 1fr 1fr;
+    /* Two equal columns */
     gap: var(--space-xl);
-    max-width: 700px; /* Increased for better content space */
+    max-width: 700px;
+    /* Increased for better content space */
     margin: 0 auto;
     padding: var(--space-lg);
     background: var(--bg-elevated);
@@ -523,17 +538,14 @@
 
 .layout-featured-image {
     width: 100%;
-    height: 300px; /* Good size for educational content */
+    height: 300px;
+    /* Good size for educational content */
     object-fit: cover;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
 }
 
-.layout-featured-image:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-md);
-}
 
 .layout-content-section {
     display: flex;
@@ -550,7 +562,8 @@
 
 .layout-paragraph {
     font-size: var(--text-base);
-    line-height: 1.6; /* Better for reading longer text */
+    line-height: 1.6;
+    /* Better for reading longer text */
     color: var(--text-secondary);
     margin: 0;
     text-align: left;
@@ -575,11 +588,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    animation: slideInLeft var(--transition-slow) 0.1s both;
-}
-
-.layout-right {
-    animation: slideInRight var(--transition-slow) 0.2s both;
 }
 
 .layout-large-image,
@@ -596,10 +604,6 @@
 }
 
 .layout-large-image:hover,
-.layout-gif:hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: var(--shadow-md);
-}
 
 .layout-large-image:active,
 .layout-gif:active {
@@ -619,14 +623,8 @@
     box-shadow: var(--shadow-md);
     /* Increased shadow */
     transition: all var(--transition-normal);
-    animation: scaleIn var(--transition-bounce) 0.3s both;
 }
 
-.layout-video:hover {
-    transform: translateY(-3px);
-    /* More prominent lift */
-    box-shadow: var(--shadow-lg);
-}
 
 .layout-video iframe {
     width: 100%;
@@ -672,7 +670,6 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    animation: staggerIn var(--transition-slow) 0.2s both;
 }
 
 .layout-bullet-list li {
@@ -683,13 +680,8 @@
     line-height: 1.4;
     color: var(--text-secondary);
     transition: all var(--transition-fast);
-    animation: slideInLeft var(--transition-normal) calc(var(--index, 0) * 0.1s) both;
 }
 
-.layout-bullet-list li:hover {
-    color: var(--text-primary);
-    transform: translateX(2px);
-}
 
 .layout-bullet-list li::before {
     content: '';
@@ -703,10 +695,6 @@
     transition: all var(--transition-normal);
 }
 
-.layout-bullet-list li:hover::before {
-    transform: scale(1.3);
-    background: var(--color-primary-hover);
-}
 
 /* Layout 14: Visual narrative with prominent images */
 .layout-14 {
@@ -749,15 +737,8 @@
     border: 1px solid var(--border-secondary);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-normal);
-    animation: slideInUp var(--transition-slow) calc(var(--index, 0) * 0.1s) both;
 }
 
-.layout-section:hover {
-    transform: translateY(-3px);
-    /* More prominent lift */
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-primary);
-}
 
 .layout-section:nth-child(even) .layout-section-image {
     order: 2;
@@ -769,7 +750,6 @@
 
 .layout-section-image {
     width: 100%;
-    animation: slideInRight var(--transition-slow) 0.2s both;
 }
 
 .layout-section-image img {
@@ -782,22 +762,9 @@
     transition: all var(--transition-normal);
 }
 
-.layout-section-image img:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-md);
-}
-
-.layout-section:nth-child(even) .layout-section-image {
-    animation: slideInLeft var(--transition-slow) 0.2s both;
-}
 
 .layout-section-content {
     padding: 0 var(--space-sm);
-    animation: slideInLeft var(--transition-slow) 0.1s both;
-}
-
-.layout-section:nth-child(even) .layout-section-content {
-    animation: slideInRight var(--transition-slow) 0.1s both;
 }
 
 .layout-section-content .layout-text {
@@ -853,15 +820,7 @@
     transition: all var(--transition-normal);
     position: relative;
     z-index: 2;
-    animation: slideInUp var(--transition-slow) calc(var(--index, 0) * 0.1s) both;
     margin-left: var(--space-lg);
-}
-
-.layout-timeline-item:hover {
-    transform: translateY(-3px) scale(1.02);
-    /* More prominent hover */
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary);
 }
 
 .layout-timeline-date {
@@ -895,11 +854,6 @@
     flex-shrink: 0;
 }
 
-.layout-timeline-image:hover {
-    transform: scale(1.08);
-    /* Increased from 1.05 */
-    box-shadow: var(--shadow-md);
-}
 
 .layout-timeline-content {
     flex: 1;
@@ -937,7 +891,6 @@
     gap: var(--space-sm);
     position: relative;
     overflow: hidden;
-    animation: slideInUp var(--transition-slow) calc(var(--index, 0) * 0.1s) both;
 }
 
 .layout-card::before {
@@ -952,15 +905,7 @@
     transition: opacity var(--transition-normal);
 }
 
-.layout-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-primary);
-}
 
-.layout-card:hover::before {
-    opacity: 1;
-}
 
 .layout-card-title {
     font-size: var(--text-base);
@@ -980,10 +925,6 @@
     box-shadow: var(--shadow-sm);
 }
 
-.layout-card-image:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-md);
-}
 
 .layout-card-description {
     font-size: var(--text-sm);
@@ -1010,7 +951,6 @@
     font-weight: 600;
     text-align: center;
     transition: all var(--transition-normal);
-    animation: shake 0.5s ease-in-out;
 }
 
 .mermaid-error {
@@ -1031,103 +971,13 @@
 }
 
 /* Keyframe Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
 
-    to {
-        opacity: 1;
-    }
-}
 
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
 
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
 
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
 
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes staggerIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(-4px);
-    }
-
-    75% {
-        transform: translateX(4px);
-    }
-}
-
-@keyframes slideInFromTop {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1370,5 +1220,113 @@
         padding: var(--space-lg) !important;
         border: 1px solid black !important;
         text-align: center !important;
+    }
+}
+
+/* Code Layouts - Layout 17 & 18 */
+.layout-17,
+.layout-18 {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    padding: var(--space-xl);
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-secondary);
+    box-shadow: var(--shadow-md);
+}
+
+.layout-code-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    background: var(--bg-secondary);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.layout-code-block {
+    font-family: var(--font-secondary);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    background: var(--bg-code);
+    color: var(--text-code);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-primary);
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+}
+
+.layout-code-explanation,
+.layout-implementation-explanation,
+.layout-documentation,
+.layout-usage-examples,
+.layout-best-practices {
+    font-family: var(--font-primary);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--text-secondary);
+}
+
+.layout-diagram-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: center;
+    background: var(--bg-tertiary);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+}
+
+.layout-diagram-image,
+.layout-api-diagram {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.layout-api-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    align-items: start;
+}
+
+.layout-code-container {
+    background: var(--bg-secondary);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-secondary);
+}
+
+.layout-usage-section {
+    background: var(--bg-secondary);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+}
+
+/* Responsive adjustments for code layouts */
+@media (max-width: 768px) {
+
+    .layout-17,
+    .layout-18 {
+        max-width: 100%;
+        padding: var(--space-md);
+    }
+
+    .layout-api-section {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+
+    .layout-code-block {
+        font-size: var(--text-xs);
+        padding: var(--space-md);
     }
 }

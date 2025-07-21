@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
-import { createPortal } from "react-dom";
 import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { parseTextIntoTokens, Token } from "../utils/nodeHelpers";
 import ModeMenu from "./ModeChooseMenu";
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css";
 import "../styles/layouts.css";
 
 interface NodeData {
@@ -106,6 +107,7 @@ export function DraggableEditableNode({
 
     // Add a ref to always have the latest dragState
     const dragStateRef = useRef(dragState);
+
     useEffect(() => {
         dragStateRef.current = dragState;
     }, [dragState]);
@@ -334,6 +336,22 @@ export function DraggableEditableNode({
         });
     };
 
+    // Highlight.js code block highlighting
+    useEffect(() => {
+        if (data.contents && nodeRef.current) {
+            setTimeout(() => {
+                const codeBlocks =
+                    nodeRef.current?.querySelectorAll("pre code");
+                codeBlocks?.forEach((block) => {
+                    const htmlElement = block as HTMLElement;
+                    if (!htmlElement.dataset.highlighted) {
+                        hljs.highlightElement(htmlElement);
+                    }
+                });
+            }, 200);
+        }
+    }, [data.contents]);
+
     const getParentCenter = () => {
         if (!nodeRef.current) return { x: 0, y: 0 };
         const rect = nodeRef.current.getBoundingClientRect();
@@ -357,7 +375,7 @@ export function DraggableEditableNode({
                 borderColor: data.myColor
                     ? `${data.myColor}60`
                     : "rgba(229, 231, 235, 0.6)",
-                transform: "translateZ(0)", // Force hardware acceleration
+                transform: "translateZ(0)",
                 willChange: "transform",
                 backfaceVisibility: "hidden",
             }}
