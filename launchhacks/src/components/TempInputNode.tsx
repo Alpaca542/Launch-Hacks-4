@@ -2,20 +2,33 @@ import { Handle, Position } from "reactflow";
 import { useEffect, useRef, useState } from "react";
 import { Info, Lightbulb, Gavel, Hash } from "lucide-react"; // npm i lucide-react
 
+interface NodeData {
+    label?: string;
+    title?: string;
+    suggestions?: string[];
+    myColor?: string;
+    summary?: string;
+    full_text?: string;
+    isLoading?: boolean;
+    tokenColors?: { [key: string]: string };
+    previousNode?: string; // Not used in static node
+    onNodeCallback?: (
+        mode?: string,
+        parent?: string,
+        position?: { x: number; y: number }
+    ) => void;
+}
+
 interface TempInputNodeProps {
-    data: {
-        mode: "default" | "explain" | "answer" | "argue";
-        onSubmit: (
-            v: string,
-            mode: "default" | "explain" | "answer" | "argue"
-        ) => void;
-        initialText?: string;
-    };
+    data: NodeData;
+    id: string;
 }
 
 // --- visual presets ---------------------------------------------------------
+type ModeType = "default" | "explain" | "answer" | "argue";
+
 const MODE_STYLES: Record<
-    TempInputNodeProps["data"]["mode"],
+    ModeType,
     {
         border: string;
         ring: string;
@@ -56,38 +69,47 @@ const MODE_STYLES: Record<
 // ---------------------------------------------------------------------------
 
 export default function TempInputNode({ data }: TempInputNodeProps) {
-    const [value, setValue] = useState(data.initialText || "");
-    const [currentMode, setCurrentMode] = useState<
-        TempInputNodeProps["data"]["mode"]
-    >(data.mode);
+    // Ensure currentMode always has a valid value
+    const [currentMode, setCurrentMode] = useState<ModeType>("default");
     const inputRef = useRef<HTMLInputElement>(null);
+    const [value, setValue] = useState<string>(data.label || "");
 
-    const modes: TempInputNodeProps["data"]["mode"][] = [
-        "default",
-        "explain",
-        "answer",
-        "argue",
-    ];
+    const modes: ModeType[] = ["default", "explain", "answer", "argue"];
 
     useEffect(() => {
         const el = inputRef.current;
         if (!el) return;
 
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
-                el.focus();
-                observer.disconnect();
+        // Try immediate focus first
+        const focusTimeout = setTimeout(() => {
+            el.focus();
+        }, 100); // Small delay to ensure the component is fully rendered
+
+        // Also use intersection observer as fallback
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    el.focus();
+                    observer.disconnect();
+                }
+            },
+            {
+                threshold: 0.1,
             }
-        });
+        );
 
         observer.observe(el);
-        return () => observer.disconnect();
+
+        return () => {
+            clearTimeout(focusTimeout);
+            observer.disconnect();
+        };
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = value.trim();
-        if (trimmed) data.onSubmit(trimmed, currentMode);
+        if (trimmed) data.onNodeCallback?.(trimmed);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -109,7 +131,9 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
     };
 
     /* ----- style tokens for current mode ----------------------------------- */
-    const { border, ring, placeholder, Icon, color } = MODE_STYLES[currentMode];
+    const modeStyle = MODE_STYLES[currentMode] || MODE_STYLES["default"];
+    const { border, ring, placeholder, color } = modeStyle;
+    const Icon = modeStyle.Icon;
 
     return (
         <div
@@ -120,11 +144,11 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
             }}
         >
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                {/* mode icon with color transition */}
-                <div className="transition-colors duration-300 ease-in-out">
+                {/* animated mode icon with simple transitions */}
+                <div className="transition-all duration-300 ease-in-out transform hover:scale-110">
                     <Icon
                         size={18}
-                        className="shrink-0"
+                        className="shrink-0 transition-colors duration-300 ease-in-out animate-pulse"
                         style={{ color: color }}
                     />
                 </div>
@@ -135,14 +159,14 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="flex-1 bg-transparent outline-none text-sm placeholder-gray-400 dark:placeholder-gray-500 caret-gray-900 dark:caret-gray-100 text-gray-900 dark:text-gray-100 transition-all duration-300"
+                    className="flex-1 bg-transparent outline-none text-sm placeholder-gray-400 dark:placeholder-gray-500 caret-black dark:caret-white text-gray-900 dark:text-gray-100 transition-all duration-300"
                     style={{
                         caretColor: color,
                     }}
                 />
             </form>
 
-            {/* Mode indicator */}
+            {/* Mode indicator with smooth color transition */}
             <div
                 className="absolute -top-2 -right-2 px-2 py-1 text-xs font-semibold text-white rounded-full transition-all duration-300 ease-in-out"
                 style={{ backgroundColor: color }}

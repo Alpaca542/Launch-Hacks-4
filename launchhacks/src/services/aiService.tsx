@@ -12,6 +12,7 @@
 
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // Adjust path to your Firebase config
+import { jsonrepair } from "jsonrepair";
 import {
     suggestionsPrompt,
     iconPrompt,
@@ -21,21 +22,36 @@ import {
 
 // Helper function to clean AI responses that might have markdown formatting
 const cleanJsonResponse = (response: string): string => {
-    // Remove markdown code blocks
-    let cleaned = response
-        .replace(/```json\s*\n?/gi, "")
-        .replace(/```\s*$/gi, "");
+    try {
+        // Remove markdown code blocks
+        let cleaned = response
+            .replace(/```json\s*\n?/gi, "")
+            .replace(/```\s*$/gi, "");
 
-    // Remove any leading/trailing whitespace
-    cleaned = cleaned.trim();
+        // Remove any leading/trailing whitespace
+        cleaned = cleaned.trim();
 
-    // If response starts with text before JSON, try to extract just the JSON
-    const jsonMatch = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
-    if (jsonMatch) {
-        cleaned = jsonMatch[0];
+        // If response starts with text before JSON, try to extract just the JSON
+        const jsonMatch = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        if (jsonMatch) {
+            cleaned = jsonMatch[0];
+        }
+
+        // Try to repair the JSON if it's malformed
+        const repairedJson = jsonrepair(cleaned);
+        return repairedJson;
+    } catch (error) {
+        console.warn("Failed to repair JSON:", error);
+        console.warn("Original response:", response);
+        // Return the cleaned response as fallback
+        let cleaned = response
+            .replace(/```json\s*\n?/gi, "")
+            .replace(/```\s*$/gi, "")
+            .trim();
+
+        const jsonMatch = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        return jsonMatch ? jsonMatch[0] : cleaned;
     }
-
-    return cleaned;
 };
 
 const askAI = async (message: string): Promise<any> => {
@@ -71,8 +87,20 @@ export const askAiForSuggestions = async (
         const response = await askAI(suggestionsPrompt(message, "default"));
         console.log("Suggestions response:", response);
         const cleanedResponse = cleanJsonResponse(response);
-        const parsed = JSON.parse(cleanedResponse);
-        return Array.isArray(parsed) ? parsed : [];
+
+        try {
+            const parsed = JSON.parse(cleanedResponse);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (parseError) {
+            console.warn(
+                "JSON parse failed for suggestions, attempting repair:",
+                parseError
+            );
+            // Try direct jsonrepair as a last resort
+            const repairedJson = jsonrepair(response);
+            const parsed = JSON.parse(repairedJson);
+            return Array.isArray(parsed) ? parsed : [];
+        }
     } catch (error) {
         console.error("Error fetching suggestions:", error);
         return [];
@@ -135,8 +163,17 @@ export const askAiForContent = async (
         );
         console.log("Content response:", response);
         const cleanedResponse = cleanJsonResponse(response);
-        const parsed = JSON.parse(cleanedResponse);
-        return Array.isArray(parsed) ? parsed : [];
+
+        try {
+            const parsed = JSON.parse(cleanedResponse);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (parseError) {
+            console.warn("JSON parse failed, attempting repair:", parseError);
+            // Try direct jsonrepair as a last resort
+            const repairedJson = jsonrepair(response);
+            const parsed = JSON.parse(repairedJson);
+            return Array.isArray(parsed) ? parsed : [];
+        }
     } catch (error) {
         console.error("Error fetching content:", error);
         return [];

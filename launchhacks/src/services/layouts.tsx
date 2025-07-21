@@ -15,7 +15,7 @@ export const LAYOUT_TYPES = {
     "1": "Hero visual with comprehensive explanation - large image with detailed educational content",
     "2": "Step-by-step visual guide - multiple images with substantial explanations for each step",
     "3": "Process diagram with detailed explanation - flowchart showing complex processes with educational context",
-    "4": "Concept map with comprehensive analysis - mind map with detailed explanations of relationships",
+    "4": "Concept map with analysis - mind map with detailed explanations of relationships",
     "5": "Data visualization with analysis - pie chart with detailed statistical breakdown and interpretation",
     "6": "Strategic framework with detailed explanation - quadrant analysis with comprehensive guidelines",
     "7": "Featured concept layout - large visual with title and multiple paragraphs of educational content",

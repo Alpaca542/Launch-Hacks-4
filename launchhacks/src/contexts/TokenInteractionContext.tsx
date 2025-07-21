@@ -37,6 +37,7 @@ interface TokenInteractionProviderProps {
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
+    saveCallback?: () => Promise<void>;
 }
 
 export const handleTokenClick = (
@@ -53,7 +54,8 @@ export const handleTokenClick = (
     suggestionID?: string,
     isInput?: boolean,
     inputNode?: Node,
-    inputMode?: string
+    inputMode?: string,
+    saveCallback?: () => Promise<void>
 ) => {
     console.log(1);
     const sourceNode = nodes.find((node) => node.id === sourceNodeId);
@@ -206,8 +208,17 @@ export const handleTokenClick = (
                     return node;
                 })
             );
+
+            // Save the new node content after AI processing completes
+            if (saveCallback) {
+                try {
+                    await saveCallback();
+                } catch (error) {
+                    console.error("Error saving new node content:", error);
+                }
+            }
         })
-        .catch((error) => {
+        .catch(async (error) => {
             console.error("Error generating node content:", error);
             // Fallback to original word if AI request fails
             setNodes((nds) =>
@@ -232,6 +243,18 @@ export const handleTokenClick = (
                     return node;
                 })
             );
+
+            // Save even in error case
+            if (saveCallback) {
+                try {
+                    await saveCallback();
+                } catch (saveError) {
+                    console.error(
+                        "Error saving new node content after error:",
+                        saveError
+                    );
+                }
+            }
         });
 
     return color;
@@ -239,7 +262,14 @@ export const handleTokenClick = (
 
 export const TokenInteractionProvider: React.FC<
     TokenInteractionProviderProps
-> = ({ children, nodes, onNodesChange, onEdgesChange, setNodes }) => {
+> = ({
+    children,
+    nodes,
+    onNodesChange,
+    onEdgesChange,
+    setNodes,
+    saveCallback,
+}) => {
     // Replace local handleTokenClick with a wrapper that calls the exported function
     const handleTokenClickWrapper = (
         token: Token,
@@ -267,7 +297,8 @@ export const TokenInteractionProvider: React.FC<
             solutionID,
             isInput,
             inputNode,
-            inputMode
+            inputMode,
+            saveCallback
         );
 
     return (

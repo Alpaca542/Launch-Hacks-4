@@ -3,7 +3,6 @@ import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 import { Handle, Position, useReactFlow } from "reactflow";
 import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
-import ModeMenu from "./ModeChooseMenu";
 
 interface NodeData {
     label?: string;
@@ -85,7 +84,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
             { x: 0, y: 0 }, // Static node, position not relevant
             "staticEditable",
             data.myColor,
-            data.label || "Static Node",
+            data.label || data.title || "Static Node",
             token.suggestionId
         );
     };
@@ -304,12 +303,6 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                 type="target"
                 position={Position.Bottom}
                 id="bottom-target"
-            />
-            <ModeMenu
-                dragState={dragState}
-                handleDragStart={handleDragStart}
-                handleOrigin={handleOrigin}
-                getParentCenter={getParentCenter}
             />
         </div>
     );

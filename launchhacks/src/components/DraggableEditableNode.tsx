@@ -1,14 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
-import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
-import { parseTextIntoTokens, Token } from "../utils/nodeHelpers";
+import { Loader2, Sparkles } from "lucide-react";
 import SuggestionHandles from "./SuggestionHandles";
-import hljs from "highlight.js";
-import "highlight.js/styles/github.css";
 import "../styles/layouts.css";
-import ModeMenu from "./ModeChooseMenu";
 
 interface NodeData {
     label?: string;
@@ -24,7 +19,7 @@ interface NodeData {
     tokenColors?: { [key: string]: string };
     previousNode?: string;
     onNodeCallback?: (
-        mode?: string,
+        suggestion?: string,
         parent?: string,
         position?: { x: number; y: number },
         extraData?: { initialText?: string }
@@ -43,6 +38,7 @@ function Handles() {
     return (
         <>
             <Handle
+                style={{ transform: "translateY(-150%)" }}
                 type="source"
                 position={Position.Bottom}
                 id="bottom-source"
@@ -85,10 +81,6 @@ export function DraggableEditableNode({
     data,
     id,
 }: DraggableEditableNodeProps) {
-    const [summary, setSummary] = useState<string>(
-        data.summary || data.label || "Draggable Node"
-    );
-
     useEffect(() => {
         // Initialize default layout if needed
         if (!data.layout) {
@@ -96,16 +88,14 @@ export function DraggableEditableNode({
         }
     }, [data.layout]);
 
-    const { getNode, setViewport, screenToFlowPosition } = useReactFlow();
-    const { handleTokenClick } = useTokenInteraction();
-    const [isNodeMenuVisible, setIsNodeMenuVisible] = useState(false);
+    const { screenToFlowPosition } = useReactFlow();
     const nodeRef = useRef<HTMLDivElement>(null);
     const [dragState, setDragState] = useState<{
-        suggestion?: string;
+        suggestion: string;
         x: number;
         y: number;
         isDragging: boolean;
-    }>({ suggestion: undefined, x: 0, y: 0, isDragging: false });
+    }>({ suggestion: "", x: 0, y: 0, isDragging: false });
 
     // Add a ref to always have the latest dragState
     const dragStateRef = useRef(dragState);
@@ -122,56 +112,6 @@ export function DraggableEditableNode({
     useEffect(() => {
         dragStateRef.current = dragState;
     }, [dragState]);
-
-    // Show node menu on hover
-    function handleMouseEnter() {
-        setIsNodeMenuVisible(true);
-    }
-
-    function handleMouseLeave() {
-        setIsNodeMenuVisible(false);
-    }
-
-    // Sync local state with prop changes (e.g., when AI response updates data)
-    useEffect(() => {
-        setSummary(data.summary || data.label || "Draggable Node");
-    }, [data.summary, data.label]);
-
-    // Parse text into tokens
-    const tokens = parseTextIntoTokens(summary);
-
-    // Display tokens based on expansion state
-    const displayTokens = (() => {
-        return tokens;
-    })();
-
-    // Check if token is clickable
-    const isTokenClickable = () => {
-        return true; // All tokens are clickable now
-    };
-
-    // Token click handler
-    const handleTokenClickLocal = (token: Token, e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        // Get current node info
-        if (nodeRef.current) {
-            const rect = nodeRef.current.getBoundingClientRect();
-            const nodePosition = screenToFlowPosition({
-                x: rect.left,
-                y: rect.top,
-            });
-
-            handleTokenClick(
-                token,
-                id,
-                nodePosition,
-                "draggableEditable",
-                data.myColor,
-                data.full_text || summary
-            );
-        }
-    };
 
     // Render content based on whether rich content is available
     const renderContent = useMemo(() => {
@@ -206,192 +146,99 @@ export function DraggableEditableNode({
             );
         }
 
-        return (
-            <div className="space-y-4">
-                {/* Main content area */}
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/80">
-                    <div className="flex flex-wrap gap-2">
-                        {displayTokens.map((t, idx) => {
-                            const tokenColors = data.tokenColors || {};
-                            const color = tokenColors[t.myConcept || t.word];
-                            const clickable = isTokenClickable() && !color;
+        return null;
+    }, [data.contents, data.isLoading]);
 
-                            return (
-                                <span
-                                    key={idx}
-                                    onClick={(e) =>
-                                        clickable
-                                            ? handleTokenClickLocal(t, e)
-                                            : e.stopPropagation()
-                                    }
-                                    style={{
-                                        backgroundColor: color || undefined,
-                                        borderColor: color || "transparent",
-                                    }}
-                                    className={[
-                                        "inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium",
-                                        "transition-all duration-200 ease-out",
-                                        color
-                                            ? "text-white shadow-sm"
-                                            : "bg-white/80 backdrop-blur-sm text-gray-700 border border-white/90",
-                                        clickable
-                                            ? "cursor-pointer hover:scale-105 active:scale-95"
-                                            : "cursor-default opacity-80",
-                                    ].join(" ")}
-                                >
-                                    {t.word}
-                                </span>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-        );
-    }, [
-        data.contents,
-        data.isLoading,
-        data.title,
-        displayTokens,
-        isTokenClickable,
-        data.tokenColors,
-        handleTokenClickLocal,
-        data.myColor,
-        handleTokenClick,
-        id,
-        nodeRef,
-        screenToFlowPosition,
-        data.full_text,
-    ]);
-
-    // Helper functions
-    const navigateToPreviousNode = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (data.previousNode) {
-            const previousNode = getNode(data.previousNode);
-            if (previousNode) {
-                const { x, y } = previousNode.position;
-                // Center the viewport on the previous node with smooth animation
-                setViewport(
-                    { x: -x + 200, y: -y + 100, zoom: 1 },
-                    { duration: 500 }
-                );
-            }
-        }
-    };
-    const handleDragStart = (suggestion: string, e: PointerEvent) => {
-        // Set handle origin like ModeChooseMenu does
-        setHandleOrigin({ x: e.clientX, y: e.clientY });
-
-        setDragState({
-            suggestion,
-            x: e.clientX,
-            y: e.clientY,
-            isDragging: true,
-        });
-
-        // Set up global mouse event handlers for drag
-        const handleMouseMove = (moveEvent: MouseEvent) => {
-            setDragState((prev) => ({
-                ...prev,
-                x: moveEvent.clientX,
-                y: moveEvent.clientY,
-            }));
-        };
-
-        const handleMouseUp = (upEvent: MouseEvent) => {
-            // Create temp input node at drop position
-            if (data.onNodeCallback) {
-                const flowPosition = screenToFlowPosition({
-                    x: upEvent.clientX,
-                    y: upEvent.clientY,
-                });
-                data.onNodeCallback(
-                    "tempInput",
-                    id,
-                    {
-                        x: flowPosition.x,
-                        y: flowPosition.y,
-                    },
-                    {
-                        initialText: suggestion,
-                    }
-                );
-            }
-
-            // Clean up
-            setDragState({
-                suggestion: undefined,
-                x: 0,
-                y: 0,
-                isDragging: false,
-            });
-            setHandleOrigin(null);
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
-        };
-
-        document.addEventListener("mousemove", handleMouseMove);
-        document.addEventListener("mouseup", handleMouseUp);
-    };
-
-    const getParentCenter = () => {
+    const getParentCenter = useCallback(() => {
         if (!nodeRef.current) return { x: 0, y: 0 };
         const rect = nodeRef.current.getBoundingClientRect();
         return {
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2,
         };
-    };
+    }, []);
+    // Mouse event handlers for drag (memoized)
+    const handleDragStart = useCallback(
+        (suggestion: string, e: MouseEvent | PointerEvent) => {
+            // Find the handle's DOM node
+            const handleDiv = e.target as HTMLElement;
+            const rect = handleDiv.getBoundingClientRect();
+            // Use the center of the handle div as the origin
+            setHandleOrigin({
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+            });
+            setDragState({
+                suggestion: suggestion,
+                x: e.clientX,
+                y: e.clientY,
+                isDragging: true,
+            });
+            document.addEventListener("pointermove", handleDragMove);
+            document.addEventListener("pointerup", handleDragEnd);
+        },
+        []
+    );
 
-    const handleDragMove = (e: PointerEvent) => {
+    const handleDragMove = useCallback((e: PointerEvent) => {
         setDragState((prev) =>
             prev.isDragging ? { ...prev, x: e.clientX, y: e.clientY } : prev
         );
-    };
+    }, []);
 
-    const handleDragEnd = () => {
-        // Use the ref to get the latest dragState
+    const handleDragEnd = useCallback(() => {
         const latestDragState = dragStateRef.current;
-        console.log("handleDragEnd", latestDragState);
         if (latestDragState.isDragging && data.onNodeCallback) {
             const rfPos = screenToFlowPosition({
                 x: latestDragState.x,
                 y: latestDragState.y,
             });
-            console.log(
-                "Calling onNodeCallback",
-                latestDragState.suggestion,
-                rfPos
-            );
+
             data.onNodeCallback(
                 latestDragState.suggestion || undefined,
                 id,
                 rfPos
             );
         }
-        setDragState({ suggestion: "", x: 0, y: 0, isDragging: false });
+        setDragState({ suggestion: "explain", x: 0, y: 0, isDragging: false });
         setHandleOrigin(null);
         document.removeEventListener("pointermove", handleDragMove);
         document.removeEventListener("pointerup", handleDragEnd);
-    };
+    }, [data.onNodeCallback, id, screenToFlowPosition]);
+
+    // Memoize style objects to prevent recreation
+    const nodeStyle = useMemo(
+        () => ({
+            background: data.myColor
+                ? `linear-gradient(135deg, ${data.myColor}f0, ${data.myColor}e0)`
+                : "linear-gradient(135deg, #ffffff, #fafafa)",
+            borderColor: data.myColor
+                ? `${data.myColor}60`
+                : "rgba(229, 231, 235, 0.6)",
+            transform: "translateZ(0)",
+            willChange: "transform",
+            backfaceVisibility: "hidden" as const,
+        }),
+        [data.myColor]
+    );
+
+    // Memoize mouse event handlers to prevent recreation
+    const handleMouseEnter = useCallback(() => {
+        // Could be used for showing node menu or other hover effects
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+        // Could be used for hiding node menu or other hover effects
+    }, []);
+
     return (
         <div
             ref={nodeRef}
-            className="group relative bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-3xl
+            className="group relative bg-white/95 border border-gray-200/60 rounded-3xl
                        min-w-[320px] max-w-[640px] cursor-grab select-none
                        transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
                        hover:border-gray-300/80"
-            style={{
-                background: data.myColor
-                    ? `linear-gradient(135deg, ${data.myColor}f0, ${data.myColor}e0)`
-                    : "linear-gradient(135deg, #ffffff, #fafafa)",
-                borderColor: data.myColor
-                    ? `${data.myColor}60`
-                    : "rgba(229, 231, 235, 0.6)",
-                transform: "translateZ(0)",
-                willChange: "transform",
-                backfaceVisibility: "hidden",
-            }}
+            style={nodeStyle}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
@@ -438,34 +285,9 @@ export function DraggableEditableNode({
                                 className="text-2xl font-bold tracking-tight text-gray-900 
                                           transition-colors duration-200 group-hover/header:text-gray-700"
                             >
-                                {data.title || data.label || "Node"}
+                                {data.label || "Node"}
                             </h2>
                         </div>
-
-                        {isNodeMenuVisible && data.previousNode && (
-                            <div
-                                className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"
-                                style={{
-                                    animation: isNodeMenuVisible
-                                        ? "slideInFromTop 0.3s ease-out forwards"
-                                        : undefined,
-                                }}
-                            >
-                                <button
-                                    onClick={navigateToPreviousNode}
-                                    title="Go to previous node"
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-sm text-gray-700 
-                                             border border-white/80 transition-all duration-200 ease-out
-                                             hover:bg-white/80 hover:text-gray-900 hover:scale-105 
-                                             active:scale-95"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                        Back
-                                    </span>
-                                </button>
-                            </div>
-                        )}
                     </header>
                 )}
 

@@ -1,21 +1,22 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNodesState, useEdgesState, Node, Edge } from "reactflow";
 import { User } from "firebase/auth";
 
 import {
     fetchAllBoards,
-    fetchNodesFromBoard,
-    fetchEdgesFromBoard,
-    saveNodesToBoard,
-    saveEdgesToBoard,
+    fetchBoardContent,
+    saveBoardContent,
     createBoard,
     deleteBoard as deleteBoardService,
     updateBoardStatus,
+    preloadUserData,
+    clearUserCache,
+    forceRefreshUserData,
     initialNodes,
     initialEdges,
     BoardData,
-} from "../services/boardService";
-import { processNodesForDataIntegrity } from "../utils/dataIntegrity";
+    cacheService,
+} from "../services/cachedBoardService";
 import { UseNotificationsReturn } from "./useNotifications";
 
 // Type definitions
@@ -36,6 +37,9 @@ export interface UseBoardManagementReturn {
     deleteBoard: (boardId: string) => Promise<void>;
     updateBoardName: (name: string) => Promise<void>;
     clearBoardState: () => void;
+    saveNewNodeContent: () => Promise<void>;
+    forceRefresh: () => Promise<void>;
+    getCacheStats: () => any;
 }
 
 export const useBoardManagement = (
@@ -49,6 +53,11 @@ export const useBoardManagement = (
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [allBoards, setAllBoards] = useState<BoardData[]>([]);
     const [currentBoard, setCurrentBoard] = useState<BoardData | null>(null);
+
+    // Track if initial load is complete to prevent duplicate API calls
+    const hasInitiallyLoaded = useRef(false);
+
+    // Debounce saving to prevent excessive API calls
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const { showSuccess, showError, showInfo } = notifications;
@@ -74,12 +83,16 @@ export const useBoardManagement = (
     // Load initial data when user is authenticated
     useEffect(() => {
         const loadInitialData = async () => {
-            if (!user) return;
+            if (!user || hasInitiallyLoaded.current) return;
 
             try {
                 setIsLoading(true);
+                hasInitiallyLoaded.current = true;
 
-                // Fetch all user's boards
+                // Preload user data for better performance
+                await preloadUserData(user.uid);
+
+                // Fetch all user's boards (this will use cache if available)
                 const boards = await fetchAllBoards(user.uid);
                 setAllBoards(boards);
 
@@ -109,20 +122,24 @@ export const useBoardManagement = (
 
                 setCurrentBoard(openBoard);
 
-                // Fetch nodes and edges from the open board
-                const [nodesData, edgesData] = await Promise.all([
-                    fetchNodesFromBoard(openBoard.id),
-                    fetchEdgesFromBoard(openBoard.id),
-                ]);
+                // Fetch nodes and edges from the open board using optimized batch fetch
+                const { nodes: nodesData, edges: edgesData } =
+                    await fetchBoardContent(openBoard.id);
 
                 setNodes(nodesData);
                 setEdges(edgesData as Edge[]);
 
                 if (showInfo && !hasFallbackBoard) {
-                    showInfo("Board loaded successfully!");
+                    const cacheStats = cacheService.getStats();
+                    showInfo(
+                        `Board loaded successfully! Cache hit rate: ${cacheStats.hitRate.toFixed(
+                            1
+                        )}%`
+                    );
                 }
             } catch (error) {
                 console.error("Error loading initial data:", error);
+                hasInitiallyLoaded.current = false; // Reset on error
                 if (showError) {
                     showError(
                         "Failed to load board data. Using default board."
@@ -136,69 +153,54 @@ export const useBoardManagement = (
         };
 
         loadInitialData();
-    }, [user, setNodes, setEdges]);
+    }, [user]);
 
-    // Debounced auto-save function
-    const debouncedSave = async (
-        boardId: string,
-        nodesToSave: any,
-        edgesToSave: any
-    ) => {
+    // Optimized save function with debouncing to prevent excessive API calls
+    const saveNewNodeContent = useCallback(async () => {
+        if (
+            !currentBoard ||
+            currentBoard.isFallback ||
+            isLoading ||
+            isSwitchingBoard
+        ) {
+            return;
+        }
+
+        // Clear any existing timeout
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
 
-        const timeoutId = setTimeout(async () => {
+        // Debounce saves by 2 seconds
+        saveTimeoutRef.current = setTimeout(async () => {
             try {
                 setIsSaving(true);
 
-                // Save both nodes and edges in parallel
-                const savePromises: Promise<void>[] = [];
-                if (nodesToSave && nodesToSave.length > 0) {
-                    savePromises.push(saveNodesToBoard(boardId, nodesToSave));
-                }
-                if (edgesToSave && edgesToSave.length > 0) {
-                    savePromises.push(saveEdgesToBoard(boardId, edgesToSave));
-                }
-
-                if (savePromises.length > 0) {
-                    await Promise.all(savePromises);
-                    console.log("Auto-save completed successfully");
+                // Use batch save for better performance
+                if (
+                    (nodes && nodes.length > 0) ||
+                    (edges && edges.length > 0)
+                ) {
+                    await saveBoardContent(
+                        currentBoard.id,
+                        (nodes as any) || [],
+                        (edges as any) || []
+                    );
+                    console.log(
+                        "Batch save completed successfully after node creation"
+                    );
                 }
             } catch (error) {
-                console.error("Auto-save failed:", error);
+                console.error("Save failed:", error);
                 if (showError) {
-                    showError("Failed to save changes automatically");
+                    showError("Failed to save new content");
                 }
             } finally {
                 setIsSaving(false);
                 saveTimeoutRef.current = null;
             }
-        }, 1000);
-
-        saveTimeoutRef.current = timeoutId;
-    };
-
-    // Auto-save when nodes or edges change
-    useEffect(() => {
-        if (
-            !isLoading &&
-            currentBoard &&
-            !isSwitchingBoard &&
-            !currentBoard.isFallback
-        ) {
-            debouncedSave(currentBoard.id, nodes, edges);
-        }
-
-        return () => {
-            if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
-            }
-        };
-        // Note: debouncedSave is not included in deps to prevent unnecessary re-renders
-        // It's stable since it only depends on showError from notifications
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodes, edges, isLoading, currentBoard, isSwitchingBoard]);
+        }, 2000);
+    }, [currentBoard, isLoading, isSwitchingBoard, nodes, edges, showError]);
 
     // Switch to board
     const switchToBoard = async (boardId: string) => {
@@ -251,16 +253,11 @@ export const useBoardManagement = (
                     )
                 );
 
-                // Load nodes and edges for the new board
-                const [nodesData, edgesData] = await Promise.all([
-                    fetchNodesFromBoard(boardId),
-                    fetchEdgesFromBoard(boardId),
-                ]);
+                // Load nodes and edges for the new board using optimized batch fetch
+                const { nodes: nodesData, edges: edgesData } =
+                    await fetchBoardContent(boardId);
 
-                // Process nodes to ensure they have the proper data structure
-                const processedNodes = processNodesForDataIntegrity(nodesData);
-
-                setNodes(processedNodes);
+                setNodes(nodesData);
                 setEdges(edgesData as Edge[]);
 
                 if (showSuccess) {
@@ -446,14 +443,11 @@ export const useBoardManagement = (
         }
     };
 
-    // Clear all state (for sign out)
-    const clearBoardState = () => {
-        // Clear any pending save timeouts
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = null;
+    // Clear all state (for sign out) and cache
+    const clearBoardState = useCallback(() => {
+        if (user?.uid) {
+            clearUserCache(user.uid);
         }
-
         setAllBoards([]);
         setCurrentBoard(null);
         setNodes([]);
@@ -461,7 +455,66 @@ export const useBoardManagement = (
         setIsLoading(true);
         setIsSwitchingBoard(false);
         setIsSaving(false);
-    };
+        hasInitiallyLoaded.current = false;
+
+        // Clear any pending save timeout
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
+        }
+    }, [user?.uid]);
+
+    // Force refresh all data from Firestore
+    const forceRefresh = useCallback(async () => {
+        if (!user?.uid) return;
+
+        try {
+            setIsLoading(true);
+            if (showInfo) {
+                showInfo("Refreshing data...");
+            }
+
+            const { boards, openBoardContent } = await forceRefreshUserData(
+                user.uid
+            );
+
+            setAllBoards(boards);
+            const openBoard = boards.find((board) => board.isOpen);
+            setCurrentBoard(openBoard || null);
+
+            if (openBoardContent) {
+                setNodes(openBoardContent.nodes);
+                setEdges(openBoardContent.edges as Edge[]);
+            } else if (openBoard) {
+                // Fallback if no open board content returned
+                const { nodes: nodesData, edges: edgesData } =
+                    await fetchBoardContent(openBoard.id);
+                setNodes(nodesData);
+                setEdges(edgesData as Edge[]);
+            }
+
+            const cacheStats = cacheService.getStats();
+            if (showSuccess) {
+                showSuccess(
+                    `Data refreshed! Cache hit rate: ${cacheStats.hitRate.toFixed(
+                        1
+                    )}%`
+                );
+            }
+        } catch (error) {
+            console.error("Error during force refresh:", error);
+            if (showError) {
+                showError("Failed to refresh data");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user?.uid, showInfo, showSuccess, showError]);
+
+    // Get cache statistics for debugging
+    const getCacheStats = useCallback(() => {
+        return cacheService.getStats();
+    }, []);
 
     return {
         // State
@@ -483,5 +536,8 @@ export const useBoardManagement = (
         deleteBoard,
         updateBoardName,
         clearBoardState,
+        saveNewNodeContent,
+        forceRefresh,
+        getCacheStats,
     };
 };

@@ -1,5 +1,4 @@
 import { LAYOUT_TYPES } from "./layouts";
-//        REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely
 export const contentPrompt = (
     context: string,
     message: string,
@@ -40,6 +39,8 @@ export const contentPrompt = (
         RETURN AN ARRAY [] - NOT AN OBJECT!
 
         CONCEPT: ${message}
+        CONTEXT: ${context}
+        REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely
         SCHEMA: ${LAYOUT_SCHEMA}`;
 };
 
@@ -77,10 +78,14 @@ export const iconPrompt = (message: string, inputMode: string) => {
     return `RETURN ONLY THE FA ICON CORRESPONDING TO THE CONCEPT: "${message}". EXAMPLE: <i class="fas fa-check"></i>`;
 };
 
-export const layoutPrompt = (message: string, inputMode: string) => {
+export const layoutPrompt = (
+    message: string,
+    inputMode: string,
+    last_layout?: string
+) => {
     return `Choose the best educational layout for "${message}" - prioritize diversity and optimal content presentation.
         
-        CRITICAL: Avoid layout 14 unless absolutely necessary. Use diverse layouts for better user experience.
+        Use diverse layouts for better user experience. If both layouts are suitable, prefer the one that is different from the last used layout. Last used layout: ${last_layout}.
         
         SELECTION CRITERIA:
         • Content Type Match: Which layout best fits the specific content structure?

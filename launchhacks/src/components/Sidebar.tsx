@@ -66,14 +66,14 @@ function SideBar({
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
-                        <h2 className="m-0 mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
+                        <h2 className="m-0 mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
                             TinkFlow Boards
                         </h2>
                         <button
                             onClick={handleShowModal}
                             disabled={isLoading || isCreatingBoard}
                             className={`w-full bg-blue-600 dark:bg-blue-600 text-white dark:text-white border border-blue-600 dark:border-blue-600 
-                                      px-3 py-2 rounded-lg cursor-pointer text-xs font-medium transition-all duration-200 
+                                      px-3 py-2 rounded-lg cursor-pointer text-base font-medium transition-all duration-200 
                                       ${
                                           isLoading || isCreatingBoard
                                               ? "cursor-not-allowed opacity-60"
@@ -101,7 +101,7 @@ function SideBar({
                                     onMouseLeave={() => setHoveredBoardId(null)}
                                     className={`
                                         min-h-[44px] px-3 py-2.5 mb-1 rounded-lg flex justify-between items-center
-                                        transition-all duration-200 cursor-pointer border font-medium text-sm leading-tight
+                                        transition-all duration-200 cursor-pointer border font-medium text-lg leading-tight
                                         ${
                                             isLoading
                                                 ? "cursor-not-allowed opacity-60"
@@ -135,7 +135,7 @@ function SideBar({
                                                 : "font-medium"
                                         } 
                                         flex-1 whitespace-nowrap overflow-hidden text-ellipsis 
-                                        text-sm leading-tight
+                                        text-lg leading-tight
                                     `}
                                     >
                                         {board.name}
@@ -143,7 +143,7 @@ function SideBar({
 
                                     <div className="flex items-center gap-1 ml-2">
                                         {board.isOpen && (
-                                            <span className="text-green-500 dark:text-green-400 text-xs">
+                                            <span className="text-green-500 dark:text-green-400 text-base">
                                                 ●
                                             </span>
                                         )}
@@ -160,7 +160,7 @@ function SideBar({
                                                 title="Delete board"
                                                 className={`
                                                     w-5 h-5 bg-transparent border-none text-red-500 dark:text-red-400 
-                                                    cursor-pointer text-sm leading-none flex items-center justify-center
+                                                    cursor-pointer text-lg leading-none flex items-center justify-center
                                                     rounded transition-all duration-150
                                                     ${
                                                         isHovered
@@ -181,7 +181,7 @@ function SideBar({
 
                     {/* Loading indicator */}
                     {isLoading && (
-                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-xs font-medium">
+                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-base font-medium">
                             Loading boards...
                         </div>
                     )}
@@ -191,7 +191,7 @@ function SideBar({
                         <button
                             onClick={onSignOut}
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-                                     bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer text-xs font-medium
+                                     bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer text-base font-medium
                                      transition-all duration-200
                                      hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:border-gray-400 dark:hover:border-gray-500 
                                      hover:text-gray-900 dark:hover:text-gray-100"

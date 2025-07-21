@@ -17,6 +17,7 @@ import SideBar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
+import { CacheDebugPanel } from "./components/CacheDebugPanel";
 import "./index.css"; // Ensure this is imported for styles
 import TempInputNode from "./components/TempInputNode";
 
@@ -39,6 +40,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [showCacheDebug, setShowCacheDebug] = useState(false);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -69,6 +71,7 @@ function AppContent() {
         deleteBoard,
         updateBoardName,
         clearBoardState,
+        saveNewNodeContent,
     } = useBoardManagement(user, { showSuccess, showError, showInfo });
 
     // // Handle sign out with state cleanup
@@ -102,14 +105,14 @@ function AppContent() {
         (
             _nodeId: string,
             _data: any,
-            mode?: string,
+            suggestion?: string,
             parent?: string,
             position?: { x: number; y: number }
         ) => {
-            if (!mode || !position) {
+            if (!suggestion || !position) {
                 console.warn(
-                    "handleNodeCallback called without mode or position",
-                    mode,
+                    "handleNodeCallback called without suggestion or position",
+                    suggestion,
                     position
                 );
                 return;
@@ -125,22 +128,11 @@ function AppContent() {
                     id,
                     type: "tempInput",
                     position: { x: position.x - 80, y: position.y - 40 },
-                    data: { mode: mode, parent: parent },
+                    data: { label: suggestion, parent: parent },
                 },
             ]);
-            const colorSceheme = {
-                default: "#FFFFFF", // blue-600 hex
-                explain: "#3b82f6", // blue-600 hex
-                answer: "#10b981", // emerald-600 hex
-                argue: "#fb7185", // rose-600 hex
-            };
 
-            const color =
-                colorSceheme[
-                    (mode as keyof typeof colorSceheme) in colorSceheme
-                        ? (mode as keyof typeof colorSceheme)
-                        : "default"
-                ];
+            const color = "#3b82f6";
 
             if (parent) {
                 onEdgesChange([
@@ -150,7 +142,7 @@ function AppContent() {
                             id: `e${parent}-${id}`,
                             source: parent,
                             target: id,
-                            sourceHandle: mode,
+                            sourceHandle: suggestion,
                             style: {
                                 stroke: color, // blue-600 hex
                                 strokeWidth: 3,
@@ -171,15 +163,21 @@ function AppContent() {
     const nodesWithCallback = useMemo(() => {
         return nodes.map((node) => {
             let data = { ...node.data };
-            // Inject onNodeCallback as before
             data.onNodeCallback = (
-                mode?: string,
+                suggestion?: string,
                 parent?: string,
                 position?: { x: number; y: number }
-            ) => handleNodeCallback(node.id, node.data, mode, parent, position);
+            ) =>
+                handleNodeCallback(
+                    node.id,
+                    node.data,
+                    suggestion,
+                    parent,
+                    position
+                );
             // If this is a tempInput node, inject onSubmit callback
             if (node.type === "tempInput") {
-                data.onSubmit = (value: string) => {
+                data.onNodeCallback = (value: string, mode: string) => {
                     setNodes((nodes) =>
                         nodes.map((n) =>
                             n.id === node.id
@@ -355,6 +353,7 @@ function AppContent() {
                                     onNodesChange={onNodesChange}
                                     onEdgesChange={onEdgesChange}
                                     setNodes={setNodes}
+                                    saveCallback={saveNewNodeContent}
                                 >
                                     {ReactFlowComponent}
                                 </TokenInteractionProvider>
@@ -363,6 +362,14 @@ function AppContent() {
                     </Panel>
                 </PanelGroup>
             </div>
+
+            {/* Cache Debug Panel - only show in development */}
+            {true && (
+                <CacheDebugPanel
+                    isVisible={showCacheDebug}
+                    onToggle={() => setShowCacheDebug(!showCacheDebug)}
+                />
+            )}
         </div>
     );
 }
