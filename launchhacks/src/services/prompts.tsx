@@ -1,26 +1,44 @@
 import { LAYOUT_TYPES } from "./layouts";
-
+//        REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely
 export const contentPrompt = (
     context: string,
     message: string,
     explanation_mode: string,
     LAYOUT_SCHEMA: string
 ): string => {
-    return `Return ONLY a valid JSON array. Do not include markdown formatting, code blocks, or any text before or after the JSON.
+    return `You are an expert educational designer who creates comprehensive, visually-enhanced learning content.
+    Return ONLY a valid array. Do not include markdown formatting, code blocks, or any text before or after the array.
         
-        RULES
-        • Each object = exactly one tag from SCHEMA; no new tags.
-        • You should educate the user about the concept by filling out the SCHEMA with the tags.
-        • Use tags to explain the concept in a structured way.
-        • Tone: encouraging, professional
-        REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely
+        EDUCATIONAL CONTENT RULES:
+        • COMPREHENSIVE: Each node should contain 100+ words of educational content total
+        • WELL-STRUCTURED: Use proper paragraphs, clear explanations, and logical flow
+        • VISUAL BALANCE: Combine substantial text with compelling visuals
+        • EDUCATIONAL DEPTH: Explain concepts thoroughly with examples, context, and details
+        • ENGAGING WRITING: Use clear, engaging language that teaches effectively
+        
+        TEXT GUIDELINES:
+        • Titles: Clear, educational (3-8 words)
+        • Paragraphs: Full explanations (3-5 sentences each, 20-40 words per sentence)
+        • Descriptions: Detailed and informative (2-3 sentences minimum)
+        • Content should flow logically and build understanding progressively
+        
+        IMAGE PROMPTS:
+        • Educational and specific: "Detailed diagram of photosynthesis process in plant cells"
+        • Include visual style: "realistic scientific illustration", "clean educational diagram"
+        • Support the educational content meaningfully
+        
+        CONTENT BALANCE:
+        • 70% substantial educational text
+        • 30% compelling visuals that enhance learning
+        • Ensure minimum 100 words total per node
+        • Use markdown formatting in text (headings, bold, italics where appropriate)
+        
+        OUTPUT FORMAT:
+        Return ONLY a valid array based on the SCHEMA. Follow the exact structure.
+        NO markdown code blocks, NO extra text.
+        RETURN AN ARRAY [] - NOT AN OBJECT!
 
-        OUTPUT FORMAT
-        Return ONLY a valid JSON array like this: ["item1", "item2", "item3"]
-        NO markdown code blocks, NO explanations, NO extra text.
-
-        INPUT:
-        MESSAGE: ${message}
+        CONCEPT: ${message}
         SCHEMA: ${LAYOUT_SCHEMA}`;
 };
 
@@ -55,13 +73,27 @@ export const suggestionsPrompt = (message: string, inputMode: string) => {
 //         - Ensure it visually represents the concept.
 //         - Return ONLY the icon URL as a string.
 export const iconPrompt = (message: string, inputMode: string) => {
-    return `RETURN ONLY THE EMOJI CORRESPONDING TO THE CONCEPT "${message}".`;
+    return `RETURN ONLY THE FA ICON CORRESPONDING TO THE CONCEPT: "${message}". EXAMPLE: <i class="fas fa-check"></i>`;
 };
 
 export const layoutPrompt = (message: string, inputMode: string) => {
-    return `Choose the best html layout the would explain "${message} in the most clear way. Reply with the number".
-        - Ensure it visually represents the concept.
-        - Return ONLY the layout number as an integer.
+    return `Choose the best educational layout for "${message}" - prioritize comprehensive learning with visual appeal.
+        
+        SELECTION CRITERIA:
+        • Educational Depth: Which layout allows for most comprehensive explanation?
+        • Visual Learning: Which format combines visuals and text most effectively?
+        • Information Architecture: Which layout organizes information most clearly?
+        • Engagement: Which layout maintains interest while providing substantial content?
+        
+        LAYOUT PRIORITIES:
+        • Use diagrams (3-6) for processes, systems, or data that need visual explanation
+        • Use hero layouts (1, 7, 8) for major concepts needing detailed explanation with strong visual
+        • Use story layouts (2, 14, 15) for step-by-step or chronological concepts
+        • Use comprehensive layouts (12, 13, 16) for multi-faceted topics
+        • Use media layouts (9, 13) for topics that benefit from video explanation
+        
+        Return ONLY the layout number as an integer.
+        
         LAYOUT TYPES:
         ${JSON.stringify(LAYOUT_TYPES)}`;
 };

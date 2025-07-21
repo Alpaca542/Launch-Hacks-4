@@ -3,14 +3,8 @@ import { useReactFlow, Handle, Position } from "reactflow";
 import { useTokenInteraction } from "../contexts/TokenInteractionContext";
 import LoadingSpinner from "./LoadingSpinner";
 import { createPortal } from "react-dom";
-import {
-    ArrowLeft,
-    FileText,
-    Loader2,
-    GripVertical,
-    Sparkles,
-} from "lucide-react";
-import { darkenColor, parseTextIntoTokens, Token } from "../utils/nodeHelpers";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { parseTextIntoTokens, Token } from "../utils/nodeHelpers";
 import ModeMenu from "./ModeChooseMenu";
 import "../styles/layouts.css";
 
@@ -99,9 +93,8 @@ export function DraggableEditableNode({
         }
     }, [data.layout]);
 
-    const { getNodes, getNode, setViewport, screenToFlowPosition } =
-        useReactFlow();
-    const { handleTokenClick, showExplanation } = useTokenInteraction();
+    const { getNode, setViewport, screenToFlowPosition } = useReactFlow();
+    const { handleTokenClick } = useTokenInteraction();
     const [isNodeMenuVisible, setIsNodeMenuVisible] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const [dragState, setDragState] = useState<{
@@ -118,7 +111,7 @@ export function DraggableEditableNode({
     }, [dragState]);
 
     // Add state for the handle's initial position
-    const [handleOrigin, setHandleOrigin] = useState<{
+    const [handleOrigin] = useState<{
         x: number;
         y: number;
     } | null>(null);
@@ -177,9 +170,18 @@ export function DraggableEditableNode({
     const renderContent = useMemo(() => {
         // Render rich content if available
         if (data.contents && data.contents.length > 0) {
+            // If the HTML is empty or just whitespace, show fallback
+            if (!data.contents[0].trim()) {
+                return (
+                    <div className="text-center py-8 text-gray-500">
+                        <p>No content available</p>
+                    </div>
+                );
+            }
+
             return (
                 <div
-                    className="node-rich-content"
+                    className="node-rich-content w-full"
                     dangerouslySetInnerHTML={{ __html: data.contents[0] }}
                 />
             );
@@ -198,12 +200,10 @@ export function DraggableEditableNode({
         }
 
         return (
-            <section className="grid gap-4 p-4 rounded-2xl border border-white/10 bg-black/10 shadow-inner backdrop-blur-sm">
-                <div className="rounded-lg border border-slate-600/20 bg-slate-800/40 px-4 py-3 space-y-2">
-                    <span className="text-xs font-semibold text-slate-400/80">
-                        {data.title || "Content"}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
+            <div className="space-y-4">
+                {/* Main content area */}
+                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/80">
+                    <div className="flex flex-wrap gap-2">
                         {displayTokens.map((t, idx) => {
                             const tokenColors = data.tokenColors || {};
                             const color = tokenColors[t.myConcept || t.word];
@@ -219,43 +219,32 @@ export function DraggableEditableNode({
                                     }
                                     style={{
                                         backgroundColor: color || undefined,
-                                        color: color
-                                            ? getContrastTextColor(color)
-                                            : getContrastTextColor(
-                                                  data.myColor!
-                                              ),
-                                        borderColor: color
-                                            ? darkenColor(color, 20)
-                                            : "transparent",
-                                        boxShadow: color
-                                            ? `0 0 0 1px ${color}25`
-                                            : "",
+                                        borderColor: color || "transparent",
                                     }}
                                     className={[
-                                        "inline-block px-2 py-1 rounded-md text-[0.7rem] font-medium",
-                                        "transition-all duration-300",
-                                        t.myConcept
-                                            ? "bg-indigo-500/10 border"
-                                            : "border hover:border-indigo-400/40",
+                                        "inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium",
+                                        "transition-all duration-200 ease-out",
+                                        color
+                                            ? "text-white shadow-sm"
+                                            : "bg-white/80 backdrop-blur-sm text-gray-700 border border-white/90",
                                         clickable
-                                            ? "cursor-pointer hover:bg-indigo-500/20 hover:scale-105 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
-                                            : "cursor-not-allowed opacity-70",
+                                            ? "cursor-pointer hover:scale-105 active:scale-95"
+                                            : "cursor-default opacity-80",
                                     ].join(" ")}
                                 >
                                     {t.word}
-                                    {idx < displayTokens.length - 1 ? " " : ""}
                                 </span>
                             );
                         })}
                     </div>
                 </div>
 
-                {/* Render suggestions */}
+                {/* Suggestions */}
                 {data.suggestions && data.suggestions.length > 0 && (
-                    <div className="rounded-lg border border-slate-600/20 bg-slate-800/40 px-4 py-3 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-indigo-400" />
-                            <span className="text-xs font-semibold text-slate-400/80">
+                    <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/80">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Sparkles className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-medium text-gray-700">
                                 Explore Next
                             </span>
                         </div>
@@ -263,7 +252,10 @@ export function DraggableEditableNode({
                             {data.suggestions.map((suggestion, index) => (
                                 <button
                                     key={index}
-                                    className="px-3 py-1 text-xs rounded-full bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 transition-colors"
+                                    className="px-3 py-1.5 text-sm rounded-full bg-blue-50/80 text-blue-700 
+                                             border border-blue-200/60 backdrop-blur-sm transition-all duration-200
+                                             hover:bg-blue-100/80 hover:border-blue-300/80 hover:scale-105
+                                             active:scale-95"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         if (nodeRef.current) {
@@ -296,7 +288,7 @@ export function DraggableEditableNode({
                         </div>
                     </div>
                 )}
-            </section>
+            </div>
         );
     }, [
         data.contents,
@@ -316,22 +308,6 @@ export function DraggableEditableNode({
     ]);
 
     // Helper functions
-    const getContrastTextColor = (backgroundColor: string): string => {
-        // Simple contrast calculation for text visibility
-        const hex = backgroundColor.replace("#", "");
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        return brightness > 128 ? "#000000" : "#ffffff";
-    };
-
-    const handleShowExplanation = () => {
-        if (showExplanation && data.title && data.full_text) {
-            showExplanation(data.title, data.full_text);
-        }
-    };
-
     const navigateToPreviousNode = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (data.previousNode) {
@@ -370,73 +346,101 @@ export function DraggableEditableNode({
     return (
         <div
             ref={nodeRef}
-            className="bg-[#202023] border border-white/[0.12] rounded-2xl p-5 min-w-[280px] max-w-[600px] 
-                       transition-all duration-200 ease-in-out cursor-grab select-none
-                       hover:transform hover:-translate-y-[3px]
-                       hover:border-white/[0.18] hover:bg-[#242427]"
+            className="group relative bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-3xl
+                       min-w-[320px] max-w-[640px] cursor-grab select-none
+                       transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                       hover:border-gray-300/80"
             style={{
-                background: data.myColor,
-                color: data.myColor
-                    ? getContrastTextColor(data.myColor)
-                    : "#f0f4f8",
-                border: data.myColor
-                    ? `2px solid ${darkenColor(data.myColor, 0.5)}`
-                    : "2px solid rgba(255, 255, 255, 0.12)",
+                background: data.myColor
+                    ? `linear-gradient(135deg, ${data.myColor}f0, ${data.myColor}e0)`
+                    : "linear-gradient(135deg, #ffffff, #fafafa)",
+                borderColor: data.myColor
+                    ? `${data.myColor}60`
+                    : "rgba(229, 231, 235, 0.6)",
+                transform: "translateZ(0)", // Force hardware acceleration
+                willChange: "transform",
+                backfaceVisibility: "hidden",
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <div className="relative pointer-events-auto text-[#f0f4f8] text-[17px] leading-[1.7] font-medium">
-                {/* ───────────────── Loading state */}
+            <div className="relative p-6 text-gray-900">
+                {/* Loading state */}
                 {data.isLoading && (
-                    <div className="flex items-center justify-center gap-3 py-6 animate-pulse">
-                        <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                        <span className="text-slate-400 text-sm font-medium">
-                            Loading concept…
+                    <div className="flex flex-col items-center justify-center gap-4 py-12">
+                        <div className="relative">
+                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                            <div className="absolute inset-0 w-8 h-8 rounded-full bg-blue-500/20 animate-ping" />
+                        </div>
+                        <span className="text-gray-600 text-sm font-medium">
+                            Generating content...
                         </span>
                     </div>
                 )}
 
-                {/* ───────────────── Header */}
-                <header className="flex flex-col items-center gap-3 mb-6">
-                    <div className="flex items-center gap-3 group">
-                        {/* Icon if available */}
-                        {data.icon ? (
-                            <span className="text-2xl">{data.icon}</span>
-                        ) : (
-                            <Sparkles className="w-7 h-7 text-indigo-300 drop-shadow-md transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110" />
-                        )}
-                        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-100 drop-shadow-sm">
-                            {data.title || data.label || "Node"}
-                        </h2>
-                    </div>
+                {/* Header */}
+                {!data.isLoading && (
+                    <header className="flex flex-col items-center gap-4 mb-6">
+                        <div className="flex items-center gap-3 group/header">
+                            {/* Icon */}
+                            {data.icon ? (
+                                <div
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 backdrop-blur-sm border border-white/80 
+                                               transition-transform duration-200 ease-out group-hover/header:scale-105"
+                                >
+                                    <span
+                                        className="text-2xl"
+                                        dangerouslySetInnerHTML={{
+                                            __html: data.icon,
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white 
+                                               transition-transform duration-200 ease-out group-hover/header:scale-105"
+                                >
+                                    <Sparkles className="w-6 h-6" />
+                                </div>
+                            )}
+                            <h2
+                                className="text-2xl font-bold tracking-tight text-gray-900 
+                                          transition-colors duration-200 group-hover/header:text-gray-700"
+                            >
+                                {data.title || data.label || "Node"}
+                            </h2>
+                        </div>
 
-                    {isNodeMenuVisible && (
-                        <div className="flex gap-3">
-                            {data.previousNode && (
+                        {isNodeMenuVisible && data.previousNode && (
+                            <div
+                                className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out"
+                                style={{
+                                    animation: isNodeMenuVisible
+                                        ? "slideInFromTop 0.3s ease-out forwards"
+                                        : undefined,
+                                }}
+                            >
                                 <button
                                     onClick={navigateToPreviousNode}
                                     title="Go to previous node"
-                                    className="grid place-items-center w-9 h-9 rounded-xl border border-slate-500/30 bg-slate-600/10 text-slate-300 backdrop-blur
-                                           transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-600/20 hover:border-slate-500/50 active:translate-y-0"
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-sm text-gray-700 
+                                             border border-white/80 transition-all duration-200 ease-out
+                                             hover:bg-white/80 hover:text-gray-900 hover:scale-105 
+                                             active:scale-95"
                                 >
-                                    <ArrowLeft className="w-5 h-5" />
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                        Back
+                                    </span>
                                 </button>
-                            )}
+                            </div>
+                        )}
+                    </header>
+                )}
 
-                            <button
-                                onClick={handleShowExplanation}
-                                title="Show full text"
-                                className="grid place-items-center w-9 h-9 rounded-xl border border-indigo-500/30 bg-indigo-600/10 text-indigo-300 backdrop-blur
-                                       transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-600/20 hover:border-indigo-500/50 active:translate-y-0"
-                            >
-                                <FileText className="w-5 h-5" />
-                            </button>
-                        </div>
-                    )}
-                </header>
+                {/* Content */}
+                {!data.isLoading && renderContent}
 
-                {renderContent}
                 <ModeMenu
                     dragState={dragState}
                     handleDragStart={handleDragStart}

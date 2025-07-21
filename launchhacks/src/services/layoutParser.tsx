@@ -1,3 +1,17 @@
+/**
+ * Layout Parser Service
+ *
+ * Converts AI-generated content arrays into rich HTML layouts for educational nodes.
+ * Supports 16+ different layout types including text, images, videos, diagrams, and interactive content.
+ *
+ * Each layout follows a specific schema and renders responsive, accessible HTML with:
+ * - Optimized image loading and error handling
+ * - Mermaid diagram rendering
+ * - Video embedding support
+ * - Timeline and card layouts
+ * - Consistent styling and animations
+ */
+
 import {
     fetchImage,
     fetchGif,
@@ -8,18 +22,16 @@ import {
 
 export interface ParsedLayoutContent {
     html: string;
-    mediaPromises: Promise<void>[];
 }
 
 /**
- * Parses AI-generated content based on layout schema and returns HTML + media promises
+ * Parses AI-generated content based on layout schema and returns fully loaded HTML
  */
 export const parseLayoutContent = async (
     layoutNumber: number,
     content: any[],
     nodeId: string
 ): Promise<ParsedLayoutContent> => {
-    const mediaPromises: Promise<void>[] = [];
     let html = "";
 
     try {
@@ -57,6 +69,15 @@ export const parseLayoutContent = async (
             case 13:
                 html = await parseLayout13(content, nodeId);
                 break;
+            case 14:
+                html = await parseLayout14(content, nodeId);
+                break;
+            case 15:
+                html = await parseLayout15(content, nodeId);
+                break;
+            case 16:
+                html = await parseLayout16(content, nodeId);
+                break;
             default:
                 html = await parseLayout1(content, nodeId);
         }
@@ -65,28 +86,36 @@ export const parseLayoutContent = async (
         html = `<div class="error-content">Error loading content</div>`;
     }
 
-    return { html, mediaPromises };
+    return { html };
 };
 
 // Layout 1: Title, textbar, images
-async function parseLayout1(content: any[], nodeId: string): Promise<string> {
+async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
     const [title, textbar, imagePrompts] = content;
-    
+
     let html = `
         <div class="layout-1">
-            <h2 class="layout-title">${title || 'Title'}</h2>
-            <div class="layout-textbar">${textbar || 'Content'}</div>
+            <h2 class="layout-title">${title || "Title"}</h2>
+            <div class="layout-textbar">${textbar || "Content"}</div>
             <div class="layout-images">
     `;
 
     if (Array.isArray(imagePrompts)) {
         // Fetch all images concurrently
         const imageUrls = await Promise.all(
-            imagePrompts.map(prompt => fetchImage(prompt))
+            imagePrompts.map((prompt) => fetchImage(prompt).catch(() => null))
         );
-        
+
         imageUrls.forEach((url, index) => {
-            html += `<img class="layout-small-image" src="${url}" alt="Image ${index + 1}" />`;
+            if (url) {
+                html += `<img class="layout-small-image" src="${url}" alt="Image ${
+                    index + 1
+                }" />`;
+            } else {
+                html += `<div class="image-error">Error loading image ${
+                    index + 1
+                }</div>`;
+            }
         });
     }
 
@@ -98,32 +127,61 @@ async function parseLayout1(content: any[], nodeId: string): Promise<string> {
     return html;
 }
 
-// Layout 2: Row of images with captions
-async function parseLayout2(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+// Layout 2: Flexible image-caption pairs (handles both nested arrays and flat alternating arrays)
+async function parseLayout2(content: any[], _nodeId: string): Promise<string> {
     let html = `<div class="layout-2">`;
 
-    content.forEach((item, index) => {
-        if (Array.isArray(item) && item.length >= 2) {
-            const [imagePrompt, caption] = item;
-            const imageId = `img-${nodeId}-${index}`;
+    // Handle different content structures
+    let imageCaptionPairs: Array<[string, string]> = [];
 
+    // Check if content is nested arrays [[img, cap], [img, cap]] or flat [img, cap, img, cap]
+    if (content.length > 0 && Array.isArray(content[0])) {
+        // Nested array format: [[image1, caption1], [image2, caption2], ...]
+        imageCaptionPairs = content.filter(
+            (item) => Array.isArray(item) && item.length >= 2
+        ) as Array<[string, string]>;
+    } else {
+        // Flat array format: [image1, caption1, image2, caption2, ...]
+        for (let i = 0; i < content.length; i += 2) {
+            if (i + 1 < content.length) {
+                imageCaptionPairs.push([content[i], content[i + 1]]);
+            }
+        }
+    }
+
+    // Fetch all images concurrently
+    const imagePromises = imageCaptionPairs.map(
+        async ([imagePrompt, caption]) => {
+            try {
+                const url = await fetchImage(imagePrompt);
+                return { url, caption };
+            } catch {
+                return { url: null, caption };
+            }
+        }
+    );
+
+    const imageResults = await Promise.all(imagePromises);
+
+    imageResults.forEach(({ url, caption }, index) => {
+        if (url) {
             html += `
                 <div class="layout-image-caption">
-                    <img id="${imageId}" class="layout-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjEwMCIgeT0iNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+" alt="Loading..." />
+                    <img class="layout-image" src="${url}" alt="Image ${
+                index + 1
+            }" />
                     <p class="layout-caption">${caption}</p>
                 </div>
             `;
-
-            mediaPromises.push(
-                fetchImage(imagePrompt).then((url) => {
-                    const imgElement = document.getElementById(imageId);
-                    if (imgElement) imgElement.setAttribute("src", url);
-                })
-            );
+        } else {
+            html += `
+                <div class="layout-image-caption">
+                    <div class="image-error">Error loading image ${
+                        index + 1
+                    }</div>
+                    <p class="layout-caption">${caption}</p>
+                </div>
+            `;
         }
     });
 
@@ -132,11 +190,7 @@ async function parseLayout2(
 }
 
 // Layout 3: Mermaid flowchart with description
-async function parseLayout3(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout3(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
@@ -147,33 +201,22 @@ async function parseLayout3(
         </div>
     `;
 
-    mediaPromises.push(
-        mermaidToSvg(mermaidCode)
-            .then((svg) => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML = "";
-                    diagramElement.appendChild(svg);
-                }
-            })
-            .catch(() => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML =
-                        '<div class="mermaid-error">Error loading diagram</div>';
-                }
-            })
-    );
+    try {
+        const svg = await mermaidToSvg(mermaidCode);
+        // Replace the loading text with the actual SVG
+        html = html.replace("Loading diagram...", svg.outerHTML);
+    } catch (error) {
+        html = html.replace(
+            "Loading diagram...",
+            '<div class="mermaid-error">Error loading diagram</div>'
+        );
+    }
 
     return html;
 }
 
 // Layout 4: Mermaid mindmap with description
-async function parseLayout4(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout4(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
@@ -184,33 +227,21 @@ async function parseLayout4(
         </div>
     `;
 
-    mediaPromises.push(
-        mermaidToSvg(mermaidCode)
-            .then((svg) => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML = "";
-                    diagramElement.appendChild(svg);
-                }
-            })
-            .catch(() => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML =
-                        '<div class="mermaid-error">Error loading mindmap</div>';
-                }
-            })
-    );
+    try {
+        const svg = await mermaidToSvg(mermaidCode);
+        html = html.replace("Loading mindmap...", svg.outerHTML);
+    } catch (error) {
+        html = html.replace(
+            "Loading mindmap...",
+            '<div class="mermaid-error">Error loading mindmap</div>'
+        );
+    }
 
     return html;
 }
 
 // Layout 5: Mermaid piechart with description
-async function parseLayout5(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout5(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
@@ -221,33 +252,21 @@ async function parseLayout5(
         </div>
     `;
 
-    mediaPromises.push(
-        mermaidToSvg(mermaidCode)
-            .then((svg) => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML = "";
-                    diagramElement.appendChild(svg);
-                }
-            })
-            .catch(() => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML =
-                        '<div class="mermaid-error">Error loading piechart</div>';
-                }
-            })
-    );
+    try {
+        const svg = await mermaidToSvg(mermaidCode);
+        html = html.replace("Loading piechart...", svg.outerHTML);
+    } catch (error) {
+        html = html.replace(
+            "Loading piechart...",
+            '<div class="mermaid-error">Error loading piechart</div>'
+        );
+    }
 
     return html;
 }
 
 // Layout 6: Mermaid quadrant chart with description
-async function parseLayout6(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout6(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
@@ -258,206 +277,408 @@ async function parseLayout6(
         </div>
     `;
 
-    mediaPromises.push(
-        mermaidToSvg(mermaidCode)
-            .then((svg) => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML = "";
-                    diagramElement.appendChild(svg);
-                }
-            })
-            .catch(() => {
-                const diagramElement = document.getElementById(diagramId);
-                if (diagramElement) {
-                    diagramElement.innerHTML =
-                        '<div class="mermaid-error">Error loading quadrant chart</div>';
-                }
-            })
-    );
+    try {
+        const svg = await mermaidToSvg(mermaidCode);
+        html = html.replace("Loading quadrant chart...", svg.outerHTML);
+    } catch (error) {
+        html = html.replace(
+            "Loading quadrant chart...",
+            '<div class="mermaid-error">Error loading quadrant chart</div>'
+        );
+    }
 
     return html;
 }
 
-// Layout 7: Large image left, title and description right
-async function parseLayout7(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
-    const [imagePrompt, title, description] = content;
+// Layout 7: Featured concept - large visual with comprehensive educational content
+async function parseLayout7(content: any[], nodeId: string): Promise<string> {
+    const [imagePrompt, title, paragraph1, paragraph2, paragraph3] = content;
     const imageId = `img-${nodeId}`;
 
-    let html = `
-        <div class="layout-7">
-            <div class="layout-left">
-                <img id="${imageId}" class="layout-large-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5Mb2FkaW5nLi4uPC90ZXh0Pjwvc3ZnPg==" alt="Loading..." />
-            </div>
-            <div class="layout-right">
-                <h2 class="layout-title">${title || "Title"}</h2>
-                <p class="layout-description">${description || ""}</p>
-            </div>
-        </div>
-    `;
+    try {
+        const imageUrl = await fetchImage(imagePrompt);
 
-    mediaPromises.push(
-        fetchImage(imagePrompt).then((url) => {
-            const imgElement = document.getElementById(imageId);
-            if (imgElement) imgElement.setAttribute("src", url);
-        })
-    );
+        let html = `
+            <div class="layout-7">
+                <div class="layout-visual-section">
+                    <img id="${imageId}" class="layout-featured-image" src="${imageUrl}" alt="Featured Visual" />
+                </div>
+                <div class="layout-content-section">
+                    <h2 class="layout-title">${title || "Educational Topic"}</h2>
+                    <div class="layout-educational-content">
+                        ${paragraph1 ? `<p class="layout-paragraph">${paragraph1}</p>` : ""}
+                        ${paragraph2 ? `<p class="layout-paragraph">${paragraph2}</p>` : ""}
+                        ${paragraph3 ? `<p class="layout-paragraph">${paragraph3}</p>` : ""}
+                    </div>
+                </div>
+            </div>
+        `;
 
-    return html;
+        return html;
+    } catch (error) {
+        let html = `
+            <div class="layout-7">
+                <div class="layout-visual-section">
+                    <div class="image-error">Error loading featured image</div>
+                </div>
+                <div class="layout-content-section">
+                    <h2 class="layout-title">${title || "Educational Topic"}</h2>
+                    <div class="layout-educational-content">
+                        ${paragraph1 ? `<p class="layout-paragraph">${paragraph1}</p>` : ""}
+                        ${paragraph2 ? `<p class="layout-paragraph">${paragraph2}</p>` : ""}
+                        ${paragraph3 ? `<p class="layout-paragraph">${paragraph3}</p>` : ""}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
 }
 
 // Layout 8: Large image right, title and small images left
-async function parseLayout8(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout8(content: any[], nodeId: string): Promise<string> {
     const [imagePrompt, title, smallImagePrompts] = content;
     const mainImageId = `img-main-${nodeId}`;
 
-    let html = `
-        <div class="layout-8">
-            <div class="layout-left">
-                <h2 class="layout-title">${title || "Title"}</h2>
-                <div class="layout-small-images">
-    `;
+    try {
+        // Fetch main image
+        const mainImageUrl = await fetchImage(imagePrompt);
 
-    if (Array.isArray(smallImagePrompts)) {
-        smallImagePrompts.forEach((prompt, index) => {
-            const imageId = `img-small-${nodeId}-${index}`;
-            html += `<img id="${imageId}" class="layout-small-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+TG9hZGluZy4uLjwvdGV4dD48L3N2Zz4=" alt="Loading..." />`;
+        let html = `
+            <div class="layout-8">
+                <div class="layout-left">
+                    <h2 class="layout-title">${title || "Title"}</h2>
+                    <div class="layout-small-images">
+        `;
 
-            mediaPromises.push(
-                fetchImage(prompt).then((url) => {
-                    const imgElement = document.getElementById(imageId);
-                    if (imgElement) imgElement.setAttribute("src", url);
-                })
+        // Fetch small images if they exist
+        if (Array.isArray(smallImagePrompts)) {
+            const smallImageUrls = await Promise.all(
+                smallImagePrompts.map((prompt) =>
+                    fetchImage(prompt).catch(() => null)
+                )
             );
-        });
-    }
 
-    html += `
+            smallImageUrls.forEach((url, index) => {
+                if (url) {
+                    html += `<img class="layout-small-image" src="${url}" alt="Small Image ${
+                        index + 1
+                    }" />`;
+                } else {
+                    html += `<div class="image-error">Error loading image ${
+                        index + 1
+                    }</div>`;
+                }
+            });
+        }
+
+        html += `
+                    </div>
+                </div>
+                <div class="layout-right">
+                    <img id="${mainImageId}" class="layout-large-image" src="${mainImageUrl}" alt="Main Image" />
                 </div>
             </div>
-            <div class="layout-right">
-                <img id="${mainImageId}" class="layout-large-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5Mb2FkaW5nLi4uPC90ZXh0Pjwvc3ZnPg==" alt="Loading..." />
+        `;
+
+        return html;
+    } catch (error) {
+        let html = `
+            <div class="layout-8">
+                <div class="layout-left">
+                    <h2 class="layout-title">${title || "Title"}</h2>
+                    <div class="layout-small-images">
+                        <div class="image-error">Error loading images</div>
+                    </div>
+                </div>
+                <div class="layout-right">
+                    <div class="image-error">Error loading main image</div>
+                </div>
             </div>
-        </div>
-    `;
+        `;
 
-    mediaPromises.push(
-        fetchImage(imagePrompt).then((url) => {
-            const imgElement = document.getElementById(mainImageId);
-            if (imgElement) imgElement.setAttribute("src", url);
-        })
-    );
-
-    return html;
+        return html;
+    }
 }
 
 // Layout 9: Video player with caption
-async function parseLayout9(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout9(content: any[], nodeId: string): Promise<string> {
     const [videoPrompt, caption] = content;
     const videoId = `video-${nodeId}`;
 
-    let html = `
-        <div class="layout-9">
-            <div id="${videoId}" class="layout-video">Loading video...</div>
-            <p class="layout-caption">${caption || ""}</p>
-        </div>
-    `;
+    try {
+        const videoIdResult = await fetchVideo(videoPrompt);
+        const embedUrl = getYouTubeEmbedUrl(videoIdResult);
 
-    mediaPromises.push(
-        fetchVideo(videoPrompt).then((videoIdResult) => {
-            const videoElement = document.getElementById(videoId);
-            if (videoElement) {
-                const embedUrl = getYouTubeEmbedUrl(videoIdResult);
-                videoElement.innerHTML = `<iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
-            }
-        })
-    );
+        let html = `
+            <div class="layout-9">
+                <div id="${videoId}" class="layout-video">
+                    <iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <p class="layout-caption">${caption || ""}</p>
+            </div>
+        `;
 
-    return html;
+        return html;
+    } catch (error) {
+        let html = `
+            <div class="layout-9">
+                <div id="${videoId}" class="layout-video">
+                    <div class="video-error">Error loading video</div>
+                </div>
+                <p class="layout-caption">${caption || ""}</p>
+            </div>
+        `;
+
+        return html;
+    }
 }
 
-// Layout 12: GIF left, bulleted list right
-async function parseLayout12(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
-    const [gifPrompt, bulletPoints] = content;
-    const gifId = `gif-${nodeId}`;
+// Layout 12: Central illustration with icon-driven key points
+async function parseLayout12(content: any[], nodeId: string): Promise<string> {
+    const [illustrationPrompt, iconPoints] = content;
+    const illustrationId = `illustration-${nodeId}`;
 
-    let html = `
-        <div class="layout-12">
-            <div class="layout-left">
-                <img id="${gifId}" class="layout-gif" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjEyNSIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5Mb2FkaW5nIEdJRi4uLjwvdGV4dD48L3N2Zz4=" alt="Loading GIF..." />
+    try {
+        const illustrationUrl = await fetchImage(illustrationPrompt);
+
+        let html = `
+            <div class="layout-12">
+                <div class="layout-central-visual">
+                    <img id="${illustrationId}" class="layout-central-image" src="${illustrationUrl}" alt="Central Illustration" />
+                </div>
+                <div class="layout-icon-points">
+        `;
+
+        if (Array.isArray(iconPoints)) {
+            iconPoints.forEach((point, index) => {
+                // Extract icon hint if present (e.g., "🚀 Launch sequence initiated")
+                const iconMatch = point.match(
+                    /^(\p{Emoji}|\p{Symbol})\s+(.+)$/u
+                );
+                const icon = iconMatch ? iconMatch[1] : "●";
+                const text = iconMatch ? iconMatch[2] : point;
+
+                html += `
+                    <div class="layout-icon-point">
+                        <span class="layout-point-icon">${icon}</span>
+                        <span class="layout-point-text">${text}</span>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+                </div>
             </div>
-            <div class="layout-right">
-                <ul class="layout-bullet-list">
-    `;
+        `;
 
-    if (Array.isArray(bulletPoints)) {
-        bulletPoints.forEach((point) => {
-            html += `<li>${point}</li>`;
-        });
+        return html;
+    } catch (error) {
+        let html = `
+            <div class="layout-12">
+                <div class="layout-central-visual">
+                    <div class="image-error">Error loading illustration</div>
+                </div>
+                <div class="layout-icon-points">
+        `;
+
+        if (Array.isArray(iconPoints)) {
+            iconPoints.forEach((point, index) => {
+                const iconMatch = point.match(
+                    /^(\p{Emoji}|\p{Symbol})\s+(.+)$/u
+                );
+                const icon = iconMatch ? iconMatch[1] : "●";
+                const text = iconMatch ? iconMatch[2] : point;
+
+                html += `
+                    <div class="layout-icon-point">
+                        <span class="layout-point-icon">${icon}</span>
+                        <span class="layout-point-text">${text}</span>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        return html;
     }
-
-    html += `
-                </ul>
-            </div>
-        </div>
-    `;
-
-    mediaPromises.push(
-        fetchGif(gifPrompt).then((url) => {
-            const gifElement = document.getElementById(gifId);
-            if (gifElement) gifElement.setAttribute("src", url);
-        })
-    );
-
-    return html;
 }
 
 // Layout 13: Title and text left, large video right
-async function parseLayout13(
-    content: any[],
-    nodeId: string,
-    mediaPromises: Promise<void>[]
-): Promise<string> {
+async function parseLayout13(content: any[], nodeId: string): Promise<string> {
     const [title, text, videoPrompt] = content;
     const videoId = `video-${nodeId}`;
 
-    let html = `
-        <div class="layout-13">
-            <div class="layout-left">
-                <h2 class="layout-title">${title || "Title"}</h2>
-                <p class="layout-text">${text || ""}</p>
-            </div>
-            <div class="layout-right">
-                <div id="${videoId}" class="layout-video">Loading video...</div>
-            </div>
-        </div>
-    `;
+    try {
+        const videoIdResult = await fetchVideo(videoPrompt);
+        const embedUrl = getYouTubeEmbedUrl(videoIdResult);
 
-    mediaPromises.push(
-        fetchVideo(videoPrompt).then((videoIdResult) => {
-            const videoElement = document.getElementById(videoId);
-            if (videoElement) {
-                const embedUrl = getYouTubeEmbedUrl(videoIdResult);
-                videoElement.innerHTML = `<iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+        let html = `
+            <div class="layout-13">
+                <div class="layout-left">
+                    <h2 class="layout-title">${title || "Title"}</h2>
+                    <p class="layout-text">${text || ""}</p>
+                </div>
+                <div class="layout-right">
+                    <div id="${videoId}" class="layout-video">
+                        <iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    } catch (error) {
+        let html = `
+            <div class="layout-13">
+                <div class="layout-left">
+                    <h2 class="layout-title">${title || "Title"}</h2>
+                    <p class="layout-text">${text || ""}</p>
+                </div>
+                <div class="layout-right">
+                    <div id="${videoId}" class="layout-video">
+                        <div class="video-error">Error loading video</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+}
+
+// Layout 14: Comprehensive topic with alternating sections (like Mars example)
+async function parseLayout14(content: any[], nodeId: string): Promise<string> {
+    let html = `<div class="layout-14">`;
+
+    // Handle flat alternating array: [imagePrompt, text, imagePrompt, text, ...]
+    for (let i = 0; i < content.length; i += 2) {
+        const imagePrompt = content[i];
+        const text = content[i + 1];
+
+        if (imagePrompt && text) {
+            const sectionIndex = i / 2;
+            const isEven = sectionIndex % 2 === 0;
+
+            try {
+                const imageUrl = await fetchImage(imagePrompt);
+                html += `
+                    <div class="layout-section ${
+                        isEven
+                            ? "layout-section-normal"
+                            : "layout-section-reverse"
+                    }">
+                        <div class="layout-section-image">
+                            <img class="layout-large-image" src="${imageUrl}" alt="Section ${
+                    sectionIndex + 1
+                }" />
+                        </div>
+                        <div class="layout-section-content">
+                            <p class="layout-text">${text}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                html += `
+                    <div class="layout-section ${
+                        isEven
+                            ? "layout-section-normal"
+                            : "layout-section-reverse"
+                    }">
+                        <div class="layout-section-image">
+                            <div class="image-error">Error loading image</div>
+                        </div>
+                        <div class="layout-section-content">
+                            <p class="layout-text">${text}</p>
+                        </div>
+                    </div>
+                `;
             }
-        })
-    );
+        }
+    }
 
+    html += `</div>`;
+    return html;
+}
+
+// Layout 15: Timeline layout with chronological image-text pairs
+async function parseLayout15(content: any[], nodeId: string): Promise<string> {
+    let html = `<div class="layout-15">`;
+
+    // Handle flat alternating array: [date1, imagePrompt1, event1_description, date2, imagePrompt2, event2_description, ...]
+    for (let i = 0; i < content.length; i += 3) {
+        const date = content[i];
+        const imagePrompt = content[i + 1];
+        const eventDescription = content[i + 2];
+
+        if (date && imagePrompt && eventDescription) {
+            try {
+                const imageUrl = await fetchImage(imagePrompt);
+                html += `
+                    <div class="layout-timeline-item">
+                        <div class="layout-timeline-date">${date}</div>
+                        <img class="layout-timeline-image" src="${imageUrl}" alt="Timeline event" />
+                        <div class="layout-timeline-content">
+                            <p class="layout-timeline-text">${eventDescription}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                html += `
+                    <div class="layout-timeline-item">
+                        <div class="layout-timeline-date">${date}</div>
+                        <div class="image-error">Error loading image</div>
+                        <div class="layout-timeline-content">
+                            <p class="layout-timeline-text">${eventDescription}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// Layout 16: Card grid layout with multiple topic cards
+async function parseLayout16(content: any[], nodeId: string): Promise<string> {
+    let html = `<div class="layout-16">`;
+
+    // Handle flat alternating array: [card1_title, card1_imagePrompt, card1_description, card2_title, card2_imagePrompt, card2_description, ...]
+    for (let i = 0; i < content.length; i += 3) {
+        const cardTitle = content[i];
+        const imagePrompt = content[i + 1];
+        const cardDescription = content[i + 2];
+
+        if (cardTitle && imagePrompt && cardDescription) {
+            try {
+                const imageUrl = await fetchImage(imagePrompt);
+                html += `
+                    <div class="layout-card">
+                        <h3 class="layout-card-title">${cardTitle}</h3>
+                        <img class="layout-card-image" src="${imageUrl}" alt="${cardTitle}" />
+                        <p class="layout-card-description">${cardDescription}</p>
+                    </div>
+                `;
+            } catch (error) {
+                html += `
+                    <div class="layout-card">
+                        <h3 class="layout-card-title">${cardTitle}</h3>
+                        <div class="image-error">Error loading image</div>
+                        <p class="layout-card-description">${cardDescription}</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    html += `</div>`;
     return html;
 }

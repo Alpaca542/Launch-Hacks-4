@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, memo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -8,14 +8,12 @@ import ReactFlow, {
     MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Resizable } from "re-resizable";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { handleTokenClick } from "./contexts/TokenInteractionContext";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
 import SideBar from "./components/Sidebar";
-import ExplanationSidebar from "./components/ExplanationSidebar";
 import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
@@ -39,66 +37,8 @@ const nodeTypes = {
 import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
-// Memoized explanation sidebar container
-const MemoizedExplanationSidebar = memo(function MemoizedExplanationSidebar({
-    isVisible,
-    explanation,
-    onClose,
-}: {
-    isVisible: boolean;
-    explanation: { title: string; text: string } | null;
-    onClose: () => void;
-}) {
-    return (
-        <Resizable
-            defaultSize={{
-                width: 380,
-            }}
-            style={{
-                background: "transparent",
-                position: "fixed",
-                right: "12px",
-                top: "80px",
-                borderRadius: "16px",
-                zIndex: 1000,
-            }}
-            enable={{
-                right: false,
-                top: false,
-                bottom: false,
-                left: true,
-            }}
-        >
-            <div className="relative z-10 overflow-auto h-full">
-                <ExplanationSidebar
-                    explanation={explanation}
-                    onClose={onClose}
-                    isVisible={isVisible}
-                />
-            </div>
-        </Resizable>
-    );
-});
-
 function AppContent() {
-    // Explanation sidebar state
-    const [isExplanationVisible, setIsExplanationVisible] = useState(false);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-    const [currentExplanation, setCurrentExplanation] = useState<{
-        title: string;
-        text: string;
-    } | null>(null);
-
-    // Optimized explanation handlers
-    const showExplanation = useCallback((title: string, text: string) => {
-        setCurrentExplanation({ title, text });
-        setIsExplanationVisible(true);
-    }, []);
-
-    const closeExplanation = useCallback(() => {
-        setIsExplanationVisible(false);
-    }, []);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -256,7 +196,6 @@ function AppContent() {
                     );
                     const parentColor = parentNode?.data?.color;
                     const parentText = parentNode?.data?.label;
-                    console.log(parentNode);
                     const token = { word: value };
                     const sourceNodeId = node.data.parent;
                     const sourceNodePosition = {
@@ -281,10 +220,8 @@ function AppContent() {
                         suggestionID,
                         isInput,
                         node,
-                        node.data.mode,
-                        showExplanation
+                        node.data.mode
                     );
-                    console.log("Color from handleTokenClick:", color);
                     // Update the node's color
                     setNodes((nodes) =>
                         nodes.map((n) =>
@@ -418,7 +355,6 @@ function AppContent() {
                                     onNodesChange={onNodesChange}
                                     onEdgesChange={onEdgesChange}
                                     setNodes={setNodes}
-                                    showExplanation={showExplanation}
                                 >
                                     {ReactFlowComponent}
                                 </TokenInteractionProvider>
@@ -426,13 +362,6 @@ function AppContent() {
                         </div>
                     </Panel>
                 </PanelGroup>
-
-                {/* Right Panel - Explanation Sidebar (conditionally rendered) */}
-                <MemoizedExplanationSidebar
-                    isVisible={isExplanationVisible}
-                    explanation={currentExplanation}
-                    onClose={closeExplanation}
-                />
             </div>
         </div>
     );

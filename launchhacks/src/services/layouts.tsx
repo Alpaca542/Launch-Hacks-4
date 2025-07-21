@@ -1,27 +1,84 @@
+/**
+ * Layout Configuration Module
+ *
+ * Defines 16 different layout types for educational content presentation.
+ * Each layout has a specific purpose and schema for optimal learning experiences.
+ *
+ * Layout Types:
+ * 1-2: Text and image combinations
+ * 3-6: Interactive diagrams (flowcharts, mindmaps, charts)
+ * 7-9: Media-focused layouts (images, videos)
+ * 12-16: Advanced layouts (timelines, cards, comprehensive topics)
+ */
+
 export const LAYOUT_TYPES = {
-    "1": "A title on the very top, a large textbar under it and a list of small images on the bottom",
-    "2": "A row of images, each with a small text caption below",
-    "3": "A mermaid flowchart with a text description at the bottom",
-    "4": "A mermaid mindmap with a text description at the bottom",
-    "5": "A mermaid piechart with a text description at the bottom",
-    "6": "A mermaid quadrant chart with a text description at the bottom",
-    "7": "A large image on the left, a title on the top-right and a text description on the bottom-right",
-    "8": "A large image on the right, a title on the top-left and a list of small images on the bottom-left",
-    "9": "A video player at the top, a text caption below",
-    "12": "A single GIF on the left, a bulleted list on the right",
-    "13": "A large video on the right, a title and a text on the left",
+    "1": "Hero visual with comprehensive explanation - large image with detailed educational content",
+    "2": "Step-by-step visual guide - multiple images with substantial explanations for each step",
+    "3": "Process diagram with detailed explanation - flowchart showing complex processes with educational context",
+    "4": "Concept map with comprehensive analysis - mind map with detailed explanations of relationships",
+    "5": "Data visualization with analysis - pie chart with detailed statistical breakdown and interpretation",
+    "6": "Strategic framework with detailed explanation - quadrant analysis with comprehensive guidelines",
+    "7": "Featured concept layout - large visual with title and multiple paragraphs of educational content",
+    "8": "Comparative analysis - main concept with supporting evidence and detailed explanations",
+    "9": "Video learning with context - educational video with substantial background information",
+    "12": "Illustrated guide with key insights - central visual with detailed bullet points and explanations",
+    "13": "Media-rich educational content - video with comprehensive overview and context",
+    "14": "Comprehensive topic exploration - alternating visuals and detailed explanations for thorough understanding",
+    "15": "Historical timeline with detailed context - chronological progression with substantial descriptions",
+    "16": "Multi-concept comparison - grid layout with detailed descriptions for comparing related topics",
 };
 
 export const LAYOUT_SCHEMA = {
-    "1": "[title, textbar, [image1_prompt, image2_prompt, ...]]",
-    "2": "[[image1_prompt, caption1], [image2_prompt, caption2], ...]",
-    "3": "[mermaid_flowchart, description]",
-    "4": "[mermaid_mindmap, description]",
-    "5": "[mermaid_piechart, description]",
-    "6": "[mermaid_quadrant_chart, description]",
-    "7": "[image_left_prompt, title, description]",
-    "8": "[image_right_prompt, title, [image1_prompt, image2_prompt, ...]]",
-    "9": "[video_prompt, caption]",
-    "12": "[gif_prompt, [bullet1, bullet2, ...]]",
-    "13": "[title, text, video_prompt]",
+    "1": `["compelling_title", "comprehensive_educational_content", ["hero_image_prompt", "supporting_visual_1", "supporting_visual_2"]]`,
+    "2": `[["step_image_1", "detailed_step_explanation_1"], ["step_image_2", "detailed_step_explanation_2"], ["step_image_3", "detailed_step_explanation_3"]]`,
+    "3": [
+        `flowchart TD
+    A[starting_concept] -->|process_1| B(intermediate_result)
+    B --> C{decision_point}
+    C -->|outcome_a| D[final_result_1]
+    C -->|outcome_b| E[final_result_2]
+    C -->|outcome_c| F[fa:fa-star special_case]`,
+        "comprehensive_process_explanation",
+    ],
+    "4": [
+        `mindmap
+  root((Central_Educational_Concept))
+    Key_Aspect_1
+      Supporting_Detail_A
+      Supporting_Detail_B
+    Key_Aspect_2
+      Supporting_Detail_C
+      Supporting_Detail_D`,
+        "detailed_concept_analysis",
+    ],
+    "5": [
+        `pie
+    title Educational_Data_Analysis
+    "Primary_Factor" : 45
+    "Secondary_Factor" : 30
+    "Additional_Factors" : 25`,
+        "comprehensive_data_interpretation",
+    ],
+    "6": [
+        `quadrantChart
+    title Educational_Framework
+    x-axis Low_Complexity --> High_Complexity
+    y-axis Low_Impact --> High_Impact
+    quadrant-1 Quick_Concepts
+    quadrant-2 Advanced_Topics
+    quadrant-3 Basic_Ideas
+    quadrant-4 Fundamental_Principles
+    "Concept_A": [0.3, 0.7]
+    "Concept_B": [0.8, 0.4]
+    "Concept_C": [0.2, 0.8]`,
+        "detailed_framework_explanation",
+    ],
+    "7": "[featured_visual_prompt, educational_title, detailed_paragraph_1, detailed_paragraph_2, detailed_paragraph_3]",
+    "8": "[main_concept_visual, educational_title, comprehensive_explanation, [evidence_visual_1, evidence_visual_2, evidence_visual_3]]",
+    "9": "[educational_video_prompt, comprehensive_contextual_explanation]",
+    "12": "[central_educational_visual, [detailed_insight_1, detailed_insight_2, detailed_insight_3, detailed_insight_4]]",
+    "13": "[educational_section_title, comprehensive_overview_text, instructional_video_prompt]",
+    "14": "[educational_visual_1, detailed_explanation_1, educational_visual_2, detailed_explanation_2, educational_visual_3, detailed_explanation_3]",
+    "15": "[date_1, historical_visual_1, comprehensive_event_description_1, date_2, historical_visual_2, comprehensive_event_description_2]",
+    "16": "[topic_title_1, topic_visual_1, detailed_description_1, topic_title_2, topic_visual_2, detailed_description_2]",
 };

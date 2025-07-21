@@ -26,7 +26,6 @@ interface TokenInteractionContextType {
         solutionID?: string
     ) => string | null;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
-    showExplanation?: (title: string, text: string) => void;
 }
 
 const TokenInteractionContext =
@@ -38,7 +37,6 @@ interface TokenInteractionProviderProps {
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
-    showExplanation?: (title: string, text: string) => void;
 }
 
 export const handleTokenClick = (
@@ -55,8 +53,7 @@ export const handleTokenClick = (
     suggestionID?: string,
     isInput?: boolean,
     inputNode?: Node,
-    inputMode?: string,
-    showExplanation?: (title: string, text: string) => void
+    inputMode?: string
 ) => {
     console.log(1);
     const sourceNode = nodes.find((node) => node.id === sourceNodeId);
@@ -169,18 +166,28 @@ export const handleTokenClick = (
         inputMode || "default"
     )
         .then(async (result) => {
-            // Parse the layout content to HTML
-            const { html, mediaPromises } = await parseLayoutContent(
+            console.log("AI Response received:", result);
+            console.log("Selected layout:", result.layout);
+            console.log("Content array:", result.content);
+
+            // Parse the layout content to HTML (now waits for all media to load)
+            const { html } = await parseLayoutContent(
                 result.layout,
                 result.content,
                 newNode?.id || ""
             );
 
+            console.log(
+                "Layout HTML generated (first 500 chars):",
+                html.substring(0, 500)
+            );
+            console.log("Layout HTML full length:", html.length);
+
             // Update node with all the generated content
             setNodes((nds) =>
                 nds.map((node) => {
                     if (node.id === newNode?.id) {
-                        return {
+                        const updatedNode = {
                             ...node,
                             data: {
                                 ...node.data,
@@ -188,20 +195,17 @@ export const handleTokenClick = (
                                 full_text: result.fullText,
                                 suggestions: result.suggestions,
                                 layout: result.layout,
-                                contents: [html], // Store the rendered HTML
+                                contents: [html], // Store the rendered HTML with loaded media
                                 isLoading: false,
                                 icon: result.icon,
                             },
                         };
+                        console.log("Updated node data:", updatedNode.data);
+                        return updatedNode;
                     }
                     return node;
                 })
             );
-
-            // Execute media loading promises in background
-            Promise.all(mediaPromises).catch((error) => {
-                console.warn("Some media failed to load:", error);
-            });
         })
         .catch((error) => {
             console.error("Error generating node content:", error);
@@ -235,14 +239,7 @@ export const handleTokenClick = (
 
 export const TokenInteractionProvider: React.FC<
     TokenInteractionProviderProps
-> = ({
-    children,
-    nodes,
-    onNodesChange,
-    onEdgesChange,
-    setNodes,
-    showExplanation,
-}) => {
+> = ({ children, nodes, onNodesChange, onEdgesChange, setNodes }) => {
     // Replace local handleTokenClick with a wrapper that calls the exported function
     const handleTokenClickWrapper = (
         token: Token,
@@ -270,8 +267,7 @@ export const TokenInteractionProvider: React.FC<
             solutionID,
             isInput,
             inputNode,
-            inputMode,
-            showExplanation
+            inputMode
         );
 
     return (
@@ -279,7 +275,6 @@ export const TokenInteractionProvider: React.FC<
             value={{
                 handleTokenClick: handleTokenClickWrapper,
                 setNodes,
-                showExplanation,
             }}
         >
             {children}

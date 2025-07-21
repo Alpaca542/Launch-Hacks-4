@@ -1,3 +1,15 @@
+/**
+ * AI Service Module
+ *
+ * Handles all AI interactions for generating educational content including:
+ * - Content suggestions and recommendations
+ * - Layout selection and optimization
+ * - Icon generation for visual representation
+ * - Structured content generation with schema validation
+ *
+ * Uses Firebase Cloud Functions with Groq for fast, reliable AI responses.
+ */
+
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase"; // Adjust path to your Firebase config
 import {
@@ -87,7 +99,7 @@ export const askAiForLayout = async (message: string): Promise<number> => {
         const layoutNumber = parseInt(cleanedResponse);
 
         // Validate the layout number is within expected range
-        if (isNaN(layoutNumber) || layoutNumber < 1 || layoutNumber > 13) {
+        if (isNaN(layoutNumber) || layoutNumber < 1 || layoutNumber > 16) {
             console.warn(
                 `Invalid layout number: ${layoutNumber}, defaulting to 1`
             );
@@ -115,8 +127,11 @@ export const askAiForContent = async (
                 layoutNumber.toString() as keyof typeof layouts.LAYOUT_SCHEMA
             ];
 
+        const schemaString = Array.isArray(schema)
+            ? JSON.stringify(schema)
+            : schema;
         const response = await askAI(
-            contentPrompt(context, message, mode, schema)
+            contentPrompt(context, message, mode, schemaString)
         );
         console.log("Content response:", response);
         const cleanedResponse = cleanJsonResponse(response);
