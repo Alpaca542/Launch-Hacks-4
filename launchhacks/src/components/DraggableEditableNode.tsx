@@ -113,7 +113,7 @@ export function DraggableEditableNode({
     }, [dragState]);
 
     // Add state for the handle's initial position
-    const [handleOrigin] = useState<{
+    const [handleOrigin, setHandleOrigin] = useState<{
         x: number;
         y: number;
     } | null>(null);
@@ -324,18 +324,6 @@ export function DraggableEditableNode({
         }
     };
 
-    const handleDragStart = (
-        mode: "explain" | "answer" | "argue",
-        e: PointerEvent
-    ) => {
-        setDragState({
-            mode,
-            x: e.clientX,
-            y: e.clientY,
-            isDragging: true,
-        });
-    };
-
     // Highlight.js code block highlighting
     useEffect(() => {
         if (data.contents && nodeRef.current) {
@@ -360,7 +348,47 @@ export function DraggableEditableNode({
             y: rect.top + rect.height / 2,
         };
     };
+    // Mouse event handlers for drag
+    const handleDragStart = (
+        mode: "explain" | "answer" | "argue",
+        e: MouseEvent | PointerEvent
+    ) => {
+        // Find the handle's DOM node
+        const handleDiv = e.target as HTMLElement;
+        const rect = handleDiv.getBoundingClientRect();
+        // Use the center of the handle div as the origin
+        setHandleOrigin({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+        });
+        setDragState({ mode, x: e.clientX, y: e.clientY, isDragging: true });
+        document.addEventListener("pointermove", handleDragMove);
+        document.addEventListener("pointerup", handleDragEnd);
+    };
 
+    const handleDragMove = (e: PointerEvent) => {
+        setDragState((prev) =>
+            prev.isDragging ? { ...prev, x: e.clientX, y: e.clientY } : prev
+        );
+    };
+
+    const handleDragEnd = () => {
+        // Use the ref to get the latest dragState
+        const latestDragState = dragStateRef.current;
+        console.log("handleDragEnd", latestDragState);
+        if (latestDragState.isDragging && data.onNodeCallback) {
+            const rfPos = screenToFlowPosition({
+                x: latestDragState.x,
+                y: latestDragState.y,
+            });
+            console.log("Calling onNodeCallback", latestDragState.mode, rfPos);
+            data.onNodeCallback(latestDragState.mode || undefined, id, rfPos);
+        }
+        setDragState({ mode: "explain", x: 0, y: 0, isDragging: false });
+        setHandleOrigin(null);
+        document.removeEventListener("pointermove", handleDragMove);
+        document.removeEventListener("pointerup", handleDragEnd);
+    };
     return (
         <div
             ref={nodeRef}
