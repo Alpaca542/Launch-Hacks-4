@@ -1,18 +1,23 @@
 import { LAYOUT_TYPES } from "./layouts";
 export const quizPrompt = (message: string) => {
     return `You are an expert quiz creator. Generate a quiz based on the concept: "${message}".
-    
-    - Create 3-5 questions with 4 answer options each.
+
+    - Create 4+ questions with 3+ answer options each.
     - Ensure questions are clear and concise.
     - Provide one correct answer per question.
     - Format the output as a JSON array of objects, each with "question", "options", and "answer" fields.
-    
+
     Example output:
     [
         {
-            "question": "What is the capital of France?",
-            "options": ["Paris", "London", "Berlin", "Madrid"],
-            "answer": "Paris"
+            question: "What is React?",
+            options: ["A JavaScript library", "A database", "A programming language", "A CSS framework"],
+            answer: 0
+        },
+        {
+            question: "Which company developed React?",
+            options: ["Google", "Facebook", "Microsoft", "Amazon"],
+            answer: 1
         },
         ...
     ]`;

@@ -148,7 +148,7 @@ export const handleNodeCreation = (
                     newNode?.id || ""
                 );
             } else {
-                html = processQuizHTML(result.content);
+                html = processQuizHTML(JSON.parse(result.content[0]));
             }
 
             // Update node with all the generated content

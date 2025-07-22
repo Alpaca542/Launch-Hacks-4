@@ -118,7 +118,8 @@ function AppContent() {
             _data: any,
             suggestion?: string,
             parent?: string,
-            position?: { x: number; y: number }
+            position?: { x: number; y: number },
+            extraData?: { initialText?: string; isQuizMode?: boolean }
         ) => {
             if (!suggestion || !position) {
                 console.warn(
@@ -139,7 +140,11 @@ function AppContent() {
                     id,
                     type: "tempInput",
                     position: { x: position.x - 80, y: position.y - 40 },
-                    data: { label: suggestion, parent: parent },
+                    data: {
+                        label: suggestion,
+                        parent: parent,
+                        isQuizMode: extraData?.isQuizMode || false,
+                    },
                 },
             ]);
 
@@ -177,14 +182,16 @@ function AppContent() {
             data.onNodeCallback = (
                 suggestion?: string,
                 parent?: string,
-                position?: { x: number; y: number }
+                position?: { x: number; y: number },
+                extraData?: { initialText?: string; isQuizMode?: boolean }
             ) =>
                 handleNodeCallback(
                     node.id,
                     node.data,
                     suggestion,
                     parent,
-                    position
+                    position,
+                    extraData
                 );
 
             data.onQuizCreate = (

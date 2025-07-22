@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import LoadingSpinner from "./LoadingSpinner";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Brain } from "lucide-react";
 import SuggestionHandles from "./SuggestionHandles";
+import { createPortal } from "react-dom";
 import "../styles/layouts.css";
 
 interface NodeData {
@@ -22,7 +23,7 @@ interface NodeData {
         suggestion?: string,
         parent?: string,
         position?: { x: number; y: number },
-        extraData?: { initialText?: string }
+        extraData?: { initialText?: string; isQuizMode?: boolean }
     ) => void;
     onQuizCreate?: (
         topic: string,
@@ -185,6 +186,26 @@ export function DraggableEditableNode({
         []
     );
 
+    // Quiz drag handlers
+    const handleQuizDragStart = useCallback((e: MouseEvent | PointerEvent) => {
+        // Find the handle's DOM node
+        const handleDiv = e.target as HTMLElement;
+        const rect = handleDiv.getBoundingClientRect();
+        // Use the center of the handle div as the origin
+        setHandleOrigin({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+        });
+        setDragState({
+            suggestion: "quiz",
+            x: e.clientX,
+            y: e.clientY,
+            isDragging: true,
+        });
+        document.addEventListener("pointermove", handleDragMove);
+        document.addEventListener("pointerup", handleQuizDragEnd);
+    }, []);
+
     const handleDragMove = useCallback((e: PointerEvent) => {
         setDragState((prev) =>
             prev.isDragging ? { ...prev, x: e.clientX, y: e.clientY } : prev
@@ -209,6 +230,26 @@ export function DraggableEditableNode({
         setHandleOrigin(null);
         document.removeEventListener("pointermove", handleDragMove);
         document.removeEventListener("pointerup", handleDragEnd);
+    }, [data.onNodeCallback, id, screenToFlowPosition]);
+
+    const handleQuizDragEnd = useCallback(() => {
+        const latestDragState = dragStateRef.current;
+        if (latestDragState.isDragging && data.onNodeCallback) {
+            const rfPos = screenToFlowPosition({
+                x: latestDragState.x,
+                y: latestDragState.y,
+            });
+
+            // Use onNodeCallback with "quiz" as the suggestion and pass isQuizMode in extraData
+            data.onNodeCallback("quiz", id, rfPos, {
+                initialText: "",
+                isQuizMode: true,
+            });
+        }
+        setDragState({ suggestion: "explain", x: 0, y: 0, isDragging: false });
+        setHandleOrigin(null);
+        document.removeEventListener("pointermove", handleDragMove);
+        document.removeEventListener("pointerup", handleQuizDragEnd);
     }, [data.onNodeCallback, id, screenToFlowPosition]);
 
     // Memoize style objects to prevent recreation
@@ -293,6 +334,36 @@ export function DraggableEditableNode({
                                 {data.label || "Node"}
                             </h2>
                         </div>
+
+                        {/* Quiz Creation Button */}
+                        {data.onQuizCreate && (
+                            <div className="relative">
+                                <div
+                                    className="group relative flex items-center justify-center w-10 h-10
+                                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
+                                              border-2 border-emerald-200 hover:border-emerald-300 
+                                              rounded-full cursor-grab active:cursor-grabbing 
+                                              shadow-sm hover:shadow-md transition-all duration-200 ease-out 
+                                              hover:scale-110 active:scale-95"
+                                    title="Drag to create quiz"
+                                    onPointerDown={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        if (e.button !== 0) return;
+                                        handleQuizDragStart(e.nativeEvent);
+                                    }}
+                                    draggable={false}
+                                >
+                                    <Brain className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700 transition-colors duration-200" />
+                                </div>
+                                <div
+                                    className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 
+                                               text-xs text-gray-500 font-medium whitespace-nowrap"
+                                >
+                                    Quiz
+                                </div>
+                            </div>
+                        )}
                     </header>
                 )}
 
@@ -308,6 +379,74 @@ export function DraggableEditableNode({
                         getParentCenter={getParentCenter}
                     />
                 )}
+
+                {/* Quiz drag visualization */}
+                {dragState.isDragging &&
+                    dragState.suggestion === "quiz" &&
+                    typeof window !== "undefined" &&
+                    createPortal(
+                        <>
+                            {/* Connection line */}
+                            <svg
+                                className="fixed inset-0 pointer-events-none z-[9998]"
+                                width="100vw"
+                                height="100vh"
+                            >
+                                <defs>
+                                    <linearGradient
+                                        id="quizConnectionGradient"
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="0%"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stopColor="#10b981"
+                                            stopOpacity="0.8"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stopColor="#059669"
+                                            stopOpacity="1"
+                                        />
+                                    </linearGradient>
+                                </defs>
+                                <line
+                                    x1={handleOrigin?.x || getParentCenter().x}
+                                    y1={handleOrigin?.y || getParentCenter().y}
+                                    x2={dragState.x}
+                                    y2={dragState.y}
+                                    stroke="url(#quizConnectionGradient)"
+                                    strokeWidth={3}
+                                    strokeLinecap="round"
+                                    strokeDasharray="5,5"
+                                    className="animate-pulse"
+                                />
+                            </svg>
+
+                            {/* Floating quiz label */}
+                            <div
+                                className="fixed pointer-events-none z-[9999] transform -translate-x-1/2 -translate-y-1/2"
+                                style={{ left: dragState.x, top: dragState.y }}
+                            >
+                                <div
+                                    className="px-4 py-2 rounded-lg shadow-xl font-medium text-white 
+                                           bg-gradient-to-r from-emerald-600 to-emerald-700 backdrop-blur-sm
+                                           border border-emerald-500/30 animate-bounce"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Brain
+                                            size={14}
+                                            className="animate-pulse"
+                                        />
+                                        Create Quiz
+                                    </div>
+                                </div>
+                            </div>
+                        </>,
+                        document.body
+                    )}
             </div>
             <Handles />
         </div>

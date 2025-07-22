@@ -317,7 +317,7 @@ export const askAIStream = async (
 
 export const askAIForQuizContent = async (message: string): Promise<string> => {
     try {
-        const response = await askAI(quizPrompt(message, "default"));
+        const response = await askAI(quizPrompt(message));
         console.log("Quiz response:", response);
         return response || "✨";
     } catch (error) {

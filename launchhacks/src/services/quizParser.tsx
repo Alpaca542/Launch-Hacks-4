@@ -7,14 +7,10 @@
 
 import React from "react";
 
-export interface QuizAnswer {
-    [answerText: string]: string; // answer text -> hint text
-}
-
 export interface QuizData {
     question: string;
-    answers: QuizAnswer[];
-    correctAnswer: number;
+    options: string[];
+    answer: number;
 }
 
 export interface QuizParserProps {
@@ -37,22 +33,18 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
             );
 
             /* ----- answers ----- */
-            const answerButtons = quizData.answers
-                .map((answer, idx) => {
-                    const answerText = Object.keys(answer)[0];
-                    const hint = answer[answerText];
-                    const isCorrect = idx === quizData.correctAnswer;
+            const answerButtons = quizData.options
+                .map((option, idx) => {
+                    const isCorrect = idx === quizData.answer;
 
                     const clickHandler = `
                         const quiz    = document.getElementById('${quizId}');
-                        const hintDiv = document.getElementById('${quizId}-hint');
                         const result  = document.getElementById('${quizId}-result');
                         const nextBtn = document.getElementById('${quizId}-next');
                         const buttons = quiz.querySelectorAll('.quiz-answer');
                         const me      = this;
 
                         if (${isCorrect}) {
-                            hintDiv.classList.add('hidden');
                             result.style.display = 'flex';
                             result.classList.remove('hidden');
                             if (nextBtn) {
@@ -67,12 +59,6 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                             me.classList.remove('hover:bg-slate-50','dark:hover:bg-slate-800');
                             me.classList.add('scale-105');
                         } else {
-                            hintDiv.textContent = '${hint.replace(
-                                /'/g,
-                                "\\'"
-                            )}';
-                            hintDiv.classList.remove('hidden');
-
                             me.classList.add('bg-red-50','dark:bg-red-900/20',
                                              'border-red-500','text-red-800','dark:text-red-100',
                                              'animate-pulse');
@@ -94,7 +80,7 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                                    disabled:cursor-not-allowed disabled:opacity-60"
                             onclick="${clickHandler}"
                         >
-                            ${answerText}
+                            ${option}
                         </button>`;
                 })
                 .join("");
@@ -166,12 +152,6 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                         ${answerButtons}
                     </div>
 
-                    <div id="${quizId}-hint"
-                         class="hidden bg-yellow-50 dark:bg-yellow-900/20
-                                border border-yellow-300 dark:border-yellow-600
-                                rounded-lg p-4 text-yellow-800 dark:text-yellow-200
-                                text-sm italic mb-6 animate-fade-in"></div>
-
                     <div id="${quizId}-result"
                          class="hidden flex-col items-center gap-6 mb-4 animate-fade-in"
                          style="display: none;">
@@ -202,12 +182,10 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                 (_, i) => `
             (function() {
                 const q     = document.getElementById('${quizSetId}-q${i}');
-                const hint  = document.getElementById('${quizSetId}-q${i}-hint');
                 const res   = document.getElementById('${quizSetId}-q${i}-result');
                 const next  = document.getElementById('${quizSetId}-q${i}-next');
                 const btns  = q.querySelectorAll('.quiz-answer');
 
-                hint.classList.add('hidden'); hint.textContent = '';
                 res.classList.add('hidden'); res.style.display = 'none';
                 if (next) {
                     next.classList.add('hidden');
@@ -293,17 +271,11 @@ export const validateQuizData = (quizData: QuizData[]): boolean => {
     return quizData.every((quiz) => {
         return (
             quiz.question &&
-            quiz.answers &&
-            quiz.answers.length > 0 &&
-            quiz.correctAnswer >= 0 &&
-            quiz.correctAnswer < quiz.answers.length &&
-            quiz.answers.every(
-                (answer) =>
-                    Object.keys(answer).length === 1 &&
-                    Object.values(answer).every(
-                        (hint) => typeof hint === "string"
-                    )
-            )
+            quiz.options &&
+            quiz.options.length > 0 &&
+            quiz.answer >= 0 &&
+            quiz.answer < quiz.options.length &&
+            quiz.options.every((option) => typeof option === "string")
         );
     });
 };
@@ -312,6 +284,7 @@ export const validateQuizData = (quizData: QuizData[]): boolean => {
  * Enhanced quiz parser with accessibility features
  */
 export const processQuizHTML = (rawQuizData: QuizData[]): string => {
+    console.log("Processing quiz data:", rawQuizData);
     if (!validateQuizData(rawQuizData)) {
         console.warn("Invalid quiz data provided");
         return '<div class="error">Invalid quiz data</div>';

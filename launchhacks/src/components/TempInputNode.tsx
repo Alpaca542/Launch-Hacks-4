@@ -1,6 +1,6 @@
 import { Handle, Position } from "reactflow";
 import { useEffect, useRef, useState } from "react";
-import { Info, Lightbulb, Gavel, Hash } from "lucide-react"; // npm i lucide-react
+import { Info, Lightbulb, Gavel, Hash, Brain } from "lucide-react"; // npm i lucide-react
 
 interface NodeData {
     label?: string;
@@ -17,6 +17,12 @@ interface NodeData {
         parent?: string,
         position?: { x: number; y: number }
     ) => void;
+    onQuizCreate?: (
+        topic: string,
+        parent?: string,
+        position?: { x: number; y: number }
+    ) => void;
+    isQuizMode?: boolean;
 }
 
 interface TempInputNodeProps {
@@ -25,7 +31,7 @@ interface TempInputNodeProps {
 }
 
 // --- visual presets ---------------------------------------------------------
-type ModeType = "default" | "explain" | "answer" | "argue";
+type ModeType = "default" | "explain" | "answer" | "argue" | "quiz";
 
 const MODE_STYLES: Record<
     ModeType,
@@ -65,16 +71,29 @@ const MODE_STYLES: Record<
         Icon: Gavel,
         color: "#f43f5e",
     },
+    quiz: {
+        border: "border-emerald-400",
+        ring: "ring-emerald-100 dark:ring-emerald-500/30",
+        placeholder: "Create quiz about...",
+        Icon: Brain,
+        color: "#10b981",
+    },
 };
 // ---------------------------------------------------------------------------
 
 export default function TempInputNode({ data }: TempInputNodeProps) {
+    // Determine initial mode based on whether it's quiz mode
+    const initialMode: ModeType = data.isQuizMode ? "quiz" : "default";
+
     // Ensure currentMode always has a valid value
-    const [currentMode, setCurrentMode] = useState<ModeType>("default");
+    const [currentMode, setCurrentMode] = useState<ModeType>(initialMode);
     const inputRef = useRef<HTMLInputElement>(null);
     const [value, setValue] = useState<string>(data.label || "");
 
-    const modes: ModeType[] = ["default", "explain", "answer", "argue"];
+    // If it's quiz mode, only allow quiz mode (no switching)
+    const modes: ModeType[] = data.isQuizMode
+        ? ["quiz"]
+        : ["default", "explain", "answer", "argue"];
 
     useEffect(() => {
         const el = inputRef.current;
@@ -109,11 +128,21 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = value.trim();
-        if (trimmed) data.onNodeCallback?.(trimmed);
+        if (trimmed) {
+            if (data.isQuizMode && data.onQuizCreate) {
+                data.onQuizCreate(trimmed);
+            } else if (data.onNodeCallback) {
+                data.onNodeCallback(trimmed);
+            }
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        // Only allow mode switching if not in quiz mode
+        if (
+            !data.isQuizMode &&
+            (e.key === "ArrowUp" || e.key === "ArrowDown")
+        ) {
             e.preventDefault();
             const currentIndex = modes.indexOf(currentMode);
             let nextIndex;
