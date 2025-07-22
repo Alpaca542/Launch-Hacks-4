@@ -197,7 +197,11 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                 const btns  = q.querySelectorAll('.quiz-answer');
 
                 hint.classList.add('hidden'); hint.textContent = '';
-                res.classList.add('hidden');  next && next.classList.add('hidden');
+                res.classList.add('hidden'); res.style.display = 'none';
+                if (next) {
+                    next.classList.add('hidden');
+                    next.style.display = 'none';
+                }
 
                 btns.forEach(b => {
                     b.disabled = false;
