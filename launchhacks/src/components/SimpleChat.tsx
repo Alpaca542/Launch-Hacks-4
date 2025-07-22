@@ -130,10 +130,18 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
         };
 
         try {
+            console.log("Starting chat request...", {
+                message: userMessageContent,
+                enableTools: enableTools && !!toolExecutor,
+                currentBoardId: currentBoardId,
+                toolExecutor: !!toolExecutor,
+            });
+
             await askAIStream(
                 userMessageContent,
                 // onChunk
                 (chunk: string) => {
+                    console.log("Received chunk:", chunk);
                     assistantResponseContent += chunk;
                     setMessages((prev) =>
                         prev.map((msg) =>
@@ -145,6 +153,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                 },
                 // onComplete
                 async () => {
+                    console.log("Stream completed successfully");
                     setMessages((prev) =>
                         prev.map((msg) =>
                             msg.id === assistantMessage.id
@@ -189,6 +198,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                 (error: Error) => {
                     console.error("Streaming error:", error);
                     const errorMessage =
+                        error.message ||
                         "Sorry, I encountered an error. Please try again.";
                     setMessages((prev) =>
                         prev.map((msg) =>
@@ -229,7 +239,9 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
         } catch (error) {
             console.error("Chat error:", error);
             const errorMessage =
-                "Sorry, I encountered an error. Please try again.";
+                error instanceof Error
+                    ? error.message
+                    : "Sorry, I encountered an error. Please try again.";
             setMessages((prev) =>
                 prev.map((msg) =>
                     msg.id === assistantMessage.id

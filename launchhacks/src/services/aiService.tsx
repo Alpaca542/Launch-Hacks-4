@@ -241,54 +241,114 @@ export const askAIStream = async (
             payload.tool_choice = "auto"; // Let OpenAI decide when to use tools
         }
 
+        console.log("Calling Firebase function with payload:", payload);
+
+        // Create the callable function
         const openaiChatFunction = httpsCallable(functions, "groqChat");
 
-        // Make the API call
-        const result = await openaiChatFunction(payload);
+        try {
+            // Make the API call
+            const result = await openaiChatFunction(payload);
+            console.log("Firebase function result:", result.data);
 
-        // Handle the response
-        if (result.data && (result.data as any).response) {
-            const responseData = result.data as any;
+            // Handle the response
+            if (result.data && (result.data as any).response) {
+                const responseData = result.data as any;
 
-            // Check if there are tool calls in the response
-            if (responseData.tool_calls && options?.onToolCall) {
-                for (const toolCall of responseData.tool_calls) {
-                    try {
-                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
-                        const toolResult = await options.onToolCall(toolCall);
-                        onChunk(`✅ ${toolResult}\n`);
-                    } catch (toolError) {
-                        console.error("Tool execution error:", toolError);
-                        onChunk(`❌ Tool execution failed: ${toolError}\n`);
+                // Check if there are tool calls in the response
+                if (responseData.tool_calls && options?.onToolCall) {
+                    for (const toolCall of responseData.tool_calls) {
+                        try {
+                            onChunk(
+                                `\n🔧 Using ${toolCall.function.name}...\n`
+                            );
+                            const toolResult = await options.onToolCall(
+                                toolCall
+                            );
+                            onChunk(`✅ ${toolResult}\n`);
+                        } catch (toolError) {
+                            console.error("Tool execution error:", toolError);
+                            onChunk(`❌ Tool execution failed: ${toolError}\n`);
+                        }
                     }
                 }
+
+                // Stream the main response content
+                const response =
+                    responseData.response || responseData.content || "";
+
+                if (response) {
+                    // For now, simulate streaming by chunking the response
+                    // TODO: Implement real streaming when Firebase supports it for callable functions
+                    const words = response.split(" ");
+                    for (let i = 0; i < words.length; i++) {
+                        const chunk =
+                            words[i] + (i < words.length - 1 ? " " : "");
+                        onChunk(chunk);
+                        // Small delay to simulate streaming
+                        await new Promise((resolve) => setTimeout(resolve, 30));
+                    }
+                } else {
+                    onChunk(
+                        "I apologize, but I didn't receive a proper response. Please try again."
+                    );
+                }
+
+                if (onComplete) {
+                    onComplete();
+                }
+            } else {
+                throw new Error(
+                    "Invalid response format from Firebase function"
+                );
+            }
+        } catch (functionError: any) {
+            console.error("Firebase function call failed:", functionError);
+
+            // Provide more specific error messages
+            let errorMessage =
+                "I'm having trouble connecting to the AI service. ";
+
+            if (functionError.code === "functions/not-found") {
+                errorMessage +=
+                    "The chat function is not available. Please ensure the Firebase function is deployed.";
+            } else if (functionError.code === "functions/unavailable") {
+                errorMessage +=
+                    "The service is temporarily unavailable. Please try again in a moment.";
+            } else if (functionError.code === "functions/unauthenticated") {
+                errorMessage += "Please sign in to use the chat feature.";
+            } else if (functionError.code === "functions/permission-denied") {
+                errorMessage +=
+                    "You don't have permission to use this feature.";
+            } else if (functionError.message) {
+                errorMessage += `Error: ${functionError.message}`;
+            } else {
+                errorMessage +=
+                    "Please check your internet connection and try again.";
             }
 
-            // Stream the main response content
-            const response =
-                responseData.response || responseData.content || "";
-            const words = response.split(" ");
+            onChunk(errorMessage);
 
-            for (let i = 0; i < words.length; i++) {
-                const chunk = words[i] + (i < words.length - 1 ? " " : "");
-                onChunk(chunk);
-                // Small delay to simulate streaming
-                await new Promise((resolve) => setTimeout(resolve, 50));
+            if (onError) {
+                onError(new Error(errorMessage));
             }
-
             if (onComplete) {
                 onComplete();
             }
         }
     } catch (err) {
-        console.error("Firebase streaming function error:", err);
-        console.error("Message sent:", message);
+        console.error("AI Stream error:", err);
+        const errorMessage =
+            err instanceof Error ? err.message : "An unexpected error occurred";
+        onChunk(`Sorry, there was an error: ${errorMessage}`);
         if (onError) {
             onError(
                 err instanceof Error ? err : new Error("Unknown error occurred")
             );
         }
-        throw err;
+        if (onComplete) {
+            onComplete();
+        }
     }
 };
 

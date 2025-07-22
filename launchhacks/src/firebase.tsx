@@ -26,6 +26,21 @@ export const auth: Auth = getAuth(app);
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 export const functions = getFunctions(app, "us-central1");
 
-if (true) {
-    connectFunctionsEmulator(functions, "localhost", 5001);
+// Temporarily disable emulator to use deployed functions
+// TODO: Re-enable for local development when emulator is running
+const useEmulator = true; // Set to true when running Firebase emulator locally
+const isDev = true;
+
+if (useEmulator && isDev) {
+    try {
+        connectFunctionsEmulator(functions, "localhost", 5001);
+        console.log("Connected to Firebase Functions emulator");
+    } catch (error) {
+        console.warn(
+            "Failed to connect to Firebase Functions emulator:",
+            error
+        );
+    }
+} else {
+    console.log("Using deployed Firebase Functions");
 }

@@ -421,17 +421,6 @@ function AppContent() {
                 </div>
             </RightSidePanel>
 
-            {/* Toggle Button for Right Panel */}
-            {!showRightPanel && (
-                <button
-                    onClick={() => setShowRightPanel(true)}
-                    className="fixed top-1/2 right-4 z-30 p-3 rounded-l-lg bg-gradient-to-b from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-white group"
-                    title="Open Panel"
-                >
-                    <div className="w-1 h-6 bg-white rounded-full group-hover:scale-x-150 transition-transform duration-200"></div>
-                </button>
-            )}
-
             {/* AI Chat Side Panel */}
             <RightSidePanel
                 isOpen={showChat}
