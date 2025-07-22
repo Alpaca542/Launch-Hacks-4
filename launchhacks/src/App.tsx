@@ -9,7 +9,6 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
-import { handleTokenClick } from "./contexts/TokenInteractionContext";
 
 // Components
 import AuthWindow from "./components/AuthWindow";
@@ -22,6 +21,7 @@ import RightSidePanel from "./components/RightSidePanel";
 import FloatingChatButton from "./components/SimpleFloatingChatButton";
 import "./index.css"; // Ensure this is imported for styles
 import TempInputNode from "./components/TempInputNode";
+import { handleNodeCreation } from "./contexts/TokenInteractionContext";
 
 // Hooks
 import { useAuth } from "./hooks/useAuth";
@@ -38,7 +38,7 @@ const nodeTypes = {
 };
 
 // Context
-import { TokenInteractionProvider } from "./contexts/TokenInteractionContext";
+import { NodeCreationProvider } from "./contexts/TokenInteractionContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
@@ -205,18 +205,17 @@ function AppContent() {
                     );
                     const parentColor = parentNode?.data?.color;
                     const parentText = parentNode?.data?.label;
-                    const token = { word: value };
                     const sourceNodeId = node.data.parent;
                     const sourceNodePosition = {
                         x: node.position.x,
                         y: node.position.y,
                     };
                     const sourceNodeType = "draggableEditable";
-                    const isInput = true;
+                    const isAIGenerated = false;
                     const suggestionID = undefined;
 
-                    const color = handleTokenClick(
-                        token,
+                    const color = handleNodeCreation(
+                        value,
                         sourceNodeId,
                         sourceNodePosition,
                         sourceNodeType,
@@ -224,12 +223,12 @@ function AppContent() {
                         setNodes,
                         onNodesChange,
                         onEdgesChange,
+                        node.data.mode,
+                        node,
+                        isAIGenerated,
                         parentColor,
                         parentText,
                         suggestionID,
-                        isInput,
-                        node,
-                        node.data.mode,
                         saveNewNodeContent,
                         getLastTwoLayouts,
                         addLayout
@@ -362,7 +361,7 @@ function AppContent() {
                                     width: "100%",
                                 }}
                             >
-                                <TokenInteractionProvider
+                                <NodeCreationProvider
                                     nodes={nodes}
                                     onNodesChange={onNodesChange}
                                     onEdgesChange={onEdgesChange}
@@ -372,7 +371,7 @@ function AppContent() {
                                     addLayout={addLayout}
                                 >
                                     {ReactFlowComponent}
-                                </TokenInteractionProvider>
+                                </NodeCreationProvider>
                             </div>
                         </div>
                     </Panel>

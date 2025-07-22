@@ -115,7 +115,7 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
     {
         type: "function",
         function: {
-            name: "create_knowledge_node",
+            name: "create_visual",
             description:
                 "Creates a detailed knowledge node with AI-generated content about a specific topic",
             parameters: {
@@ -123,86 +123,17 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
                 properties: {
                     title: {
                         type: "string",
-                        description: "The title/topic for the knowledge node",
+                        description: "The title for the content node",
                     },
                     description: {
                         type: "string",
                         description:
-                            "A detailed description or context for the knowledge node content",
+                            "A brief description or context for the node's content",
                     },
-                    layout: {
-                        type: "number",
-                        description:
-                            "Optional layout type (1-18), defaults to AI selection",
-                    },
-                    position: {
-                        type: "object",
-                        properties: {
-                            x: { type: "number" },
-                            y: { type: "number" },
-                        },
-                        description: "Optional position for the node",
-                    },
-                    parentNodeId: {
+                    mode: {
                         type: "string",
                         description:
-                            "ID of parent node to connect to (optional)",
-                    },
-                },
-                required: ["title", "description"],
-            },
-        },
-    },
-    {
-        type: "function",
-        function: {
-            name: "create_concept_map",
-            description:
-                "Creates a mind map/concept map node showing relationships between concepts",
-            parameters: {
-                type: "object",
-                properties: {
-                    title: {
-                        type: "string",
-                        description: "The central concept for the mind map",
-                    },
-                    description: {
-                        type: "string",
-                        description:
-                            "Description of the concept and related topics to include",
-                    },
-                    parentNodeId: {
-                        type: "string",
-                        description:
-                            "ID of parent node to connect to (optional)",
-                    },
-                },
-                required: ["title", "description"],
-            },
-        },
-    },
-    {
-        type: "function",
-        function: {
-            name: "create_flowchart",
-            description:
-                "Creates a process flowchart node showing step-by-step workflows or procedures",
-            parameters: {
-                type: "object",
-                properties: {
-                    title: {
-                        type: "string",
-                        description: "The process name for the flowchart",
-                    },
-                    description: {
-                        type: "string",
-                        description:
-                            "Description of the process steps and workflow",
-                    },
-                    parentNodeId: {
-                        type: "string",
-                        description:
-                            "ID of parent node to connect to (optional)",
+                            "The mode for the node, choose one of 'default', 'argue', 'explain', 'answer'",
                     },
                 },
                 required: ["title", "description"],

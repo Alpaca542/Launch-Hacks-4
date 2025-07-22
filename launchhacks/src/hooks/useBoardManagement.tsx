@@ -64,6 +64,7 @@ export const useBoardManagement = (
     const hasInitiallyLoaded = useRef(false);
     // Debounce saving to prevent excessive API calls
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const { setViewport } = useReactFlow();
 
     const { showSuccess, showError, showInfo } = notifications;
 
@@ -351,10 +352,12 @@ export const useBoardManagement = (
                         data: {
                             label: boardName || "New Board",
                         },
-                        position: { x: 250, y: 25 },
-                        draggable: false, // Static nodes should not be draggable
+                        position: { x: 0, y: 0 },
+                        draggable: false,
                     },
                 ]);
+
+                setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 300 });
                 setEdges(initialEdges as Edge[]);
 
                 if (showSuccess) {

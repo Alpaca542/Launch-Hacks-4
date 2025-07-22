@@ -51,8 +51,10 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
             {/* Simple Side Panel - Always Open Style */}
             <div
                 className={`
-                fixed top-0 right-0 h-full w-96
+                fixed top-0 right-0 w-96
                 bg-transparent
+                h-fit
+                max-h-[700px]
                 overflow-y-auto
                 border-l border-gray-200/50 dark:border-gray-700/50
                 shadow-xl shadow-gray-900/10 dark:shadow-black/30

@@ -8,6 +8,8 @@ import { ReactFlowProvider } from "reactflow";
 
 createRoot(rootElement).render(
     <StrictMode>
-        <App />
+        <ReactFlowProvider>
+            <App />
+        </ReactFlowProvider>
     </StrictMode>
 );

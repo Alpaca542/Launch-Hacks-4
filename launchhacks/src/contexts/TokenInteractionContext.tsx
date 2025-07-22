@@ -10,28 +10,22 @@ import {
 import { generateNodeContent } from "../services/aiService";
 import { parseLayoutContent } from "../services/layoutParser";
 
-export interface Token {
-    word: string;
-    myConcept?: string;
-}
-
-interface TokenInteractionContextType {
-    handleTokenClick: (
-        token: Token,
+interface NodeCreationContextType {
+    handleNodeCreation: (
+        content: string,
         sourceNodeId: string,
         sourceNodePosition: { x: number; y: number },
         sourceNodeType: string,
         sourceNodeColor?: string,
-        sourceNodeText?: string,
-        solutionID?: string
+        sourceNodeLabel?: string,
+        suggestionID?: string
     ) => string | null;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
 }
 
-const TokenInteractionContext =
-    createContext<TokenInteractionContextType | null>(null);
+const NodeCreationContext = createContext<NodeCreationContextType | null>(null);
 
-interface TokenInteractionProviderProps {
+interface NodeCreationProviderProps {
     children: React.ReactNode;
     nodes: Node[];
     onNodesChange: (changes: any) => void;
@@ -42,8 +36,8 @@ interface TokenInteractionProviderProps {
     addLayout?: (layout: number) => void;
 }
 
-export const handleTokenClick = (
-    token: Token,
+export const handleNodeCreation = (
+    content: string,
     sourceNodeId: string,
     sourceNodePosition: { x: number; y: number },
     sourceNodeType: string,
@@ -51,35 +45,20 @@ export const handleTokenClick = (
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void,
     onNodesChange: (changes: any) => void,
     onEdgesChange: (changes: any) => void,
-    sourceNodeColor?: string,
-    sourceNodeText?: string,
-    suggestionID?: string,
-    isInput?: boolean,
+    inputMode: string,
     inputNode?: Node,
-    inputMode?: string,
+    isAIGenerated: boolean = false,
+    sourceNodeColor?: string,
+    sourceNodeLabel?: string,
+    suggestionID?: string,
     saveCallback?: () => Promise<void>,
     getLastTwoLayouts?: () => number[],
-    addLayout?: (layout: number) => void
+    addLayout?: (layout: number) => void,
+    customLabel?: string
 ) => {
-    console.log(1);
     const sourceNode = nodes.find((node) => node.id === sourceNodeId);
     if (!sourceNode) return null;
-    console.log(2);
-    // Initialize tokenColors if it doesn't exist
-    const tokenColors = sourceNode.data.tokenColors || {};
-    console.log(3);
-    // Check if this token is already colored
-    if (!isInput) {
-        const tokenKey = token.myConcept || token.word;
-        if (tokenColors[tokenKey]) {
-            // Token is already colored, don't allow clicking
-            console.log(
-                `Token "${tokenKey}" is already colored, ignoring click`
-            );
-            return null;
-        }
-    }
-    console.log(4);
+
     // Determine color based on source node type
     let color: string;
     if (sourceNodeType === "staticEditable") {
@@ -89,48 +68,25 @@ export const handleTokenClick = (
             ? generateColorVariation(sourceNodeColor)
             : generateRandomColor();
     }
+
     let newNode: Node | null = null;
-    if (isInput) {
+
+    if (!isAIGenerated) {
         newNode = inputNode!;
     } else {
-        // Update the source node's tokenColors
-        const updatedTokenColors = { ...tokenColors };
-        if (token.myConcept) {
-            // If token is part of a concept, color all tokens in that concept
-            updatedTokenColors[token.myConcept] = color;
-        } else {
-            // Color just this token
-            updatedTokenColors[token.word] = color;
-        }
-
-        // Update the source node with new token colors
-        setNodes((nds) =>
-            nds.map((node) => {
-                if (node.id === sourceNodeId) {
-                    return {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            tokenColors: updatedTokenColors,
-                        },
-                    };
-                }
-                return node;
-            })
-        );
-
         // Calculate position for new node
         const newPosition = calculateNewNodePosition(sourceNodePosition);
 
         newNode = createNewNode(
             newPosition,
-            token.myConcept || token.word, // Use the token word as initial label
+            customLabel || content,
             "Loading...", // full_text placeholder
             "", // Start with empty summary for progressive streaming
             color,
             sourceNodeType,
             sourceNodeId // Pass the source node ID as previousNode
         );
+
         // Create new edge
         const newEdge = createNewEdge(
             sourceNodeId,
@@ -149,7 +105,7 @@ export const handleTokenClick = (
         newNode.data.previousNode = sourceNodeId;
     }
 
-    if (isInput) {
+    if (!isAIGenerated) {
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === newNode?.id) {
@@ -165,12 +121,12 @@ export const handleTokenClick = (
         );
     }
 
-    // Always ask AI for concept and update node when response arrives
+    // Generate content for the new node
     const lastTwoLayouts = getLastTwoLayouts ? getLastTwoLayouts() : [];
 
     generateNodeContent(
-        token.myConcept || token.word,
-        sourceNodeText || "",
+        content,
+        sourceNodeLabel || "",
         inputMode || "default",
         lastTwoLayouts
     )
@@ -205,7 +161,7 @@ export const handleTokenClick = (
                             ...node,
                             data: {
                                 ...node.data,
-                                title: result.title,
+                                title: customLabel || content,
                                 full_text: result.fullText,
                                 suggestions: result.suggestions,
                                 layout: result.layout,
@@ -232,7 +188,7 @@ export const handleTokenClick = (
         })
         .catch(async (error) => {
             console.error("Error generating node content:", error);
-            // Fallback to original word if AI request fails
+            // Fallback to original content if AI request fails
             setNodes((nds) =>
                 nds.map((node) => {
                     if (node.id === newNode?.id) {
@@ -240,12 +196,12 @@ export const handleTokenClick = (
                             ...node,
                             data: {
                                 ...node.data,
-                                title: token.word,
-                                full_text: token.word,
+                                title: customLabel || content,
+                                full_text: content,
                                 suggestions: [],
                                 layout: 1,
                                 contents: [
-                                    `<div class="error-content">Failed to load content for "${token.word}"</div>`,
+                                    `<div class="error-content">Failed to load content for "${content}"</div>`,
                                 ],
                                 isLoading: false,
                                 icon: "❌",
@@ -272,9 +228,7 @@ export const handleTokenClick = (
     return color;
 };
 
-export const TokenInteractionProvider: React.FC<
-    TokenInteractionProviderProps
-> = ({
+export const NodeCreationProvider: React.FC<NodeCreationProviderProps> = ({
     children,
     nodes,
     onNodesChange,
@@ -284,21 +238,21 @@ export const TokenInteractionProvider: React.FC<
     getLastTwoLayouts,
     addLayout,
 }) => {
-    // Replace local handleTokenClick with a wrapper that calls the exported function
-    const handleTokenClickWrapper = (
-        token: Token,
+    // Create a wrapper that calls the exported handleNodeCreation function
+    const handleNodeCreationWrapper = (
+        content: string,
         sourceNodeId: string,
         sourceNodePosition: { x: number; y: number },
         sourceNodeType: string,
         sourceNodeColor?: string,
-        sourceNodeText?: string,
-        solutionID?: string,
+        sourceNodeLabel?: string,
+        suggestionID?: string,
         isInput?: boolean,
         inputNode?: Node,
         inputMode?: string
     ) =>
-        handleTokenClick(
-            token,
+        handleNodeCreation(
+            content,
             sourceNodeId,
             sourceNodePosition,
             sourceNodeType,
@@ -306,34 +260,34 @@ export const TokenInteractionProvider: React.FC<
             setNodes,
             onNodesChange,
             onEdgesChange,
-            sourceNodeColor,
-            sourceNodeText,
-            solutionID,
-            isInput,
+            inputMode || "default",
             inputNode,
-            inputMode,
+            !isInput,
+            sourceNodeColor,
+            sourceNodeLabel,
+            suggestionID,
             saveCallback,
             getLastTwoLayouts,
             addLayout
         );
 
     return (
-        <TokenInteractionContext.Provider
+        <NodeCreationContext.Provider
             value={{
-                handleTokenClick: handleTokenClickWrapper,
+                handleNodeCreation: handleNodeCreationWrapper,
                 setNodes,
             }}
         >
             {children}
-        </TokenInteractionContext.Provider>
+        </NodeCreationContext.Provider>
     );
 };
 
-export const useTokenInteraction = (): TokenInteractionContextType => {
-    const context = useContext(TokenInteractionContext);
+export const useNodeCreation = (): NodeCreationContextType => {
+    const context = useContext(NodeCreationContext);
     if (!context) {
         throw new Error(
-            "useTokenInteraction must be used within a TokenInteractionProvider"
+            "useNodeCreation must be used within a NodeCreationProvider"
         );
     }
     return context;

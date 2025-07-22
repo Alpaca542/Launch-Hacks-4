@@ -7,8 +7,7 @@ import {
 } from "../services/aiService";
 import { saveChatConversation } from "../services/chatService";
 import { useAuth } from "../hooks/useAuth";
-import { NodeCreationService } from "../services/nodeCreationService";
-import { ToolExecutor } from "../services/toolExecutor";
+import { executeTool } from "../services/toolExecutor";
 import { Node } from "reactflow";
 
 interface Message {
@@ -52,35 +51,6 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
     const { user } = useAuth();
 
     // Create tool executor when node management props are available
-    const toolExecutor = useMemo(() => {
-        if (
-            !setNodes ||
-            !onNodesChange ||
-            !onEdgesChange ||
-            !getLastTwoLayouts ||
-            !addLayout
-        ) {
-            return null;
-        }
-
-        const nodeCreationService = new NodeCreationService(
-            nodes,
-            setNodes,
-            onNodesChange,
-            onEdgesChange,
-            getLastTwoLayouts,
-            addLayout
-        );
-
-        return new ToolExecutor(nodeCreationService);
-    }, [
-        nodes,
-        setNodes,
-        onNodesChange,
-        onEdgesChange,
-        getLastTwoLayouts,
-        addLayout,
-    ]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -114,20 +84,6 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
 
         // Track the assistant's response content for saving
         let assistantResponseContent = "";
-
-        // Tool call handler
-        const handleToolCall = async (toolCall: ToolCall): Promise<string> => {
-            if (!toolExecutor) {
-                throw new Error(
-                    "Node creation tools not available - missing board management"
-                );
-            }
-
-            // Update the node creation service with current nodes
-            toolExecutor.nodeCreationService.updateNodes(nodes);
-
-            return await toolExecutor.executeTool(toolCall);
-        };
 
         try {
             await askAIStream(
@@ -220,10 +176,26 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                 },
                 // options - enable tools if available
                 {
-                    enableTools: enableTools && !!toolExecutor,
+                    enableTools: enableTools,
                     availableTools: NODE_CREATION_TOOLS,
-                    onToolCall: handleToolCall,
                     currentBoardId: currentBoardId,
+                    onToolCall: async (toolCall: ToolCall) => {
+                        try {
+                            await executeTool(
+                                toolCall,
+                                nodes,
+                                setNodes,
+                                onNodesChange,
+                                onEdgesChange
+                            );
+                            // Log tool call for debugging
+                            console.log("Tool call executed:", toolCall);
+                            return "Tool executed successfully";
+                        } catch (error) {
+                            console.error("Error executing tool:", error);
+                            return "Error executing tool";
+                        }
+                    },
                 }
             );
         } catch (error) {
@@ -291,20 +263,18 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
 
                         {/* Status indicators */}
                         <div className="space-y-3 mt-6">
-                            {toolExecutor && (
-                                <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                                    <div className="flex items-center justify-center space-x-2 mb-2">
-                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                                            Node Creation Tools Active
-                                        </p>
-                                    </div>
-                                    <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                                        I can create knowledge nodes, concept
-                                        maps, and flowcharts
+                            <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                                <div className="flex items-center justify-center space-x-2 mb-2">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                        Node Creation Tools Active
                                     </p>
                                 </div>
-                            )}
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                    I can create knowledge nodes, concept maps,
+                                    and flowcharts
+                                </p>
+                            </div>
 
                             {currentBoardId ? (
                                 <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
@@ -404,7 +374,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                                                 Thinking...
                                             </span>
                                         </div>
-                                        {toolExecutor && enableTools && (
+                                        {enableTools && (
                                             <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full">
                                                 <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
                                                 <span className="text-emerald-600 dark:text-emerald-400 text-xs">
@@ -424,7 +394,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
             {/* Chat Input */}
             <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                 {/* Tools Toggle */}
-                {toolExecutor && (
+                {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -456,12 +426,11 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             </div>
                         )}
                     </div>
-                )}
+                }
 
                 <div className="p-4">
                     {/* Quick suggestions */}
-                    {toolExecutor &&
-                        enableTools &&
+                    {enableTools &&
                         input.length === 0 &&
                         messages.length === 0 && (
                             <div className="mb-3">
