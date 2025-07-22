@@ -18,6 +18,7 @@ import {
     iconPrompt,
     layoutPrompt,
     contentPrompt,
+    quizPrompt,
 } from "./prompts";
 
 // Helper function to clean AI responses that might have markdown formatting
@@ -311,6 +312,17 @@ export const askAIStream = async (
         if (onComplete) {
             onComplete();
         }
+    }
+};
+
+export const askAIForQuizContent = async (message: string): Promise<string> => {
+    try {
+        const response = await askAI(quizPrompt(message, "default"));
+        console.log("Quiz response:", response);
+        return response || "✨";
+    } catch (error) {
+        console.error("Error fetching icon:", error);
+        return "✨";
     }
 };
 
@@ -616,7 +628,8 @@ export const generateNodeContent = async (
     message: string,
     context: string = "",
     mode: string = "default",
-    lastTwoLayouts: number[] = []
+    lastTwoLayouts: number[] = [],
+    isQuiz = false
 ): Promise<{
     layout: number;
     content: any[];
@@ -626,6 +639,21 @@ export const generateNodeContent = async (
     fullText: string;
 }> => {
     try {
+        if (isQuiz) {
+            const [content, icon] = await Promise.all([
+                askAIForQuizContent(message),
+                askAIForIcon(message),
+            ]);
+
+            return {
+                layout: -1,
+                content: [content],
+                suggestions: [],
+                icon: icon ?? "✨",
+                title: message,
+                fullText: message,
+            };
+        }
         // Step 1: Get layout recommendation first (needed for content)
         const layout = await askAiForLayout(message, lastTwoLayouts);
         console.log("Selected layout:", layout);

@@ -24,6 +24,11 @@ interface NodeData {
         position?: { x: number; y: number },
         extraData?: { initialText?: string }
     ) => void;
+    onQuizCreate?: (
+        topic: string,
+        parent?: string,
+        position?: { x: number; y: number }
+    ) => void;
     layout?: number;
     contents?: string[];
     icon?: string;

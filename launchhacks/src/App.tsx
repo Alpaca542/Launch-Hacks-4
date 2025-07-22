@@ -186,6 +186,91 @@ function AppContent() {
                     parent,
                     position
                 );
+
+            data.onQuizCreate = (
+                topic: string,
+                parent?: string,
+                position?: { x: number; y: number }
+            ) => {
+                setNodes((nodes) =>
+                    nodes.map((n) =>
+                        n.id === node.id
+                            ? {
+                                  ...n,
+                                  type: "draggableEditable",
+                                  data: { ...n.data, label: " Quiz: " + topic },
+                              }
+                            : n
+                    )
+                );
+                const parentNode = nodes.find((n) => n.id === node.data.parent);
+                const parentColor = parentNode?.data?.color;
+                const parentText = parentNode?.data?.label;
+                const sourceNodeId = node.data.parent;
+                const sourceNodePosition = {
+                    x: node.position.x,
+                    y: node.position.y,
+                };
+                const sourceNodeType = "draggableEditable";
+                const isAIGenerated = false;
+                const suggestionID = undefined;
+
+                const color = handleNodeCreation(
+                    topic,
+                    sourceNodeId,
+                    sourceNodePosition,
+                    sourceNodeType,
+                    nodes,
+                    setNodes,
+                    onNodesChange,
+                    onEdgesChange,
+                    node.data.mode,
+                    node,
+                    isAIGenerated,
+                    parentColor,
+                    parentText,
+                    suggestionID,
+                    saveNewNodeContent,
+                    getLastTwoLayouts,
+                    addLayout,
+                    undefined,
+                    true // isQuiz
+                );
+                // Update the node's color
+                setNodes((nodes) =>
+                    nodes.map((n) =>
+                        n.id === node.id
+                            ? {
+                                  ...n,
+                                  data: { ...n.data, myColor: color },
+                              }
+                            : n
+                    )
+                );
+                // Update the edge's color if parent exists
+                if (node.data.parent) {
+                    if (!color) return; // or handle fallback here
+                    setEdges((edges) =>
+                        edges.map((e) =>
+                            e.id === `e${node.data.parent}-${node.id}`
+                                ? {
+                                      ...e,
+                                      style: {
+                                          ...(e.style || {}),
+                                          stroke: color,
+                                          strokeWidth: 3,
+                                      },
+                                      markerEnd: {
+                                          type: MarkerType.ArrowClosed,
+                                          color: color,
+                                      },
+                                  }
+                                : e
+                        )
+                    );
+                }
+            };
+
             // If this is a tempInput node, inject onSubmit callback
             if (node.type === "tempInput") {
                 data.onNodeCallback = (value: string, _mode: string) => {

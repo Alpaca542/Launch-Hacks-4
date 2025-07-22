@@ -9,7 +9,7 @@ import {
 } from "../utils/nodeHelpers";
 import { generateNodeContent } from "../services/aiService";
 import { parseLayoutContent } from "../services/layoutParser";
-
+import { processQuizHTML } from "../services/quizParser";
 interface NodeCreationContextType {
     handleNodeCreation: (
         content: string,
@@ -54,7 +54,8 @@ export const handleNodeCreation = (
     saveCallback?: () => Promise<void>,
     getLastTwoLayouts?: () => number[],
     addLayout?: (layout: number) => void,
-    customLabel?: string
+    customLabel?: string,
+    isQuiz: boolean = false
 ) => {
     const sourceNode = nodes.find((node) => node.id === sourceNodeId);
     if (!sourceNode) return null;
@@ -123,35 +124,32 @@ export const handleNodeCreation = (
 
     // Generate content for the new node
     const lastTwoLayouts = getLastTwoLayouts ? getLastTwoLayouts() : [];
-
     generateNodeContent(
         content,
         sourceNodeLabel || "",
         inputMode || "default",
-        lastTwoLayouts
+        lastTwoLayouts,
+        isQuiz
     )
         .then(async (result) => {
             console.log("AI Response received:", result);
             console.log("Selected layout:", result.layout);
             console.log("Content array:", result.content);
-
-            // Track the layout that was chosen
-            if (addLayout) {
-                addLayout(result.layout);
+            let html;
+            if (result.layout > -1) {
+                if (addLayout) {
+                    // Track the layout that was chosen
+                    addLayout(result.layout);
+                }
+                // Parse the layout content to HTML (now waits for all media to load)
+                html = await parseLayoutContent(
+                    result.layout,
+                    result.content,
+                    newNode?.id || ""
+                );
+            } else {
+                html = processQuizHTML(result.content);
             }
-
-            // Parse the layout content to HTML (now waits for all media to load)
-            const { html } = await parseLayoutContent(
-                result.layout,
-                result.content,
-                newNode?.id || ""
-            );
-
-            console.log(
-                "Layout HTML generated (first 500 chars):",
-                html.substring(0, 500)
-            );
-            console.log("Layout HTML full length:", html.length);
 
             // Update node with all the generated content
             setNodes((nds) =>

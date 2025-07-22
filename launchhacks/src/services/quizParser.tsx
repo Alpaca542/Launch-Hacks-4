@@ -5,7 +5,7 @@
  * with progress tracking, animations, and accessibility features.
  */
 
-import React from 'react';
+import React from "react";
 
 export interface QuizAnswer {
     [answerText: string]: string; // answer text -> hint text
@@ -32,7 +32,9 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
     const quizHtml = quizArray
         .map((quizData, quizIndex) => {
             const quizId = `${quizSetId}-q${quizIndex}`;
-            const progress = Math.round(((quizIndex + 1) / quizArray.length) * 100);
+            const progress = Math.round(
+                ((quizIndex + 1) / quizArray.length) * 100
+            );
 
             /* ----- answers ----- */
             const answerButtons = quizData.answers
@@ -65,7 +67,10 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                             me.classList.remove('hover:bg-slate-50','dark:hover:bg-slate-800');
                             me.classList.add('scale-105');
                         } else {
-                            hintDiv.textContent = '${hint.replace(/'/g, "\\'")}';
+                            hintDiv.textContent = '${hint.replace(
+                                /'/g,
+                                "\\'"
+                            )}';
                             hintDiv.classList.remove('hidden');
 
                             me.classList.add('bg-red-50','dark:bg-red-900/20',
@@ -95,18 +100,24 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                 .join("");
 
             /* ----- next / finish ----- */
-            const nextHandler = quizIndex < quizArray.length - 1
-                ? `
+            const nextHandler =
+                quizIndex < quizArray.length - 1
+                    ? `
                     document.getElementById('${quizSetId}-q${quizIndex}').classList.add('hidden');
-                    document.getElementById('${quizSetId}-q${quizIndex + 1}').classList.remove('hidden');
-                    window.scrollTo({ top: document.getElementById('${quizSetId}-q${quizIndex + 1}').offsetTop - 20, behavior: 'smooth' });`
-                : `
+                    document.getElementById('${quizSetId}-q${
+                          quizIndex + 1
+                      }').classList.remove('hidden');
+                    window.scrollTo({ top: document.getElementById('${quizSetId}-q${
+                          quizIndex + 1
+                      }').offsetTop - 20, behavior: 'smooth' });`
+                    : `
                     document.getElementById('${quizSetId}-completion').classList.remove('hidden');
                     document.getElementById('${quizId}').classList.add('hidden');
                     window.scrollTo({ top: document.getElementById('${quizSetId}-completion').offsetTop - 20, behavior: 'smooth' });`;
 
-            const nextButton = quizIndex < quizArray.length - 1
-                ? `<button id="${quizId}-next"
+            const nextButton =
+                quizIndex < quizArray.length - 1
+                    ? `<button id="${quizId}-next"
                            class="hidden items-center gap-2
                                   bg-blue-600 hover:bg-blue-700
                                   dark:bg-blue-500 dark:hover:bg-blue-600
@@ -116,7 +127,7 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
                            style="display: none;">
                        Next <i class="fa-solid fa-arrow-right"></i>
                    </button>`
-                : `<button id="${quizId}-next"
+                    : `<button id="${quizId}-next"
                            class="hidden items-center gap-2
                                   bg-green-600 hover:bg-green-700
                                   dark:bg-green-500 dark:hover:bg-green-600
@@ -259,11 +270,14 @@ export const generateQuizHTML = (quizArray: QuizData[]): string => {
 /**
  * React component for rendering interactive quizzes
  */
-export const QuizParser: React.FC<QuizParserProps> = ({ quizData, className = "" }) => {
+export const QuizParser: React.FC<QuizParserProps> = ({
+    quizData,
+    className = "",
+}) => {
     const quizHTML = generateQuizHTML(quizData);
 
     return (
-        <div 
+        <div
             className={`quiz-container ${className}`}
             dangerouslySetInnerHTML={{ __html: quizHTML }}
             role="region"
@@ -276,16 +290,19 @@ export const QuizParser: React.FC<QuizParserProps> = ({ quizData, className = ""
  * Extract quiz data from raw quiz content for validation
  */
 export const validateQuizData = (quizData: QuizData[]): boolean => {
-    return quizData.every(quiz => {
+    return quizData.every((quiz) => {
         return (
             quiz.question &&
             quiz.answers &&
             quiz.answers.length > 0 &&
             quiz.correctAnswer >= 0 &&
             quiz.correctAnswer < quiz.answers.length &&
-            quiz.answers.every(answer => 
-                Object.keys(answer).length === 1 && 
-                Object.values(answer).every(hint => typeof hint === 'string')
+            quiz.answers.every(
+                (answer) =>
+                    Object.keys(answer).length === 1 &&
+                    Object.values(answer).every(
+                        (hint) => typeof hint === "string"
+                    )
             )
         );
     });
@@ -296,7 +313,7 @@ export const validateQuizData = (quizData: QuizData[]): boolean => {
  */
 export const processQuizHTML = (rawQuizData: QuizData[]): string => {
     if (!validateQuizData(rawQuizData)) {
-        console.warn('Invalid quiz data provided');
+        console.warn("Invalid quiz data provided");
         return '<div class="error">Invalid quiz data</div>';
     }
 

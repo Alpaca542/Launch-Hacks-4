@@ -1,4 +1,22 @@
 import { LAYOUT_TYPES } from "./layouts";
+export const quizPrompt = (message: string) => {
+    return `You are an expert quiz creator. Generate a quiz based on the concept: "${message}".
+    
+    - Create 3-5 questions with 4 answer options each.
+    - Ensure questions are clear and concise.
+    - Provide one correct answer per question.
+    - Format the output as a JSON array of objects, each with "question", "options", and "answer" fields.
+    
+    Example output:
+    [
+        {
+            "question": "What is the capital of France?",
+            "options": ["Paris", "London", "Berlin", "Madrid"],
+            "answer": "Paris"
+        },
+        ...
+    ]`;
+};
 
 // Build a layout‑aware prompt for the educational‑content model
 export const contentPrompt = (
