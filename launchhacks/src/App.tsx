@@ -9,7 +9,6 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
-import { MessageCircle } from "lucide-react";
 import { handleTokenClick } from "./contexts/TokenInteractionContext";
 
 // Components
@@ -20,7 +19,7 @@ import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
 import { CacheDebugPanel } from "./components/CacheDebugPanel";
 import RightSidePanel from "./components/RightSidePanel";
-import SimpleChat from "./components/SimpleChat";
+import FloatingChatButton from "./components/SimpleFloatingChatButton";
 import "./index.css"; // Ensure this is imported for styles
 import TempInputNode from "./components/TempInputNode";
 
@@ -46,7 +45,7 @@ function AppContent() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showCacheDebug, setShowCacheDebug] = useState(false);
     const [showRightPanel, setShowRightPanel] = useState(false);
-    const [showChat, setShowChat] = useState(false);
+    const [showChat, setShowChat] = useState(true); // Always open by default
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -388,68 +387,28 @@ function AppContent() {
                 />
             )}
 
-            {/* Right Side Panel */}
+            {/* Unified Right Side Panel */}
             <RightSidePanel
-                isOpen={showRightPanel}
-                onClose={() => setShowRightPanel(false)}
-                title="Panel"
-            >
-                <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                        <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
-                            Sample Content
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            This is your right side panel. You can add any
-                            content here.
-                        </p>
-                    </div>
+                isOpen={showChat || showRightPanel}
+                onClose={() => {
+                    setShowChat(false);
+                    setShowRightPanel(false);
+                }}
+                currentBoardId={currentBoard?.id}
+                currentBoardName={currentBoard?.name}
+                nodes={nodes}
+                setNodes={setNodes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                getLastTwoLayouts={getLastTwoLayouts}
+                addLayout={addLayout}
+            />
 
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                            Settings
-                        </h4>
-                        <div className="space-y-2">
-                            <button className="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-800/30 rounded-md transition-colors duration-200 text-purple-700 dark:text-purple-300">
-                                Option 1
-                            </button>
-                            <button className="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-800/30 rounded-md transition-colors duration-200 text-purple-700 dark:text-purple-300">
-                                Option 2
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </RightSidePanel>
-
-            {/* AI Chat Side Panel */}
-            <RightSidePanel
-                isOpen={showChat}
-                onClose={() => setShowChat(false)}
-                title="AI Chat Assistant"
-            >
-                <SimpleChat
-                    className="h-full"
-                    currentBoardId={currentBoard?.id}
-                    currentBoardName={currentBoard?.name}
-                    nodes={nodes}
-                    setNodes={setNodes}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    getLastTwoLayouts={getLastTwoLayouts}
-                    addLayout={addLayout}
-                />
-            </RightSidePanel>
-
-            {/* Chat Toggle Button */}
-            {!showChat && !showRightPanel && (
-                <button
-                    onClick={() => setShowChat(true)}
-                    className="fixed bottom-6 right-6 z-30 p-4 rounded-full bg-gradient-to-b from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white group"
-                    title="Open AI Chat"
-                >
-                    <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                </button>
-            )}
+            {/* Floating AI Chat Button */}
+            <FloatingChatButton
+                onClick={() => setShowChat(true)}
+                isOpen={showChat || showRightPanel}
+            />
         </div>
     );
 }

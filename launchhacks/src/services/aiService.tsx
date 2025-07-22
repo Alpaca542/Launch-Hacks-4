@@ -250,35 +250,52 @@ export const askAIStream = async (
         const openaiChatFunction = httpsCallable(functions, "groqChat");
 
         try {
-            // For Firebase Functions v2 streaming, we need to handle the streaming response
-            // The streaming happens via the response.sendChunk() calls in the function
+            console.log("Starting streaming request...");
+            // Use Firebase callable function streaming - following the official pattern
+            const { stream, data } = await openaiChatFunction.stream(payload);
 
-            // Start the function call
-            const resultPromise = openaiChatFunction(payload);
+            console.log("Stream started, waiting for chunks...");
+            let fullResponse = "";
 
-            // For now, since httpsCallable doesn't expose streaming chunks directly,
-            // we'll fall back to the complete response and simulate streaming
-            const result = await resultPromise;
-            console.log("Firebase function result:", {
-                success: !!result.data,
-                dataKeys: result.data ? Object.keys(result.data) : [],
-                hasResponse: !!(result.data as any)?.response,
-                hasToolCalls: !!(result.data as any)?.tool_calls?.length,
-                toolCallsLength: (result.data as any)?.tool_calls?.length || 0,
-            });
+            // The `stream` async iterable will yield a new value every time
+            // the callable function calls `sendChunk()`
+            for await (const chunk of stream) {
+                console.log("Received chunk:", chunk);
+                // The chunk is the data sent directly from response.sendChunk()
+                if (
+                    chunk &&
+                    typeof chunk === "object" &&
+                    "type" in chunk &&
+                    "content" in chunk
+                ) {
+                    const typedChunk = chunk as {
+                        type: string;
+                        content: string;
+                    };
+                    console.log("Processing chunk:", typedChunk);
+                    if (typedChunk.type === "chunk" && typedChunk.content) {
+                        fullResponse += typedChunk.content;
+                        onChunk(typedChunk.content);
+                    }
+                }
+            }
 
-            // Handle the response
-            if (result.data) {
-                const responseData = result.data as any;
+            // The `data` promise resolves when the callable function completes
+            console.log("Waiting for final result...");
+            const finalResult = await data;
+            console.log("Final result received:", finalResult);
+
+            // Handle the final response
+            if (finalResult) {
+                const responseData = finalResult as any;
                 console.log("Response data structure:", {
                     hasResponse: !!responseData.response,
-                    hasContent: !!responseData.content,
                     hasToolCalls: !!responseData.tool_calls?.length,
                     toolCallsCount: responseData.tool_calls?.length || 0,
                     keys: Object.keys(responseData),
                 });
 
-                // Handle tool calls first if they exist
+                // Handle tool calls if they exist
                 if (
                     responseData.tool_calls &&
                     responseData.tool_calls.length > 0 &&
@@ -304,45 +321,14 @@ export const askAIStream = async (
                     }
                 }
 
-                // Stream the main response content
-                const response =
-                    responseData.response || responseData.content || "";
-
-                if (response && response.trim()) {
-                    console.log(
-                        "Streaming response content:",
-                        response.substring(0, 100)
-                    );
-                    // Simulate streaming by sending chunks with realistic delays
-                    const sentences = response.split(/(?<=[.!?])\s+/);
-                    for (let i = 0; i < sentences.length; i++) {
-                        const sentence = sentences[i];
-                        if (sentence.trim()) {
-                            onChunk(
-                                sentence + (i < sentences.length - 1 ? " " : "")
-                            );
-                            // More realistic streaming delay
-                            await new Promise((resolve) =>
-                                setTimeout(resolve, 100 + Math.random() * 200)
-                            );
-                        }
-                    }
-                } else if (
-                    !responseData.tool_calls ||
-                    responseData.tool_calls.length === 0
-                ) {
-                    // Only show this error if there were no tool calls
-                    onChunk(
-                        "I apologize, but I didn't receive a proper response. Please try again."
-                    );
-                }
-
                 if (onComplete) {
                     onComplete();
                 }
             } else {
-                console.error("No data in Firebase function result:", result);
-                throw new Error("No data received from Firebase function");
+                console.error("No final result received");
+                throw new Error(
+                    "No final result received from Firebase function"
+                );
             }
         } catch (functionError: any) {
             console.error("Firebase function call failed:", functionError);

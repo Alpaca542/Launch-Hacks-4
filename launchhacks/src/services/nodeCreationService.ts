@@ -1,12 +1,11 @@
 /**
  * Node Creation Service
  *
- * Handles AI-driven node creation with intelligent positioning and content generation
+ * Handles AI-driven node creation using the existing TokenInteractionContext
  */
 
-import { generateNodeContent } from "./aiService";
-import { generateNodeId, calculateNewNodePosition } from "../utils/nodeHelpers";
-import { Node, Edge } from "reactflow";
+import { handleTokenClick } from "../contexts/TokenInteractionContext";
+import { Node } from "reactflow";
 
 export interface NodeCreationRequest {
     title: string;
@@ -18,8 +17,6 @@ export interface NodeCreationRequest {
 }
 
 export interface NodeCreationResult {
-    node: Node;
-    edge?: Edge;
     success: boolean;
     error?: string;
 }
@@ -31,6 +28,7 @@ export class NodeCreationService {
     private onEdgesChange: (changes: any) => void;
     private getLastTwoLayouts: () => number[];
     private addLayout: (layout: number) => void;
+    private saveCallback?: () => Promise<void>;
 
     constructor(
         nodes: Node[],
@@ -38,7 +36,8 @@ export class NodeCreationService {
         onNodesChange: (changes: any) => void,
         onEdgesChange: (changes: any) => void,
         getLastTwoLayouts: () => number[],
-        addLayout: (layout: number) => void
+        addLayout: (layout: number) => void,
+        saveCallback?: () => Promise<void>
     ) {
         this.nodes = nodes;
         this.setNodes = setNodes;
@@ -46,120 +45,79 @@ export class NodeCreationService {
         this.onEdgesChange = onEdgesChange;
         this.getLastTwoLayouts = getLastTwoLayouts;
         this.addLayout = addLayout;
+        this.saveCallback = saveCallback;
     }
 
     /**
-     * Create a knowledge node with AI-generated content
+     * Create a knowledge node using the existing token interaction system
      */
     async createKnowledgeNode(
         request: NodeCreationRequest
     ): Promise<NodeCreationResult> {
         try {
-            const nodeId = generateNodeId();
-            let position = request.position;
-            let parentNode: Node | undefined;
+            // Find the parent node or use a default position
+            let sourceNode: Node;
+            let sourcePosition: { x: number; y: number };
 
-            // Find parent node if specified
             if (request.parentNodeId) {
-                parentNode = this.nodes.find(
+                const parentNode = this.nodes.find(
                     (n) => n.id === request.parentNodeId
                 );
-                if (parentNode && !position) {
-                    position = calculateNewNodePosition(parentNode.position);
+                if (parentNode) {
+                    sourceNode = parentNode;
+                    sourcePosition = parentNode.position;
+                } else {
+                    // Parent not found, create at specified position or default
+                    sourcePosition = request.position || { x: 400, y: 300 };
+                    // Use the first available node as source or create a virtual one
+                    sourceNode =
+                        this.nodes[0] ||
+                        ({
+                            id: "virtual-source",
+                            position: sourcePosition,
+                            data: { myColor: "#3b82f6" },
+                        } as Node);
                 }
+            } else {
+                // No parent specified, use specified position or smart positioning
+                sourcePosition = request.position || this.getSmartPosition();
+                sourceNode =
+                    this.nodes[0] ||
+                    ({
+                        id: "virtual-source",
+                        position: sourcePosition,
+                        data: { myColor: "#3b82f6" },
+                    } as Node);
             }
 
-            // Default position if none provided
-            if (!position) {
-                position = {
-                    x: Math.random() * 400 + 100,
-                    y: Math.random() * 300 + 100,
-                };
-            }
-
-            // Create initial node
-            const initialNode: Node = {
-                id: nodeId,
-                type: "draggableEditable",
-                position,
-                draggable: true,
-                data: {
-                    label: request.title,
-                    title: request.title,
-                    full_text: request.description,
-                    suggestions: [],
-                    isLoading: true,
-                    myColor: parentNode?.data?.myColor || "#3b82f6",
-                    previousNode: request.parentNodeId || null,
-                    tokenColors: {},
-                },
-            };
-
-            // Add node immediately
-            this.onNodesChange([{ type: "add", item: initialNode }]);
-
-            // Create edge if parent exists
-            let edge: Edge | undefined;
-            if (parentNode && request.parentNodeId) {
-                edge = {
-                    id: `edge_${request.parentNodeId}_${nodeId}`,
-                    source: request.parentNodeId,
-                    target: nodeId,
-                    style: {
-                        stroke: parentNode.data?.myColor || "#3b82f6",
-                        strokeWidth: 3,
-                    },
-                    markerEnd: {
-                        type: "arrowclosed" as any,
-                        color: parentNode.data?.myColor || "#3b82f6",
-                    },
-                };
-                this.onEdgesChange([{ type: "add", item: edge }]);
-            }
-
-            // Generate AI content
-            const lastTwoLayouts = this.getLastTwoLayouts();
-            const aiResult = await generateNodeContent(
-                request.title,
-                request.description,
-                "default",
-                lastTwoLayouts
-            );
-
-            // Track layout
-            this.addLayout(aiResult.layout);
-
-            // Update node with AI content
-            this.setNodes((nodes) =>
-                nodes.map((node) => {
-                    if (node.id === nodeId) {
-                        return {
-                            ...node,
-                            data: {
-                                ...node.data,
-                                title: aiResult.title,
-                                full_text: aiResult.fullText,
-                                suggestions: aiResult.suggestions,
-                                layout: aiResult.layout,
-                                contents: aiResult.content,
-                                isLoading: false,
-                                icon: aiResult.icon,
-                            },
-                        };
-                    }
-                    return node;
-                })
+            // Use handleTokenClick to create the node
+            const result = handleTokenClick(
+                { word: request.title }, // Token with the title
+                sourceNode.id, // Source node ID
+                sourcePosition, // Source position
+                "draggableEditable", // Source node type
+                this.nodes,
+                this.setNodes,
+                this.onNodesChange,
+                this.onEdgesChange,
+                sourceNode.data?.myColor, // Source node color
+                request.description, // Source node text (context for AI)
+                undefined, // suggestion ID
+                false, // not an input
+                undefined, // input node
+                "default", // input mode
+                this.saveCallback,
+                this.getLastTwoLayouts,
+                this.addLayout
             );
 
             return {
-                node: initialNode,
-                edge,
-                success: true,
+                success: !!result,
+                error: result ? undefined : "Failed to create node",
             };
         } catch (error) {
             console.error("Node creation failed:", error);
             return {
-                node: {} as Node,
                 success: false,
                 error: error instanceof Error ? error.message : "Unknown error",
             };
@@ -167,15 +125,12 @@ export class NodeCreationService {
     }
 
     /**
-     * Create a concept map node with specific layout
+     * Create a concept map node
      */
     async createConceptMap(
         request: NodeCreationRequest
     ): Promise<NodeCreationResult> {
-        return this.createKnowledgeNode({
-            ...request,
-            layout: 4, // Mind map layout
-        });
+        return this.createKnowledgeNode(request);
     }
 
     /**
@@ -184,10 +139,7 @@ export class NodeCreationService {
     async createFlowchart(
         request: NodeCreationRequest
     ): Promise<NodeCreationResult> {
-        return this.createKnowledgeNode({
-            ...request,
-            layout: 3, // Flowchart layout
-        });
+        return this.createKnowledgeNode(request);
     }
 
     /**
