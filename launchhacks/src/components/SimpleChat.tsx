@@ -1,8 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
-import { askAIStream } from "../services/aiService";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Bot, Loader2, User, Send } from "lucide-react";
+import {
+    askAIStream,
+    NODE_CREATION_TOOLS,
+    ToolCall,
+} from "../services/aiService";
 import { saveChatConversation } from "../services/chatService";
 import { useAuth } from "../hooks/useAuth";
+import { NodeCreationService } from "../services/nodeCreationService";
+import { ToolExecutor } from "../services/toolExecutor";
+import { Node } from "reactflow";
 
 interface Message {
     id: string;
@@ -13,22 +20,67 @@ interface Message {
 
 interface SimpleChatProps {
     className?: string;
-    currentBoardId?: string; // Add currentBoardId prop
-    currentBoardName?: string; // Add board name for display
+    currentBoardId?: string;
+    currentBoardName?: string;
+    // Node management props
+    nodes?: Node[];
+    setNodes?: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
+    onNodesChange?: (changes: any) => void;
+    onEdgesChange?: (changes: any) => void;
+    getLastTwoLayouts?: () => number[];
+    addLayout?: (layout: number) => void;
 }
 
 const SimpleChat: React.FC<SimpleChatProps> = ({
     className = "",
     currentBoardId,
     currentBoardName = "Current Board",
+    nodes = [],
+    setNodes,
+    onNodesChange,
+    onEdgesChange,
+    getLastTwoLayouts,
+    addLayout,
 }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [enableTools, setEnableTools] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const { user } = useAuth();
+
+    // Create tool executor when node management props are available
+    const toolExecutor = useMemo(() => {
+        if (
+            !setNodes ||
+            !onNodesChange ||
+            !onEdgesChange ||
+            !getLastTwoLayouts ||
+            !addLayout
+        ) {
+            return null;
+        }
+
+        const nodeCreationService = new NodeCreationService(
+            nodes,
+            setNodes,
+            onNodesChange,
+            onEdgesChange,
+            getLastTwoLayouts,
+            addLayout
+        );
+
+        return new ToolExecutor(nodeCreationService);
+    }, [
+        nodes,
+        setNodes,
+        onNodesChange,
+        onEdgesChange,
+        getLastTwoLayouts,
+        addLayout,
+    ]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,6 +115,20 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
         // Track the assistant's response content for saving
         let assistantResponseContent = "";
 
+        // Tool call handler
+        const handleToolCall = async (toolCall: ToolCall): Promise<string> => {
+            if (!toolExecutor) {
+                throw new Error(
+                    "Node creation tools not available - missing board management"
+                );
+            }
+
+            // Update the node creation service with current nodes
+            toolExecutor.nodeCreationService.updateNodes(nodes);
+
+            return await toolExecutor.executeTool(toolCall);
+        };
+
         try {
             await askAIStream(
                 userMessageContent,
@@ -95,7 +161,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             await saveChatConversation(
                                 userMessageContent,
                                 assistantResponseContent,
-                                currentBoardId, // Use currentBoardId instead of sessionId
+                                currentBoardId,
                                 user?.uid
                             );
                             console.log(
@@ -115,7 +181,6 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             "❌ Error saving chat conversation:",
                             error
                         );
-                        // Don't show error to user as the chat functionality still works
                     } finally {
                         setIsSaving(false);
                     }
@@ -139,12 +204,11 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                     setIsLoading(false);
 
                     // Still save the conversation even if there was an error
-                    // This helps track failed attempts
                     if (currentBoardId) {
                         saveChatConversation(
                             userMessageContent,
                             errorMessage,
-                            currentBoardId, // Use currentBoardId instead of sessionId
+                            currentBoardId,
                             user?.uid
                         ).catch((saveError) => {
                             console.error(
@@ -153,6 +217,13 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             );
                         });
                     }
+                },
+                // options - enable tools if available
+                {
+                    enableTools: enableTools && !!toolExecutor,
+                    availableTools: NODE_CREATION_TOOLS,
+                    onToolCall: handleToolCall,
+                    currentBoardId: currentBoardId,
                 }
             );
         } catch (error) {
@@ -177,7 +248,7 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                 saveChatConversation(
                     userMessageContent,
                     errorMessage,
-                    currentBoardId, // Use currentBoardId instead of sessionId
+                    currentBoardId,
                     user?.uid
                 ).catch((saveError) => {
                     console.error(
@@ -215,6 +286,17 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             Ask me anything and I'll help you with streaming
                             responses!
                         </p>
+                        {toolExecutor && (
+                            <div className="mt-3 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                    🔧 Node Creation Tools Enabled
+                                </p>
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                                    I can create knowledge nodes, concept maps,
+                                    and flowcharts for you!
+                                </p>
+                            </div>
+                        )}
                         {currentBoardId ? (
                             <div className="mt-4 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                                 <p className="text-xs font-medium text-purple-700 dark:text-purple-300">
@@ -246,47 +328,58 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
                             message.role === "user" ? "flex-row-reverse" : ""
                         }`}
                     >
-                        {/* Avatar */}
+                        {/* Enhanced Avatar */}
                         <div
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
                                 message.role === "user"
-                                    ? "bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
-                                    : "bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
+                                    ? "bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 text-white"
+                                    : "bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white"
                             }`}
                         >
                             {message.role === "user" ? (
-                                <User className="w-4 h-4" />
+                                <User className="w-5 h-5" />
                             ) : (
-                                <Bot className="w-4 h-4" />
+                                <Bot className="w-5 h-5" />
                             )}
                         </div>
 
                         {/* Message Content */}
                         <div
-                            className={`flex-1 max-w-xs sm:max-w-md ${
+                            className={`flex-1 max-w-xs sm:max-w-md lg:max-w-lg ${
                                 message.role === "user" ? "text-right" : ""
                             }`}
                         >
                             <div
-                                className={`inline-block px-4 py-2 rounded-lg ${
+                                className={`inline-block px-4 py-3 rounded-2xl shadow-sm ${
                                     message.role === "user"
-                                        ? "bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
-                                        : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-                                } relative`}
+                                        ? "bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 text-white rounded-tr-md"
+                                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-tl-md"
+                                } relative group`}
                             >
-                                <p className="text-sm whitespace-pre-wrap break-words">
+                                {/* Message Text */}
+                                <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                                     {message.content}
                                     {message.isStreaming && (
-                                        <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
+                                        <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse rounded-sm" />
                                     )}
-                                </p>
+                                </div>
                             </div>
 
                             {message.role === "assistant" &&
                                 message.isStreaming && (
-                                    <div className="flex items-center gap-1 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                        <span>AI is typing...</span>
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-1">
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            <span>AI is thinking...</span>
+                                        </div>
+                                        {toolExecutor && enableTools && (
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                                <span className="text-emerald-600 dark:text-emerald-400">
+                                                    Tools Ready
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                         </div>
@@ -298,41 +391,126 @@ const SimpleChat: React.FC<SimpleChatProps> = ({
 
             {/* Chat Input */}
             <div className="border-t border-purple-200 dark:border-purple-800 p-4">
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Type your message..."
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-2 border border-purple-200 dark:border-purple-700 rounded-lg 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                                 disabled:opacity-50 disabled:cursor-not-allowed
-                                 placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                {/* Tools Toggle */}
+                {toolExecutor && (
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Node Creation Tools:
+                            </span>
+                            <button
+                                onClick={() => setEnableTools(!enableTools)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
+                                    enableTools
+                                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md"
+                                        : "bg-gray-300 dark:bg-gray-600"
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-sm ${
+                                        enableTools
+                                            ? "translate-x-6"
+                                            : "translate-x-1"
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                        {enableTools && (
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                    Tools Active
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Input Area */}
+                <div className="flex items-end gap-2">
+                    <div className="flex-1 relative">
+                        <textarea
+                            ref={inputRef}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type your message..."
+                            disabled={isLoading}
+                            rows={1}
+                            className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-2xl 
+                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                     focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                                     disabled:opacity-50 disabled:cursor-not-allowed
+                                     placeholder-gray-500 dark:placeholder-gray-400
+                                     resize-none min-h-[50px] max-h-32
+                                     shadow-sm transition-all duration-200"
+                            style={{
+                                height: "auto",
+                                minHeight: "50px",
+                            }}
+                            onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height =
+                                    Math.min(target.scrollHeight, 128) + "px";
+                            }}
+                        />
+
+                        {/* Character counter for longer messages */}
+                        {input.length > 100 && (
+                            <div className="absolute bottom-1 right-14 text-xs text-gray-400">
+                                {input.length}
+                            </div>
+                        )}
+                    </div>
+
                     <button
-                        type="submit"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleSubmit(e as any);
+                        }}
                         disabled={!input.trim() || isLoading}
-                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 
+                        className="p-3 bg-gradient-to-r from-purple-600 to-indigo-600 
                                  hover:from-purple-700 hover:to-indigo-700
                                  disabled:from-gray-400 disabled:to-gray-500
-                                 text-white rounded-lg transition-all duration-200
-                                 disabled:cursor-not-allowed flex items-center justify-center
-                                 min-w-[44px]"
+                                 text-white rounded-2xl transition-all duration-200
+                                 disabled:cursor-not-allowed shadow-md hover:shadow-lg
+                                 transform hover:scale-105 active:scale-95
+                                 min-w-[50px] min-h-[50px] flex items-center justify-center"
                     >
                         {isLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                            <Send className="w-4 h-4" />
+                            <Send className="w-5 h-5" />
                         )}
                     </button>
-                </form>
+                </div>
+
+                {/* Quick suggestions for tool usage */}
+                {toolExecutor && enableTools && input.length === 0 && (
+                    <div className="flex flex-wrap gap-2 px-1 mt-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            Try:
+                        </span>
+                        {[
+                            "Create a concept map about...",
+                            "Make a flowchart for...",
+                            "Build a knowledge node on...",
+                        ].map((suggestion, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setInput(suggestion)}
+                                className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 
+                                         rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                {suggestion}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Status indicators */}
-                <div className="flex items-center justify-center mt-2 min-h-[20px]">
+                <div className="flex items-center justify-center mt-3 min-h-[20px]">
                     {isSaving && (
                         <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                             <Loader2 className="w-3 h-3 animate-spin" />

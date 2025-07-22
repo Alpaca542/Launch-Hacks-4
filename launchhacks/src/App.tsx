@@ -442,6 +442,12 @@ function AppContent() {
                     className="h-full"
                     currentBoardId={currentBoard?.id}
                     currentBoardName={currentBoard?.name}
+                    nodes={nodes}
+                    setNodes={setNodes}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    getLastTwoLayouts={getLastTwoLayouts}
+                    addLayout={addLayout}
                 />
             </RightSidePanel>
 

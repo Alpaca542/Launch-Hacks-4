@@ -186,7 +186,9 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
     let html = `
         <div class="layout-1">
             <div class="layout-header">
-                <h2 class="layout-title">${title || "Educational Topic"}</h2>
+                <h2 class="layout-title">${renderMarkdown(
+                    title || "Educational Topic"
+                )}</h2>
                 <div class="layout-textbar">${renderMarkdown(
                     textbar || "Content description"
                 )}</div>
@@ -534,9 +536,9 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
         let html = `
             <div class="layout-7">
                 <div class="layout-hero-header">
-                    <h2 class="layout-hero-title">${
+                    <h2 class="layout-hero-title">${renderMarkdown(
                         title || "Educational Topic"
-                    }</h2>
+                    )}</h2>
                 </div>
                 <div class="layout-content-grid">
                     <div class="layout-visual-section">
@@ -587,9 +589,9 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
         let html = `
             <div class="layout-7">
                 <div class="layout-hero-header">
-                    <h2 class="layout-hero-title">${
+                    <h2 class="layout-hero-title">${renderMarkdown(
                         title || "Educational Topic"
-                    }</h2>
+                    )}</h2>
                 </div>
                 <div class="layout-content-grid">
                     <div class="layout-visual-section">
@@ -1132,17 +1134,25 @@ async function parseLayout16(content: any[], _nodeId: string): Promise<string> {
                 const imageUrl = await fetchImage(imagePrompt);
                 html += `
                     <div class="layout-card">
-                        <h3 class="layout-card-title">${cardTitle}</h3>
+                        <h3 class="layout-card-title">${renderMarkdown(
+                            cardTitle
+                        )}</h3>
                         <img class="layout-card-image" src="${imageUrl}" alt="${cardTitle}" />
-                        <p class="layout-card-description">${cardDescription}</p>
+                        <p class="layout-card-description">${renderMarkdown(
+                            cardDescription
+                        )}</p>
                     </div>
                 `;
             } catch (error) {
                 html += `
                     <div class="layout-card">
-                        <h3 class="layout-card-title">${cardTitle}</h3>
+                        <h3 class="layout-card-title">${renderMarkdown(
+                            cardTitle
+                        )}</h3>
                         <div class="image-error">Error loading image</div>
-                        <p class="layout-card-description">${cardDescription}</p>
+                        <p class="layout-card-description">${renderMarkdown(
+                            cardDescription
+                        )}</p>
                     </div>
                 `;
             }
@@ -1234,7 +1244,9 @@ async function parseLayout17(content: any[], _nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-17">
-                <h2 class="layout-title">${title || "Code Tutorial"}</h2>
+                <h2 class="layout-title">${renderMarkdown(
+                    title || "Code Tutorial"
+                )}</h2>
                 
                 <div class="layout-code-section">
                     <pre class="layout-code-block language-${lang1}"><code class="language-${lang1}">${cleanCode1}</code></pre>
@@ -1350,7 +1362,9 @@ async function parseLayout18(content: any[], _nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-18">
-                <h2 class="layout-title">${title || "API Documentation"}</h2>
+                <h2 class="layout-title">${renderMarkdown(
+                    title || "API Documentation"
+                )}</h2>
                 
                 <div class="layout-api-section">
                     <div class="layout-code-container">

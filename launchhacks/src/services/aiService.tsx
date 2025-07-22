@@ -80,11 +80,143 @@ const askAI = async (message: string): Promise<any> => {
     }
 };
 
+// Tool definitions for OpenAI function calling
+export interface OpenAITool {
+    type: "function";
+    function: {
+        name: string;
+        description: string;
+        parameters: {
+            type: "object";
+            properties: Record<string, any>;
+            required: string[];
+        };
+    };
+}
+
+export interface ToolCall {
+    id: string;
+    type: "function";
+    function: {
+        name: string;
+        arguments: string;
+    };
+}
+
+export interface AIStreamOptions {
+    enableTools?: boolean;
+    availableTools?: OpenAITool[];
+    onToolCall?: (toolCall: ToolCall) => Promise<string>;
+    currentBoardId?: string;
+}
+
+// Define available tools for node creation
+export const NODE_CREATION_TOOLS: OpenAITool[] = [
+    {
+        type: "function",
+        function: {
+            name: "create_knowledge_node",
+            description:
+                "Creates a detailed knowledge node with AI-generated content about a specific topic",
+            parameters: {
+                type: "object",
+                properties: {
+                    title: {
+                        type: "string",
+                        description: "The title/topic for the knowledge node",
+                    },
+                    description: {
+                        type: "string",
+                        description:
+                            "A detailed description or context for the knowledge node content",
+                    },
+                    layout: {
+                        type: "number",
+                        description:
+                            "Optional layout type (1-18), defaults to AI selection",
+                    },
+                    position: {
+                        type: "object",
+                        properties: {
+                            x: { type: "number" },
+                            y: { type: "number" },
+                        },
+                        description: "Optional position for the node",
+                    },
+                    parentNodeId: {
+                        type: "string",
+                        description:
+                            "ID of parent node to connect to (optional)",
+                    },
+                },
+                required: ["title", "description"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "create_concept_map",
+            description:
+                "Creates a mind map/concept map node showing relationships between concepts",
+            parameters: {
+                type: "object",
+                properties: {
+                    title: {
+                        type: "string",
+                        description: "The central concept for the mind map",
+                    },
+                    description: {
+                        type: "string",
+                        description:
+                            "Description of the concept and related topics to include",
+                    },
+                    parentNodeId: {
+                        type: "string",
+                        description:
+                            "ID of parent node to connect to (optional)",
+                    },
+                },
+                required: ["title", "description"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
+            name: "create_flowchart",
+            description:
+                "Creates a process flowchart node showing step-by-step workflows or procedures",
+            parameters: {
+                type: "object",
+                properties: {
+                    title: {
+                        type: "string",
+                        description: "The process name for the flowchart",
+                    },
+                    description: {
+                        type: "string",
+                        description:
+                            "Description of the process steps and workflow",
+                    },
+                    parentNodeId: {
+                        type: "string",
+                        description:
+                            "ID of parent node to connect to (optional)",
+                    },
+                },
+                required: ["title", "description"],
+            },
+        },
+    },
+];
+
 export const askAIStream = async (
     message: string,
     onChunk: (chunk: string) => void,
     onComplete?: () => void,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    options?: AIStreamOptions
 ): Promise<void> => {
     try {
         // Add validation
@@ -98,20 +230,45 @@ export const askAIStream = async (
             throw new Error("Message cannot be empty or just whitespace");
         }
 
+        // Prepare the message payload for the Firebase function
+        const payload: any = {
+            message: trimmedMessage,
+        };
+
+        // Add tools if enabled
+        if (options?.enableTools && options?.availableTools) {
+            payload.tools = options.availableTools;
+            payload.tool_choice = "auto"; // Let OpenAI decide when to use tools
+        }
+
         const openaiChatFunction = httpsCallable(functions, "groqChat");
 
-        // Enable streaming for this call
-        const result = await openaiChatFunction({
-            message: trimmedMessage,
-        });
+        // Make the API call
+        const result = await openaiChatFunction(payload);
 
-        // Handle the streaming response
+        // Handle the response
         if (result.data && (result.data as any).response) {
-            // If we get a complete response (fallback for non-streaming)
-            const response = (result.data as any).response;
+            const responseData = result.data as any;
 
-            // Simulate streaming by breaking the response into chunks
+            // Check if there are tool calls in the response
+            if (responseData.tool_calls && options?.onToolCall) {
+                for (const toolCall of responseData.tool_calls) {
+                    try {
+                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
+                        const toolResult = await options.onToolCall(toolCall);
+                        onChunk(`✅ ${toolResult}\n`);
+                    } catch (toolError) {
+                        console.error("Tool execution error:", toolError);
+                        onChunk(`❌ Tool execution failed: ${toolError}\n`);
+                    }
+                }
+            }
+
+            // Stream the main response content
+            const response =
+                responseData.response || responseData.content || "";
             const words = response.split(" ");
+
             for (let i = 0; i < words.length; i++) {
                 const chunk = words[i] + (i < words.length - 1 ? " " : "");
                 onChunk(chunk);
