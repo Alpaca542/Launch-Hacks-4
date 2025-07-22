@@ -4,7 +4,7 @@ import { logger } from "firebase-functions/v2";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-    apiKey: "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",
+    apiKey: "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",
 });
 
 export const groqChat = onCall(

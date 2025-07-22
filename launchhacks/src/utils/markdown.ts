@@ -12,6 +12,8 @@ const converter = new Showdown.Converter({
     backslashEscapesHTMLTags: true,
     ghCodeBlocks: true,
     tasklists: true,
+    // Showdown supports _text_ for italics by default
+    // literalMidWordUnderscores: false, // (default)
 });
 
 export function renderMarkdown(text: string): string {
@@ -21,9 +23,8 @@ export function renderMarkdown(text: string): string {
 
 export function stripMarkdown(text: string): string {
     if (!text) return "";
-    // Remove common markdown formatting for plain text use
     return text
-        .replace(/[#*_`~]/g, "")
+        .replace(/[#*`~_]/g, "")
         .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
         .replace(/\n+/g, " ")
         .trim();

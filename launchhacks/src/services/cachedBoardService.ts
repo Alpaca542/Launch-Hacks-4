@@ -93,8 +93,8 @@ export const saveNodesToBoard = async (
 ): Promise<void> => {
     await originalSaveNodesToBoard(boardId, nodesToSave);
 
-    // Update cache with new data
-    cacheService.set("nodes", boardId, nodesToSave, CACHE_TTL.NODES);
+    // Update cache with new data (even if empty array)
+    cacheService.set("nodes", boardId, nodesToSave || [], CACHE_TTL.NODES);
 };
 
 /**
@@ -106,8 +106,8 @@ export const saveEdgesToBoard = async (
 ): Promise<void> => {
     await originalSaveEdgesToBoard(boardId, edgesToSave);
 
-    // Update cache with new data
-    cacheService.set("edges", boardId, edgesToSave, CACHE_TTL.EDGES);
+    // Update cache with new data (even if empty array)
+    cacheService.set("edges", boardId, edgesToSave || [], CACHE_TTL.EDGES);
 };
 
 /**
@@ -118,10 +118,15 @@ export const saveBoardContent = async (
     nodes: NodeData[],
     edges: EdgeData[]
 ): Promise<void> => {
+    console.log(`Saving board content for ${boardId}:`, {
+        nodeCount: (nodes || []).length,
+        edgeCount: (edges || []).length,
+    });
+
     // Save both in parallel
     await Promise.all([
-        saveNodesToBoard(boardId, nodes),
-        saveEdgesToBoard(boardId, edges),
+        saveNodesToBoard(boardId, nodes || []),
+        saveEdgesToBoard(boardId, edges || []),
     ]);
 };
 

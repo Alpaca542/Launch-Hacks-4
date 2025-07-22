@@ -80,6 +80,61 @@ const askAI = async (message: string): Promise<any> => {
     }
 };
 
+export const askAIStream = async (
+    message: string,
+    onChunk: (chunk: string) => void,
+    onComplete?: () => void,
+    onError?: (error: Error) => void
+): Promise<void> => {
+    try {
+        // Add validation
+        if (!message || typeof message !== "string") {
+            throw new Error("Message must be a non-empty string");
+        }
+
+        // Trim whitespace and check if message is empty after trimming
+        const trimmedMessage = message.trim();
+        if (!trimmedMessage) {
+            throw new Error("Message cannot be empty or just whitespace");
+        }
+
+        const openaiChatFunction = httpsCallable(functions, "groqChat");
+
+        // Enable streaming for this call
+        const result = await openaiChatFunction({
+            message: trimmedMessage,
+        });
+
+        // Handle the streaming response
+        if (result.data && (result.data as any).response) {
+            // If we get a complete response (fallback for non-streaming)
+            const response = (result.data as any).response;
+
+            // Simulate streaming by breaking the response into chunks
+            const words = response.split(" ");
+            for (let i = 0; i < words.length; i++) {
+                const chunk = words[i] + (i < words.length - 1 ? " " : "");
+                onChunk(chunk);
+                // Small delay to simulate streaming
+                await new Promise((resolve) => setTimeout(resolve, 50));
+            }
+
+            if (onComplete) {
+                onComplete();
+            }
+        }
+    } catch (err) {
+        console.error("Firebase streaming function error:", err);
+        console.error("Message sent:", message);
+        if (onError) {
+            onError(
+                err instanceof Error ? err : new Error("Unknown error occurred")
+            );
+        }
+        throw err;
+    }
+};
+
 export const askAiForSuggestions = async (
     message: string
 ): Promise<string[]> => {
@@ -118,9 +173,14 @@ export const askAIForIcon = async (message: string): Promise<string> => {
     }
 };
 
-export const askAiForLayout = async (message: string): Promise<number> => {
+export const askAiForLayout = async (
+    message: string,
+    lastTwoLayouts: number[] = []
+): Promise<number> => {
     try {
-        const response = await askAI(layoutPrompt(message, "default"));
+        const response = await askAI(
+            layoutPrompt(message, "default", lastTwoLayouts)
+        );
         console.log("Layout response:", response);
         // Clean the response to extract just the number
         const cleanedResponse = response.replace(/[^\d]/g, "");
@@ -141,14 +201,202 @@ export const askAiForLayout = async (message: string): Promise<number> => {
     }
 };
 
+/**
+ * Generate diagram description - what should be shown in the diagram
+ */
+const askAiForDiagramDescription = async (
+    message: string,
+    context: string,
+    layoutNumber: number
+): Promise<string> => {
+    try {
+        const diagramTypes = {
+            3: "flowchart/process diagram",
+            4: "mind map/concept map",
+            5: "pie chart/data visualization",
+            6: "quadrant chart/strategic framework",
+        };
+
+        const diagramType =
+            diagramTypes[layoutNumber as keyof typeof diagramTypes] ||
+            "diagram";
+
+        const prompt = `You are creating educational content. Generate a detailed description of what should be shown in a ${diagramType} for the concept: "${message}".
+
+Context: ${context}
+
+Requirements:
+- Describe the key elements that should appear in the diagram
+- Explain the relationships between elements
+- Specify the main flow or structure
+- Include 3-5 key components/nodes
+- Keep description comprehensive but focused (100-150 words)
+- Write in a clear, educational tone
+
+Return ONLY the description text, no JSON formatting or extra text.`;
+
+        const response = await askAI(prompt);
+        return response || `Description for ${diagramType} showing ${message}`;
+    } catch (error) {
+        console.error("Error fetching diagram description:", error);
+        return `Educational diagram showing ${message}`;
+    }
+};
+
+/**
+ * Generate actual Mermaid diagram string based on description
+ */
+const askAiForMermaidDiagram = async (
+    message: string,
+    context: string,
+    layoutNumber: number,
+    diagramDescription: string
+): Promise<string> => {
+    try {
+        const layouts = await import("./layouts");
+        const examples =
+            layouts.EXAMPLE_DIAGRAMS[
+                layoutNumber.toString() as keyof typeof layouts.EXAMPLE_DIAGRAMS
+            ];
+
+        const exampleDiagrams =
+            examples && Array.isArray(examples)
+                ? examples.slice(0, 2).join("\n\n--- EXAMPLE 2 ---\n\n")
+                : "";
+
+        const diagramTypes = {
+            3: "flowchart",
+            4: "mindmap",
+            5: "pie",
+            6: "quadrantChart",
+        };
+
+        const diagramType =
+            diagramTypes[layoutNumber as keyof typeof diagramTypes] ||
+            "flowchart";
+
+        const prompt = `Generate a valid Mermaid ${diagramType} diagram for the educational concept: "${message}".
+
+Context: ${context}
+Diagram Description: ${diagramDescription}
+
+EXAMPLES OF VALID ${diagramType.toUpperCase()} DIAGRAMS:
+${exampleDiagrams}
+
+REQUIREMENTS:
+- Generate ONLY a valid Mermaid ${diagramType} syntax
+- Use educational, clear node names (no generic A, B, C labels)
+- Include 4-7 meaningful elements
+- For flowcharts: use proper arrows and decision points
+- For mindmaps: use nested structure with ((root))
+- For pie charts: use meaningful categories with percentages
+- For quadrant charts: include axis labels and data points
+- Make it educational and relevant to "${message}"
+- NO explanatory text, just the diagram code
+
+Return ONLY the Mermaid diagram string, nothing else.`;
+
+        const response = await askAI(prompt);
+        console.log("Mermaid diagram response:", response);
+
+        // Clean the response to extract just the diagram
+        let cleanedDiagram = response
+            .replace(/```mermaid\s*\n?/gi, "")
+            .replace(/```\s*$/gi, "")
+            .trim();
+
+        // If response contains multiple potential diagrams, take the first one
+        const diagramMatch = cleanedDiagram.match(
+            /^(flowchart|mindmap|pie|quadrantChart)[\s\S]*?(?=\n\n|$)/
+        );
+        if (diagramMatch) {
+            cleanedDiagram = diagramMatch[0];
+        }
+
+        return cleanedDiagram || getDefaultDiagram(layoutNumber, message);
+    } catch (error) {
+        console.error("Error fetching Mermaid diagram:", error);
+        return getDefaultDiagram(layoutNumber, message);
+    }
+};
+
+/**
+ * Get a default diagram if AI generation fails
+ */
+const getDefaultDiagram = (layoutNumber: number, message: string): string => {
+    const defaults = {
+        3: `flowchart TD
+    A[${message}] --> B[Understanding]
+    B --> C[Application]
+    C --> D[Mastery]`,
+        4: `mindmap
+  root((${message}))
+    Key Concept 1
+    Key Concept 2
+    Key Concept 3`,
+        5: `pie
+    title ${message} Analysis
+    "Primary Aspect" : 50
+    "Secondary Aspect" : 30
+    "Other Aspects" : 20`,
+        6: `quadrantChart
+    title ${message} Framework
+    x-axis Low --> High
+    y-axis Simple --> Complex
+    quadrant-1 Basic
+    quadrant-2 Advanced
+    quadrant-3 Elementary
+    quadrant-4 Expert`,
+    };
+
+    return defaults[layoutNumber as keyof typeof defaults] || defaults[3];
+};
+
 export const askAiForContent = async (
     message: string,
     context: string,
     layoutNumber: number,
-    mode: string
+    _mode: string
 ): Promise<any[]> => {
     try {
-        // Import layouts directly instead of using dynamic import
+        // For diagram layouts (3-6), split into two requests
+        if (layoutNumber >= 3 && layoutNumber <= 6) {
+            console.log(
+                `Handling diagram layout ${layoutNumber} with split requests`
+            );
+
+            // Step 1: Get diagram description and explanation text concurrently
+            const [diagramDescription, explanationResponse] = await Promise.all(
+                [
+                    askAiForDiagramDescription(message, context, layoutNumber),
+                    askAI(`Generate a comprehensive educational explanation for "${message}" in the context: ${context}. 
+                      Provide 150-200 words of detailed, educational content explaining the concept thoroughly.
+                      Write in clear, engaging paragraphs with proper educational structure.
+                      Return ONLY the explanation text, no JSON formatting.`),
+                ]
+            );
+
+            console.log("Diagram description:", diagramDescription);
+            console.log("Explanation response:", explanationResponse);
+
+            // Step 2: Generate the actual Mermaid diagram
+            const mermaidDiagram = await askAiForMermaidDiagram(
+                message,
+                context,
+                layoutNumber,
+                diagramDescription
+            );
+
+            console.log("Generated Mermaid diagram:", mermaidDiagram);
+
+            // Return the content in the expected schema format
+            return [
+                mermaidDiagram,
+                explanationResponse || `Educational explanation for ${message}`,
+            ];
+        }
+
+        // For non-diagram layouts, use original logic
         const layouts = await import("./layouts");
         const schema =
             layouts.LAYOUT_SCHEMA[
@@ -158,8 +406,9 @@ export const askAiForContent = async (
         const schemaString = Array.isArray(schema)
             ? JSON.stringify(schema)
             : schema;
+
         const response = await askAI(
-            contentPrompt(context, message, mode, schemaString)
+            contentPrompt(context, message, schemaString, layoutNumber)
         );
         console.log("Content response:", response);
         const cleanedResponse = cleanJsonResponse(response);
@@ -187,7 +436,8 @@ export const askAiForContent = async (
 export const generateNodeContent = async (
     message: string,
     context: string = "",
-    mode: string = "default"
+    mode: string = "default",
+    lastTwoLayouts: number[] = []
 ): Promise<{
     layout: number;
     content: any[];
@@ -198,7 +448,7 @@ export const generateNodeContent = async (
 }> => {
     try {
         // Step 1: Get layout recommendation first (needed for content)
-        const layout = await askAiForLayout(message);
+        const layout = await askAiForLayout(message, lastTwoLayouts);
         console.log("Selected layout:", layout);
 
         // Step 2: Make all remaining calls concurrently
@@ -218,7 +468,7 @@ export const generateNodeContent = async (
             suggestions,
             icon,
             title: message,
-            fullText: message, // The content IS the educational part, not separate text
+            fullText: message,
         };
     } catch (error) {
         console.error("Error in generateNodeContent:", error);

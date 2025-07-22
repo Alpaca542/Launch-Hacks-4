@@ -38,6 +38,8 @@ interface TokenInteractionProviderProps {
     onEdgesChange: (changes: any) => void;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
     saveCallback?: () => Promise<void>;
+    getLastTwoLayouts?: () => number[];
+    addLayout?: (layout: number) => void;
 }
 
 export const handleTokenClick = (
@@ -55,7 +57,9 @@ export const handleTokenClick = (
     isInput?: boolean,
     inputNode?: Node,
     inputMode?: string,
-    saveCallback?: () => Promise<void>
+    saveCallback?: () => Promise<void>,
+    getLastTwoLayouts?: () => number[],
+    addLayout?: (layout: number) => void
 ) => {
     console.log(1);
     const sourceNode = nodes.find((node) => node.id === sourceNodeId);
@@ -162,15 +166,23 @@ export const handleTokenClick = (
     }
 
     // Always ask AI for concept and update node when response arrives
+    const lastTwoLayouts = getLastTwoLayouts ? getLastTwoLayouts() : [];
+
     generateNodeContent(
         token.myConcept || token.word,
         sourceNodeText || "",
-        inputMode || "default"
+        inputMode || "default",
+        lastTwoLayouts
     )
         .then(async (result) => {
             console.log("AI Response received:", result);
             console.log("Selected layout:", result.layout);
             console.log("Content array:", result.content);
+
+            // Track the layout that was chosen
+            if (addLayout) {
+                addLayout(result.layout);
+            }
 
             // Parse the layout content to HTML (now waits for all media to load)
             const { html } = await parseLayoutContent(
@@ -269,6 +281,8 @@ export const TokenInteractionProvider: React.FC<
     onEdgesChange,
     setNodes,
     saveCallback,
+    getLastTwoLayouts,
+    addLayout,
 }) => {
     // Replace local handleTokenClick with a wrapper that calls the exported function
     const handleTokenClickWrapper = (
@@ -298,7 +312,9 @@ export const TokenInteractionProvider: React.FC<
             isInput,
             inputNode,
             inputMode,
-            saveCallback
+            saveCallback,
+            getLastTwoLayouts,
+            addLayout
         );
 
     return (

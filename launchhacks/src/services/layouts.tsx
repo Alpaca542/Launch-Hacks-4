@@ -11,6 +11,137 @@
  * 12-16: Advanced layouts (timelines, cards, comprehensive topics)
  */
 
+// Example diagram templates for AI to build upon
+export const EXAMPLE_DIAGRAMS = {
+    "3": [
+        `flowchart TD
+    A[Problem Identification] -->|Analysis| B(Data Collection)
+    B --> C{Decision Point}
+    C -->|Option 1| D[Solution A]
+    C -->|Option 2| E[Solution B]
+    C -->|Complex Case| F[fa:fa-cogs Advanced Process]`,
+
+        `flowchart LR
+    Start([Beginning]) --> Process1[Step One]
+    Process1 --> Process2[Step Two]
+    Process2 --> Decision{Is Complete?}
+    Decision -->|Yes| End([Finish])
+    Decision -->|No| Process1`,
+
+        `flowchart TB
+    Input[User Input] --> Validate{Valid?}
+    Validate -->|No| Error[Display Error]
+    Validate -->|Yes| Process[Process Data]
+    Process --> Store[(Database)]
+    Store --> Output[Show Result]
+    Error --> Input`,
+    ],
+    "4": [
+        `mindmap
+  root((Learning Strategy))
+    Visual Learning
+      Diagrams
+      Charts
+      Infographics
+    Auditory Learning
+      Lectures
+      Discussions
+      Music
+    Kinesthetic Learning
+      Hands-on Activities
+      Movement
+      Practice`,
+
+        `mindmap
+  root((Project Management))
+    Planning
+      Requirements
+      Timeline
+      Resources
+    Execution
+      Team Coordination
+      Task Management
+      Quality Control
+    Review
+      Testing
+      Feedback
+      Optimization`,
+
+        `mindmap
+  root((Innovation Process))
+    Research
+      Market Analysis
+      User Needs
+      Technology Trends
+    Ideation
+      Brainstorming
+      Prototyping
+      Testing
+    Implementation
+      Development
+      Launch
+      Iteration`,
+    ],
+    "5": [
+        `pie
+    title Learning Preferences
+    "Visual Learners" : 65
+    "Auditory Learners" : 20
+    "Kinesthetic Learners" : 15`,
+
+        `pie
+    title Project Time Distribution
+    "Development" : 50
+    "Testing" : 25
+    "Planning" : 15
+    "Documentation" : 10`,
+
+        `pie
+    title Market Share Analysis
+    "Leader" : 40
+    "Challenger" : 30
+    "Follower" : 20
+    "Niche Player" : 10`,
+    ],
+    "6": [
+        `quadrantChart
+    title Priority Matrix
+    x-axis Low Effort --> High Effort
+    y-axis Low Impact --> High Impact
+    quadrant-1 Quick Wins
+    quadrant-2 Major Projects
+    quadrant-3 Fill-ins
+    quadrant-4 Thankless Tasks
+    "Task A": [0.2, 0.8]
+    "Task B": [0.7, 0.9]
+    "Task C": [0.3, 0.3]`,
+
+        `quadrantChart
+    title Skills Assessment
+    x-axis Beginner --> Expert
+    y-axis Low Demand --> High Demand
+    quadrant-1 Develop
+    quadrant-2 Leverage
+    quadrant-3 Maintain
+    quadrant-4 Focus
+    "JavaScript": [0.8, 0.9]
+    "Python": [0.6, 0.7]
+    "Design": [0.4, 0.8]`,
+
+        `quadrantChart
+    title Market Position
+    x-axis Low Price --> High Price
+    y-axis Low Quality --> High Quality
+    quadrant-1 Economy
+    quadrant-2 Premium
+    quadrant-3 Budget
+    quadrant-4 Value
+    "Product A": [0.3, 0.7]
+    "Product B": [0.8, 0.8]
+    "Product C": [0.2, 0.4]`,
+    ],
+};
+
 export const LAYOUT_TYPES = {
     "1": "Hero visual with comprehensive explanation - large image with detailed educational content",
     "2": "Step-by-step visual guide - multiple images with substantial explanations for each step",

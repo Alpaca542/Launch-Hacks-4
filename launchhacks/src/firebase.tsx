@@ -26,7 +26,6 @@ export const auth: Auth = getAuth(app);
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 export const functions = getFunctions(app, "us-central1");
 
-// Connect to Functions emulator in development
-// if (true) {
-//     connectFunctionsEmulator(functions, "localhost", 5001);
-// }
+if (true) {
+    connectFunctionsEmulator(functions, "localhost", 5001);
+}

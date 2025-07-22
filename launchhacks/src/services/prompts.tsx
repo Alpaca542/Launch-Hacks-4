@@ -1,48 +1,58 @@
 import { LAYOUT_TYPES } from "./layouts";
+
+// Build a layout‑aware prompt for the educational‑content model
 export const contentPrompt = (
-    context: string,
     message: string,
-    explanation_mode: string,
-    LAYOUT_SCHEMA: string
-): string => {
-    return `You are an expert educational designer who creates comprehensive, visually-enhanced learning content.
-    Return ONLY a valid array. Do not include markdown formatting, code blocks, or any text before or after the array.
-        
-        EDUCATIONAL CONTENT RULES:
-        • COMPREHENSIVE: Each node should contain 100+ words of educational content total
-        • WELL-STRUCTURED: Use proper paragraphs, clear explanations, and logical flow
-        • VISUAL BALANCE: Combine substantial text with compelling visuals
-        • EDUCATIONAL DEPTH: Explain concepts thoroughly with examples, context, and details
-        • ENGAGING WRITING: Use clear, engaging language that teaches effectively
-        
-        TEXT GUIDELINES:
-        • Titles: Clear, educational (3-8 words)
-        • Paragraphs: Full explanations (3-5 sentences each, 20-40 words per sentence)
-        • Descriptions: Detailed and informative (2-3 sentences minimum)
-        • Content should flow logically and build understanding progressively
-        • Markdown should be used for formatting
+    context: string,
+    LAYOUT_SCHEMA: string,
+    layout: number
+) => `
+You are creating educational content. **Return ONLY a valid JSON _array_ — no extra text.**
 
-        IMAGE PROMPTS:
-        • Educational and specific: "Detailed diagram of photosynthesis process in plant cells"
-        • Include visual style: "realistic scientific illustration", "clean educational diagram"
-        • Support the educational content meaningfully
-        
-        CONTENT BALANCE:
-        • 60% substantial educational text
-        • 40% compelling visuals that enhance learning
-        • Ensure minimum 100 words total per node
-        • Use markdown formatting in text (headings, bold, italics where appropriate)
-        
-        OUTPUT FORMAT:
-        Return ONLY a valid array based on the SCHEMA. Follow the exact structure.
-        NO markdown code blocks, NO extra text.
-        RETURN AN ARRAY [] - NOT AN OBJECT!
+════════════════════════════════════════
+GLOBAL GUIDELINES
+════════════════════════════════════════
+• **Comprehensive** – ≥100 words per node  
+• **Well‑structured** – 3–5 sentences per paragraph (20–40 words each)  
+• **Visual balance** – 70% rich markdown text, 30% visuals  
+• **Educational depth** – thorough explanations, concrete examples  
+• **Engaging writing** – heavy markdown (**bold**, *italic*, ## headers, - lists)
 
-        CONCEPT: ${message}
-        CONTEXT: ${context}
-        REMEMBER: THIS IS REALLY IMPORTANT 🚨: Focus strictly on the main topic. The provided context should be used only to clarify the topic or provide concrete examples — not as the focus of the explanation. If the context is irrelevant or distracting, ignore it entirely
-        SCHEMA: ${LAYOUT_SCHEMA}`;
-};
+════════════════════════════════════════
+LAYOUT‑SPECIFIC RULES
+════════════════════════════════════════
+${
+    layout === 12
+        ? `FOR LAYOUT 12 → Return exactly ["image_prompt", ["insight1", "insight2", "insight3", "insight4"]] — each insight 40–50 words.`
+        : ""
+}
+${
+    layout === 15
+        ? `FOR TIMELINE 15 → [date1, image_prompt1, description1, …] — 4–8 items, 2–3 sentences per description.`
+        : ""
+}
+${
+    [3, 4, 5, 6].includes(layout)
+        ? `FOR DIAGRAM 3 / 4 / 5 / 6 → First array element **MUST BE A VALID MERMAID diagram string** (e.g. \`flowchart TD ...\`). NOT A DESCRIPTION, A VALID DIAGRAM`
+        : ""
+}
+${layout === 14 ? `FOR LAYOUT 14 → Keep descriptions 2–3 sentences.` : ""}
+${layout === 2 ? `FOR LAYOUT 2  → Keep descriptions 2–3 sentences.` : ""}
+
+
+IMAGE PROMPTS
+• Educational, specific, with style & medium  
+  e.g. “Detailed illustration of photosynthesis in chloroplasts, realistic scientific style”
+
+OUTPUT FORMAT (STRICT)
+• Return **only** a JSON array \`[]\`.  
+• Never nest objects inside the array (arrays only).  
+• Absolutely no prose, markdown, or code fences outside the array.
+
+CONCEPT: ${message}
+CONTEXT: ${context}
+SCHEMA: ${LAYOUT_SCHEMA}
+`;
 
 // ========================================================================
 // Prompt for generating suggestions for next concepts
@@ -70,32 +80,38 @@ export const suggestionsPrompt = (message: string, inputMode: string) => {
             return template(3, 5);
     }
 };
-// Generate a single icon for the concept "${message}".
-//         - Use a simple, recognizable style.
-//         - Ensure it visually represents the concept.
-//         - Return ONLY the icon URL as a string.
-export const iconPrompt = (message: string, inputMode: string) => {
-    return `RETURN ONLY THE FA ICON CORRESPONDING TO THE CONCEPT: "${message}". EXAMPLE: <i class="fas fa-check"></i>`;
+
+export const iconPrompt = (message: string, _inputMode: string) => {
+    return `RETURN ONLY THE FA ICON CORRESPONDING TO THE CONCEPT: "${message}". EXAMPLE: <i class="fas fa-check"></i>. If no icon is suitable, return the closest match or a generic icon like <i class="fas fa-lightbulb"></i>. Do not return any text or explanation, just the icon HTML.`;
 };
 
 export const layoutPrompt = (
     message: string,
-    inputMode: string,
-    last_layout?: string
+    _inputMode: string,
+    lastTwoLayouts: number[] = []
 ) => {
+    const layoutHistoryText =
+        lastTwoLayouts.length > 0
+            ? `Last used layouts: ${lastTwoLayouts.join(", ")}`
+            : "No recent layout history available.";
+
     return `Choose the best educational layout for "${message}" - prioritize diversity and optimal content presentation.
         
-        Use diverse layouts for better user experience. If both layouts are suitable, prefer the one that is different from the last used layout. Last used layout: ${last_layout}.
+        ${layoutHistoryText}
+        
+        Use diverse layouts for better user experience. If multiple layouts are suitable, STRONGLY PREFER layouts that are NOT in the recent history.
         
         SELECTION CRITERIA:
+        • Layout Variety - Avoid recently used layouts (${lastTwoLayouts.join(
+            ", "
+        )})
         • Content Type Match: Which layout best fits the specific content structure?
         • Visual Balance: Optimal text-to-visual ratio for the topic
         • Learning Effectiveness: Best presentation for comprehension
-        • Layout Variety: Strongly prefer different layouts (avoid repeating same layout)
         
         PRIORITY LAYOUT SELECTION GUIDE:
         • **Technical/Programming topics**: Use layouts 17, 18 (code tutorials, API docs), 1, 8
-        • **Process/systems**: Use diagram layouts 3, 4, 5, 6
+        • **Process/systems**: Use diagram layouts 3, 4, 5(good for composition data), 6
         • **Comprehensive explanations**: Use hero layouts 1, 7, 12
         • **Step-by-step content**: Use layouts 2, 15 (timeline), 17 (code tutorial)
         • **Multi-aspect topics**: Use layouts 12, 13, 16
@@ -105,6 +121,9 @@ export const layoutPrompt = (
         • **Comparison content**: Use layouts 8, 16, 14
         
         DIVERSIFICATION RULES:
+        - PRIORITY #1: Prefer layouts not in recent history: ${lastTwoLayouts.join(
+            ", "
+        )}
         - Prioritize new code layouts (17, 18) for technical content
         - Rotate between different layout families
         - Match complexity of layout to complexity of content

@@ -258,11 +258,17 @@ export const saveNodesToBoard = async (
     boardId: string,
     nodesToSave: NodeData[]
 ): Promise<void> => {
-    if (!boardId || !nodesToSave?.length) {
+    if (!boardId || !Array.isArray(nodesToSave)) {
         console.warn("Invalid parameters for saving nodes:", {
             boardId,
-            nodesCount: nodesToSave?.length,
+            nodesToSave,
         });
+        return;
+    }
+
+    // If array is empty, still proceed to clear existing nodes (if that's the intent)
+    if (nodesToSave.length === 0) {
+        console.log("No nodes to save for board:", boardId);
         return;
     }
 
@@ -312,11 +318,17 @@ export const saveEdgesToBoard = async (
     boardId: string,
     edgesToSave: EdgeData[]
 ): Promise<void> => {
-    if (!boardId || !edgesToSave?.length) {
+    if (!boardId || !Array.isArray(edgesToSave)) {
         console.warn("Invalid parameters for saving edges:", {
             boardId,
-            edgesCount: edgesToSave?.length,
+            edgesToSave,
         });
+        return;
+    }
+
+    // If array is empty, still proceed (this is valid - means no edges)
+    if (edgesToSave.length === 0) {
+        console.log("No edges to save for board:", boardId);
         return;
     }
 

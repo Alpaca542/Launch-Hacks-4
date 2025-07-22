@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNodesState, useEdgesState, Node, Edge } from "reactflow";
+import {
+    useNodesState,
+    useEdgesState,
+    Node,
+    Edge,
+    useReactFlow,
+} from "reactflow";
 import { User } from "firebase/auth";
 
 import {
@@ -56,7 +62,6 @@ export const useBoardManagement = (
 
     // Track if initial load is complete to prevent duplicate API calls
     const hasInitiallyLoaded = useRef(false);
-
     // Debounce saving to prevent excessive API calls
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -259,7 +264,15 @@ export const useBoardManagement = (
 
                 setNodes(nodesData);
                 setEdges(edgesData as Edge[]);
-
+                // Navigate to previous node
+                // setViewport(
+                //     {
+                //         x: 0,
+                //         y: 0,
+                //         zoom: 1,
+                //     },
+                //     { duration: 200 }
+                // );
                 if (showSuccess) {
                     showSuccess(`Switched to "${openedBoard.name}"`);
                 }

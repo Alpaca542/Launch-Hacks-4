@@ -9,6 +9,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
+import { MessageCircle } from "lucide-react";
 import { handleTokenClick } from "./contexts/TokenInteractionContext";
 
 // Components
@@ -18,6 +19,8 @@ import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
 import { CacheDebugPanel } from "./components/CacheDebugPanel";
+import RightSidePanel from "./components/RightSidePanel";
+import SimpleChat from "./components/SimpleChat";
 import "./index.css"; // Ensure this is imported for styles
 import TempInputNode from "./components/TempInputNode";
 
@@ -25,6 +28,7 @@ import TempInputNode from "./components/TempInputNode";
 import { useAuth } from "./hooks/useAuth";
 import { useBoardManagement } from "./hooks/useBoardManagement";
 import { useNotifications } from "./hooks/useNotifications";
+import { useLayoutHistory } from "./hooks/useLayoutHistory";
 
 // Configuration
 import { nodeTypes as baseNodeTypes } from "./config/nodeTypes";
@@ -41,6 +45,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 function AppContent() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showCacheDebug, setShowCacheDebug] = useState(false);
+    const [showRightPanel, setShowRightPanel] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -53,6 +59,11 @@ function AppContent() {
         showError,
         showInfo,
     } = useNotifications();
+
+    // Layout History Tracking
+    const { addLayout, getLastTwoLayouts, clearHistory } = useLayoutHistory(
+        user?.uid
+    );
 
     // Board Management
     const {
@@ -78,6 +89,7 @@ function AppContent() {
     const handleSignOut = async () => {
         await signOut();
         clearBoardState();
+        clearHistory(); // Clear layout history on sign out
     };
     // Handle sign in state
 
@@ -177,7 +189,7 @@ function AppContent() {
                 );
             // If this is a tempInput node, inject onSubmit callback
             if (node.type === "tempInput") {
-                data.onNodeCallback = (value: string, mode: string) => {
+                data.onNodeCallback = (value: string, _mode: string) => {
                     setNodes((nodes) =>
                         nodes.map((n) =>
                             n.id === node.id
@@ -218,7 +230,10 @@ function AppContent() {
                         suggestionID,
                         isInput,
                         node,
-                        node.data.mode
+                        node.data.mode,
+                        saveNewNodeContent,
+                        getLastTwoLayouts,
+                        addLayout
                     );
                     // Update the node's color
                     setNodes((nodes) =>
@@ -354,6 +369,8 @@ function AppContent() {
                                     onEdgesChange={onEdgesChange}
                                     setNodes={setNodes}
                                     saveCallback={saveNewNodeContent}
+                                    getLastTwoLayouts={getLastTwoLayouts}
+                                    addLayout={addLayout}
                                 >
                                     {ReactFlowComponent}
                                 </TokenInteractionProvider>
@@ -369,6 +386,74 @@ function AppContent() {
                     isVisible={showCacheDebug}
                     onToggle={() => setShowCacheDebug(!showCacheDebug)}
                 />
+            )}
+
+            {/* Right Side Panel */}
+            <RightSidePanel
+                isOpen={showRightPanel}
+                onClose={() => setShowRightPanel(false)}
+                title="Panel"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                        <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+                            Sample Content
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            This is your right side panel. You can add any
+                            content here.
+                        </p>
+                    </div>
+
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                            Settings
+                        </h4>
+                        <div className="space-y-2">
+                            <button className="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-800/30 rounded-md transition-colors duration-200 text-purple-700 dark:text-purple-300">
+                                Option 1
+                            </button>
+                            <button className="w-full text-left px-3 py-2 text-sm bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-800/30 rounded-md transition-colors duration-200 text-purple-700 dark:text-purple-300">
+                                Option 2
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </RightSidePanel>
+
+            {/* Toggle Button for Right Panel */}
+            {!showRightPanel && (
+                <button
+                    onClick={() => setShowRightPanel(true)}
+                    className="fixed top-1/2 right-4 z-30 p-3 rounded-l-lg bg-gradient-to-b from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-white group"
+                    title="Open Panel"
+                >
+                    <div className="w-1 h-6 bg-white rounded-full group-hover:scale-x-150 transition-transform duration-200"></div>
+                </button>
+            )}
+
+            {/* AI Chat Side Panel */}
+            <RightSidePanel
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                title="AI Chat Assistant"
+            >
+                <SimpleChat
+                    className="h-full"
+                    currentBoardId={currentBoard?.id}
+                    currentBoardName={currentBoard?.name}
+                />
+            </RightSidePanel>
+
+            {/* Chat Toggle Button */}
+            {!showChat && !showRightPanel && (
+                <button
+                    onClick={() => setShowChat(true)}
+                    className="fixed bottom-6 right-6 z-30 p-4 rounded-full bg-gradient-to-b from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 text-white group"
+                    title="Open AI Chat"
+                >
+                    <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                </button>
             )}
         </div>
     );
