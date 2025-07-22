@@ -241,22 +241,53 @@ export const askAIStream = async (
             payload.tool_choice = "auto"; // Let OpenAI decide when to use tools
         }
 
-        console.log("Calling Firebase function with payload:", payload);
+        console.log("Calling Firebase function with payload:", {
+            ...payload,
+            tools: payload.tools ? `${payload.tools.length} tools` : "no tools",
+        });
 
-        // Create the callable function
+        // Create the callable function with streaming support
         const openaiChatFunction = httpsCallable(functions, "groqChat");
 
         try {
-            // Make the API call
-            const result = await openaiChatFunction(payload);
-            console.log("Firebase function result:", result.data);
+            // For Firebase Functions v2 streaming, we need to handle the streaming response
+            // The streaming happens via the response.sendChunk() calls in the function
+
+            // Start the function call
+            const resultPromise = openaiChatFunction(payload);
+
+            // For now, since httpsCallable doesn't expose streaming chunks directly,
+            // we'll fall back to the complete response and simulate streaming
+            const result = await resultPromise;
+            console.log("Firebase function result:", {
+                success: !!result.data,
+                dataKeys: result.data ? Object.keys(result.data) : [],
+                hasResponse: !!(result.data as any)?.response,
+                hasToolCalls: !!(result.data as any)?.tool_calls?.length,
+                toolCallsLength: (result.data as any)?.tool_calls?.length || 0,
+            });
 
             // Handle the response
-            if (result.data && (result.data as any).response) {
+            if (result.data) {
                 const responseData = result.data as any;
+                console.log("Response data structure:", {
+                    hasResponse: !!responseData.response,
+                    hasContent: !!responseData.content,
+                    hasToolCalls: !!responseData.tool_calls?.length,
+                    toolCallsCount: responseData.tool_calls?.length || 0,
+                    keys: Object.keys(responseData),
+                });
 
-                // Check if there are tool calls in the response
-                if (responseData.tool_calls && options?.onToolCall) {
+                // Handle tool calls first if they exist
+                if (
+                    responseData.tool_calls &&
+                    responseData.tool_calls.length > 0 &&
+                    options?.onToolCall
+                ) {
+                    console.log(
+                        "Processing tool calls:",
+                        responseData.tool_calls
+                    );
                     for (const toolCall of responseData.tool_calls) {
                         try {
                             onChunk(
@@ -277,18 +308,30 @@ export const askAIStream = async (
                 const response =
                     responseData.response || responseData.content || "";
 
-                if (response) {
-                    // For now, simulate streaming by chunking the response
-                    // TODO: Implement real streaming when Firebase supports it for callable functions
-                    const words = response.split(" ");
-                    for (let i = 0; i < words.length; i++) {
-                        const chunk =
-                            words[i] + (i < words.length - 1 ? " " : "");
-                        onChunk(chunk);
-                        // Small delay to simulate streaming
-                        await new Promise((resolve) => setTimeout(resolve, 30));
+                if (response && response.trim()) {
+                    console.log(
+                        "Streaming response content:",
+                        response.substring(0, 100)
+                    );
+                    // Simulate streaming by sending chunks with realistic delays
+                    const sentences = response.split(/(?<=[.!?])\s+/);
+                    for (let i = 0; i < sentences.length; i++) {
+                        const sentence = sentences[i];
+                        if (sentence.trim()) {
+                            onChunk(
+                                sentence + (i < sentences.length - 1 ? " " : "")
+                            );
+                            // More realistic streaming delay
+                            await new Promise((resolve) =>
+                                setTimeout(resolve, 100 + Math.random() * 200)
+                            );
+                        }
                     }
-                } else {
+                } else if (
+                    !responseData.tool_calls ||
+                    responseData.tool_calls.length === 0
+                ) {
+                    // Only show this error if there were no tool calls
                     onChunk(
                         "I apologize, but I didn't receive a proper response. Please try again."
                     );
@@ -298,9 +341,8 @@ export const askAIStream = async (
                     onComplete();
                 }
             } else {
-                throw new Error(
-                    "Invalid response format from Firebase function"
-                );
+                console.error("No data in Firebase function result:", result);
+                throw new Error("No data received from Firebase function");
             }
         } catch (functionError: any) {
             console.error("Firebase function call failed:", functionError);
@@ -320,6 +362,9 @@ export const askAIStream = async (
             } else if (functionError.code === "functions/permission-denied") {
                 errorMessage +=
                     "You don't have permission to use this feature.";
+            } else if (functionError.code === "functions/internal") {
+                errorMessage +=
+                    "There was an internal server error. Please try again.";
             } else if (functionError.message) {
                 errorMessage += `Error: ${functionError.message}`;
             } else {

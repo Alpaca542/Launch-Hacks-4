@@ -118,7 +118,7 @@ export function DraggableEditableNode({
         // Render rich content if available
         if (data.contents && data.contents.length > 0) {
             // If the HTML is empty or just whitespace, show fallback
-            if (!data.contents[0].trim()) {
+            if (!data.contents[0]) {
                 return (
                     <div className="text-center py-8 text-gray-500">
                         <p>No content available</p>
