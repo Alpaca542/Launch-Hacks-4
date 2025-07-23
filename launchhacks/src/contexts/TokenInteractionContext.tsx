@@ -135,21 +135,22 @@ export const handleNodeCreation = (
             console.log("AI Response received:", result);
             console.log("Selected layout:", result.layout);
             console.log("Content array:", result.content);
-            let html;
-            if (result.layout > -1) {
-                if (addLayout) {
-                    // Track the layout that was chosen
-                    addLayout(result.layout);
-                }
-                // Parse the layout content to HTML (now waits for all media to load)
-                html = await parseLayoutContent(
-                    result.layout,
-                    result.content,
-                    newNode?.id || ""
-                );
-            } else {
-                html = processQuizHTML(JSON.parse(result.content[0]));
-            }
+            const html: string =
+                result.layout > -1
+                    ? await (async () => {
+                          if (addLayout) {
+                              // Track the layout that was chosen
+                              addLayout(result.layout);
+                          }
+                          // Parse the layout content to HTML (now waits for all media to load)
+                          const layoutResult = await parseLayoutContent(
+                              result.layout,
+                              result.content,
+                              newNode?.id || ""
+                          );
+                          return layoutResult.html;
+                      })()
+                    : processQuizHTML(JSON.parse(result.content[0]));
 
             // Update node with all the generated content
             setNodes((nds) =>
@@ -166,6 +167,7 @@ export const handleNodeCreation = (
                                 contents: [html], // Store the rendered HTML with loaded media
                                 isLoading: false,
                                 icon: result.icon,
+                                isQuiz: isQuiz,
                             },
                         };
                         console.log("Updated node data:", updatedNode.data);

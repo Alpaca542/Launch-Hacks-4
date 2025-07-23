@@ -3,9 +3,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-    apiKey: "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",
-});
+const openai = new OpenAI({});
 
 export const groqChat = onCall(
     {

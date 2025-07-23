@@ -33,6 +33,7 @@ interface NodeData {
     layout?: number;
     contents?: string[];
     icon?: string;
+    isQuiz: boolean;
 }
 
 interface DraggableEditableNodeProps {
@@ -40,44 +41,20 @@ interface DraggableEditableNodeProps {
     id: string;
 }
 
-function Handles() {
+function Handles(data: any) {
     return (
         <>
             <Handle
                 style={{ transform: "translateY(-150%)" }}
                 type="source"
                 position={Position.Bottom}
-                id="bottom-source"
+                id={data.label}
             />
             <Handle
-                style={{ transform: "translateY(100%)" }}
+                style={{ transform: "translateY(-150%)" }}
                 type="target"
                 position={Position.Top}
-                id="top-target"
-            />
-            <Handle
-                style={{ transform: "translateY(100%)" }}
-                type="source"
-                position={Position.Left}
-                id="left-source"
-            />
-            <Handle
-                style={{ transform: "translateY(100%)" }}
-                type="target"
-                position={Position.Left}
-                id="left-target"
-            />
-            <Handle
-                style={{ transform: "translateY(100%)" }}
-                type="source"
-                position={Position.Right}
-                id="right-source"
-            />
-            <Handle
-                style={{ transform: "translateY(100%)" }}
-                type="target"
-                position={Position.Right}
-                id="right-target"
+                id={data.label}
             />
         </>
     );
@@ -241,7 +218,7 @@ export function DraggableEditableNode({
             });
 
             // Use onNodeCallback with "quiz" as the suggestion and pass isQuizMode in extraData
-            data.onNodeCallback("quiz", id, rfPos, {
+            data.onNodeCallback(data.label, id, rfPos, {
                 initialText: "",
                 isQuizMode: true,
             });
@@ -336,7 +313,7 @@ export function DraggableEditableNode({
                         </div>
 
                         {/* Quiz Creation Button */}
-                        {data.onQuizCreate && (
+                        {!data.isQuiz && (
                             <div className="relative">
                                 <div
                                     className="group relative flex items-center justify-center w-10 h-10
@@ -361,6 +338,35 @@ export function DraggableEditableNode({
                                                text-xs text-gray-500 font-medium whitespace-nowrap"
                                 >
                                     Quiz
+                                </div>
+                            </div>
+                        )}
+                        {data.onQuizCreate && data.isQuiz && (
+                            <div className="relative">
+                                <div
+                                    className="group relative flex items-center justify-center w-10 h-10
+                                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
+                                              border-2 border-emerald-200 hover:border-emerald-300 
+                                              rounded-full cursor-grab active:cursor-grabbing 
+                                              shadow-sm hover:shadow-md transition-all duration-200 ease-out 
+                                              hover:scale-110 active:scale-95"
+                                    onClick={() => {
+                                        if (data.onQuizCreate) {
+                                            data.onQuizCreate(
+                                                data.label || "New Quiz",
+                                                id,
+                                                getParentCenter()
+                                            );
+                                        }
+                                    }}
+                                >
+                                    <Brain className="w-5 h-5 text-emerald-600 group-hover:text-emerald-700 transition-colors duration-200" />
+                                </div>
+                                <div
+                                    className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 
+                                               text-xs text-gray-500 font-medium whitespace-nowrap"
+                                >
+                                    Regenerate quiz
                                 </div>
                             </div>
                         )}
@@ -448,7 +454,7 @@ export function DraggableEditableNode({
                         document.body
                     )}
             </div>
-            <Handles />
+            <Handles data={data} />
         </div>
     );
 }

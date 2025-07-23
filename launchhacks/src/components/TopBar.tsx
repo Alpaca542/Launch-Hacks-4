@@ -69,11 +69,6 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
                                     onChange={(e) =>
                                         setEditedName(e.target.value)
                                     }
-                                    onKeyDown={handleKeyPress}
-                                    onBlur={() => {
-                                        onSetName(editedName);
-                                        setEdit(false);
-                                    }}
                                     className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 
                                              rounded-md px-2 py-1 text-gray-900 dark:text-gray-100 text-sm min-w-[120px]
                                              focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"

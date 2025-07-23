@@ -12,6 +12,10 @@ import {
     fetchAllBoards,
     fetchBoardContent,
     saveBoardContent,
+    saveNodesToBoard,
+    saveEdgesToBoard,
+    saveIndividualNode,
+    saveIndividualEdge,
     createBoard,
     deleteBoard as deleteBoardService,
     updateBoardStatus,
@@ -44,6 +48,7 @@ export interface UseBoardManagementReturn {
     updateBoardName: (name: string) => Promise<void>;
     clearBoardState: () => void;
     saveNewNodeContent: () => Promise<void>;
+    performPeriodicSave: () => Promise<void>;
     forceRefresh: () => Promise<void>;
     getCacheStats: () => any;
 }
@@ -62,8 +67,12 @@ export const useBoardManagement = (
 
     // Track if initial load is complete to prevent duplicate API calls
     const hasInitiallyLoaded = useRef(false);
-    // Debounce saving to prevent excessive API calls
-    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Track changes for individual saves
+    const pendingNodeChanges = useRef<Set<string>>(new Set());
+    const pendingEdgeChanges = useRef<Set<string>>(new Set());
+    // Debounce individual saves
+    const individualSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const { setViewport } = useReactFlow();
 
     const { showSuccess, showError, showInfo } = notifications;
@@ -85,6 +94,227 @@ export const useBoardManagement = (
 
         return null;
     };
+
+    // Individual save function for immediate saves after changes - optimized with batching
+    const saveIndividualChanges = useCallback(async () => {
+        if (
+            !currentBoard ||
+            currentBoard.isFallback ||
+            isLoading ||
+            isSwitchingBoard
+        ) {
+            return;
+        }
+
+        const nodeIds = Array.from(pendingNodeChanges.current);
+        const edgeIds = Array.from(pendingEdgeChanges.current);
+
+        if (nodeIds.length === 0 && edgeIds.length === 0) {
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+
+            // Batch individual saves to reduce DB calls
+            const savePromises: Promise<void>[] = [];
+
+            // Collect nodes to save
+            const nodesToSave = nodeIds
+                .map((nodeId) => nodes.find((n) => n.id === nodeId))
+                .filter((node) => node !== undefined) as any[];
+
+            // Collect edges to save
+            const edgesToSave = edgeIds
+                .map((edgeId) => edges.find((e) => e.id === edgeId))
+                .filter((edge) => edge !== undefined) as any[];
+
+            // Use batch operations if we have multiple items, otherwise use individual saves
+            if (nodesToSave.length > 3 || edgesToSave.length > 3) {
+                // For larger changes, use batch operations
+                if (nodesToSave.length > 0) {
+                    savePromises.push(
+                        saveNodesToBoard(currentBoard.id, nodesToSave)
+                    );
+                }
+                if (edgesToSave.length > 0) {
+                    savePromises.push(
+                        saveEdgesToBoard(currentBoard.id, edgesToSave)
+                    );
+                }
+                console.log(
+                    `Batch save: ${nodesToSave.length} nodes, ${edgesToSave.length} edges`
+                );
+            } else {
+                // For smaller changes, use individual saves
+                nodesToSave.forEach((node) => {
+                    savePromises.push(
+                        saveIndividualNode(currentBoard.id, node)
+                    );
+                });
+                edgesToSave.forEach((edge) => {
+                    savePromises.push(
+                        saveIndividualEdge(currentBoard.id, edge)
+                    );
+                });
+                console.log(
+                    `Individual save: ${nodesToSave.length} nodes, ${edgesToSave.length} edges`
+                );
+            }
+
+            // Execute all saves in parallel
+            await Promise.all(savePromises);
+
+            // Clear pending changes
+            pendingNodeChanges.current.clear();
+            pendingEdgeChanges.current.clear();
+        } catch (error) {
+            console.error("Save failed:", error);
+            if (showError) {
+                showError("Failed to save changes");
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    }, [currentBoard, isLoading, isSwitchingBoard, nodes, edges, showError]);
+
+    // Optimized debounced individual save (2 seconds to allow batching)
+    const scheduleIndividualSave = useCallback(() => {
+        if (individualSaveTimeoutRef.current) {
+            clearTimeout(individualSaveTimeoutRef.current);
+        }
+
+        individualSaveTimeoutRef.current = setTimeout(() => {
+            saveIndividualChanges();
+        }, 2000); // 2 second delay to allow for batching multiple changes
+    }, [saveIndividualChanges]);
+
+    // Enhanced onNodesChange that tracks individual node changes - optimized
+    const enhancedOnNodesChange = useCallback(
+        (changes: any) => {
+            onNodesChange(changes);
+
+            let hasRelevantChanges = false;
+
+            // Track which nodes changed - only track meaningful changes
+            changes.forEach((change: any) => {
+                if (change.type === "add") {
+                    if (change.item?.id) {
+                        pendingNodeChanges.current.add(change.item.id);
+                        hasRelevantChanges = true;
+                    }
+                } else if (
+                    change.type === "position" ||
+                    change.type === "dimensions"
+                ) {
+                    if (change.id) {
+                        pendingNodeChanges.current.add(change.id);
+                        hasRelevantChanges = true;
+                    }
+                } else if (change.type === "remove") {
+                    if (change.id) {
+                        pendingNodeChanges.current.delete(change.id);
+                        hasRelevantChanges = true;
+                    }
+                }
+                // Skip 'select' changes as they don't need saving
+            });
+
+            // Only schedule save if there were relevant changes
+            if (hasRelevantChanges) {
+                scheduleIndividualSave();
+            }
+        },
+        [onNodesChange, scheduleIndividualSave]
+    );
+
+    // Enhanced onEdgesChange that tracks individual edge changes - optimized
+    const enhancedOnEdgesChange = useCallback(
+        (changes: any) => {
+            onEdgesChange(changes);
+
+            let hasRelevantChanges = false;
+
+            // Track which edges changed - only track meaningful changes
+            changes.forEach((change: any) => {
+                if (change.type === "add") {
+                    if (change.item?.id) {
+                        pendingEdgeChanges.current.add(change.item.id);
+                        hasRelevantChanges = true;
+                    }
+                } else if (change.type === "remove") {
+                    if (change.id) {
+                        pendingEdgeChanges.current.delete(change.id);
+                        hasRelevantChanges = true;
+                    }
+                }
+                // Skip 'select' changes as they don't need saving
+            });
+
+            // Only schedule save if there were relevant changes
+            if (hasRelevantChanges) {
+                scheduleIndividualSave();
+            }
+        },
+        [onEdgesChange, scheduleIndividualSave]
+    );
+
+    // Periodic full board save (called by ActivityTracker) - optimized
+    const performPeriodicSave = useCallback(async () => {
+        if (
+            !currentBoard ||
+            currentBoard.isFallback ||
+            isLoading ||
+            isSwitchingBoard
+        ) {
+            return;
+        }
+
+        // Skip periodic save if there are no pending individual changes and we're not saving
+        // This means the board is already up to date
+        const hasPendingChanges =
+            pendingNodeChanges.current.size > 0 ||
+            pendingEdgeChanges.current.size > 0;
+
+        if (!hasPendingChanges && !isSaving) {
+            console.log("Periodic save skipped - no pending changes detected");
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+
+            // If there are pending individual changes, save them first
+            if (hasPendingChanges) {
+                await saveIndividualChanges();
+            } else {
+                // Otherwise, perform full board save as backup
+                await saveBoardContent(
+                    currentBoard.id,
+                    (nodes as any) || [],
+                    (edges as any) || []
+                );
+            }
+
+            console.log("Periodic save completed successfully");
+        } catch (error) {
+            console.error("Periodic save failed:", error);
+            if (showError) {
+                showError("Failed to perform periodic save");
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    }, [
+        currentBoard,
+        isLoading,
+        isSwitchingBoard,
+        isSaving,
+        nodes,
+        edges,
+        saveIndividualChanges,
+        showError,
+    ]);
 
     // Load initial data when user is authenticated
     useEffect(() => {
@@ -161,52 +391,10 @@ export const useBoardManagement = (
         loadInitialData();
     }, [user]);
 
-    // Optimized save function with debouncing to prevent excessive API calls
+    // Legacy save function - now just triggers individual save
     const saveNewNodeContent = useCallback(async () => {
-        if (
-            !currentBoard ||
-            currentBoard.isFallback ||
-            isLoading ||
-            isSwitchingBoard
-        ) {
-            return;
-        }
-
-        // Clear any existing timeout
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-        }
-
-        // Debounce saves by 2 seconds
-        saveTimeoutRef.current = setTimeout(async () => {
-            try {
-                setIsSaving(true);
-
-                // Use batch save for better performance
-                if (
-                    (nodes && nodes.length > 0) ||
-                    (edges && edges.length > 0)
-                ) {
-                    await saveBoardContent(
-                        currentBoard.id,
-                        (nodes as any) || [],
-                        (edges as any) || []
-                    );
-                    console.log(
-                        "Batch save completed successfully after node creation"
-                    );
-                }
-            } catch (error) {
-                console.error("Save failed:", error);
-                if (showError) {
-                    showError("Failed to save new content");
-                }
-            } finally {
-                setIsSaving(false);
-                saveTimeoutRef.current = null;
-            }
-        }, 2000);
-    }, [currentBoard, isLoading, isSwitchingBoard, nodes, edges, showError]);
+        await saveIndividualChanges();
+    }, [saveIndividualChanges]);
 
     // Switch to board
     const switchToBoard = async (boardId: string) => {
@@ -345,12 +533,27 @@ export const useBoardManagement = (
                 );
 
                 // Load initial nodes and edges for the new board
+                // Get AI suggestions for the board topic
+                const { askAiForSuggestions } = await import(
+                    "../services/aiService"
+                );
+                let suggestions: string[] = [];
+
+                try {
+                    suggestions = await askAiForSuggestions(
+                        boardName || "New Board"
+                    );
+                } catch (error) {
+                    console.error("Failed to get AI suggestions:", error);
+                }
+
                 setNodes([
                     {
                         id: "1",
                         type: "staticEditable",
                         data: {
                             label: boardName || "New Board",
+                            suggestions: suggestions,
                         },
                         position: { x: 0, y: 0 },
                         draggable: false,
@@ -474,10 +677,14 @@ export const useBoardManagement = (
         hasInitiallyLoaded.current = false;
 
         // Clear any pending save timeout
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = null;
+        if (individualSaveTimeoutRef.current) {
+            clearTimeout(individualSaveTimeoutRef.current);
+            individualSaveTimeoutRef.current = null;
         }
+
+        // Clear pending changes
+        pendingNodeChanges.current.clear();
+        pendingEdgeChanges.current.clear();
     }, [user?.uid]);
 
     // Force refresh all data from Firestore
@@ -542,9 +749,9 @@ export const useBoardManagement = (
         isSwitchingBoard,
         isSaving,
 
-        // Actions
-        onNodesChange,
-        onEdgesChange,
+        // Actions - using enhanced change handlers for automatic saves
+        onNodesChange: enhancedOnNodesChange,
+        onEdgesChange: enhancedOnEdgesChange,
         setNodes,
         setEdges,
         switchToBoard,
@@ -553,6 +760,7 @@ export const useBoardManagement = (
         updateBoardName,
         clearBoardState,
         saveNewNodeContent,
+        performPeriodicSave,
         forceRefresh,
         getCacheStats,
     };

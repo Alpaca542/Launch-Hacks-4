@@ -525,7 +525,7 @@ async function parseLayout6(content: any[], nodeId: string): Promise<string> {
     return html;
 }
 
-// Layout 7: Enhanced featured concept - balanced visual-text layout with better proportion
+// Layout 7: Enhanced featured concept - inspired by Layout 12's clean design
 async function parseLayout7(content: any[], nodeId: string): Promise<string> {
     const [imagePrompt, title, paragraph1, paragraph2, paragraph3] = content;
     const imageId = `img-${nodeId}`;
@@ -535,49 +535,43 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-7">
-                <div class="layout-hero-header">
-                    <h2 class="layout-hero-title">${renderMarkdown(
-                        title || "Educational Topic"
-                    )}</h2>
+                <div class="layout-hero-section">
+                    <div class="layout-central-visual">
+                        <img id="${imageId}" class="layout-hero-image" src="${imageUrl}" alt="Featured Visual" />
+                    </div>
                 </div>
-                <div class="layout-content-grid">
-                    <div class="layout-visual-section">
-                        <div class="layout-image-container">
-                            <img id="${imageId}" class="layout-featured-image" src="${imageUrl}" alt="Featured Visual" />
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
+                        <header class="content-header">
+                            <h2 class="layout-title">${renderMarkdown(
+                                title || "Educational Topic"
+                            )}</h2>
+                        </header>
+                        <div class="layout-points-grid">
+        `;
+
+        // Create educational points for each paragraph
+        const paragraphs = [paragraph1, paragraph2, paragraph3].filter(Boolean);
+        const icons = ["📚", "🔍", "💡"];
+
+        paragraphs.forEach((paragraph, index) => {
+            if (paragraph) {
+                html += `
+                    <div class="layout-educational-point">
+                        <div class="layout-point-icon">${
+                            icons[index] || "✨"
+                        }</div>
+                        <div class="layout-point-content">
+                            <div class="layout-point-text">${renderMarkdown(
+                                paragraph
+                            )}</div>
                         </div>
                     </div>
-                    <div class="layout-content-section">
-                        <div class="layout-educational-content">
-                            ${
-                                paragraph1
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">📚</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph1
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
-                            ${
-                                paragraph2
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">🔍</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph2
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
-                            ${
-                                paragraph3
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">💡</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph3
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
+                `;
+            }
+        });
+
+        html += `
                         </div>
                     </div>
                 </div>
@@ -588,52 +582,45 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
     } catch (error) {
         let html = `
             <div class="layout-7">
-                <div class="layout-hero-header">
-                    <h2 class="layout-hero-title">${renderMarkdown(
-                        title || "Educational Topic"
-                    )}</h2>
-                </div>
-                <div class="layout-content-grid">
-                    <div class="layout-visual-section">
-                        <div class="layout-image-container">
-                            <div class="image-error">
-                                <div class="error-icon">⚠️</div>
-                                <span>Featured image unavailable</span>
-                            </div>
+                <div class="layout-hero-section">
+                    <div class="layout-central-visual">
+                        <div class="image-error">
+                            <div class="error-icon">⚠️</div>
+                            <span>Featured image unavailable</span>
                         </div>
                     </div>
-                    <div class="layout-content-section">
-                        <div class="layout-educational-content">
-                            ${
-                                paragraph1
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">📚</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph1
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
-                            ${
-                                paragraph2
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">🔍</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph2
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
-                            ${
-                                paragraph3
-                                    ? `<div class="layout-paragraph-card">
-                                        <div class="paragraph-icon">💡</div>
-                                        <p class="layout-paragraph">${renderMarkdown(
-                                            paragraph3
-                                        )}</p>
-                                    </div>`
-                                    : ""
-                            }
+                </div>
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
+                        <header class="content-header">
+                            <h2 class="layout-title">${renderMarkdown(
+                                title || "Educational Topic"
+                            )}</h2>
+                        </header>
+                        <div class="layout-points-grid">
+        `;
+
+        const paragraphs = [paragraph1, paragraph2, paragraph3].filter(Boolean);
+        const icons = ["📚", "🔍", "💡"];
+
+        paragraphs.forEach((paragraph, index) => {
+            if (paragraph) {
+                html += `
+                    <div class="layout-educational-point">
+                        <div class="layout-point-icon">${
+                            icons[index] || "✨"
+                        }</div>
+                        <div class="layout-point-content">
+                            <div class="layout-point-text">${renderMarkdown(
+                                paragraph
+                            )}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        html += `
                         </div>
                     </div>
                 </div>
@@ -644,7 +631,7 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
     }
 }
 
-// Layout 8: Enhanced asymmetric layout with better visual balance
+// Layout 8: Polished asymmetric layout with enhanced visual presentation
 async function parseLayout8(content: any[], nodeId: string): Promise<string> {
     const [imagePrompt, title, explanation, smallImagePrompts] = content;
     const mainImageId = `img-main-${nodeId}`;
@@ -655,20 +642,37 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-8">
-                <div class="layout-primary-content">
-                    <div class="layout-content-header">
-                        <h2 class="layout-title">${renderMarkdown(
-                            title || "Educational Topic"
-                        )}</h2>
+                <div class="layout-hero-section">
+                    <div class="layout-central-visual">
+                        <img id="${mainImageId}" class="layout-hero-image" src="${mainImageUrl}" alt="Main Visual" loading="lazy" />
                     </div>
-                    <div class="layout-explanation">
-                        ${renderMarkdown(explanation || "")}
-                    </div>
+                </div>
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
+                        <header class="content-header">
+                            <h2 class="layout-title">${renderMarkdown(
+                                title || "Educational Topic"
+                            )}</h2>
+                        </header>
         `;
 
-        // Fetch small images if they exist
+        // Main explanation as a text content block
+        if (explanation) {
+            html += `
+                        <div class="layout-text-content">
+                            <div class="layout-description">${renderMarkdown(
+                                explanation
+                            )}</div>
+                        </div>
+            `;
+        }
+
+        // Fetch small images if they exist - display as supporting visuals
         if (Array.isArray(smallImagePrompts) && smallImagePrompts.length > 0) {
-            html += `<div class="layout-thumbnail-grid">`;
+            html += `
+                        <div class="layout-supporting-visuals">
+                            <h4 class="visuals-title">Supporting Details</h4>
+                            <div class="visuals-grid">`;
 
             const smallImageUrls = await Promise.all(
                 smallImagePrompts.map((prompt) =>
@@ -679,30 +683,40 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
             smallImageUrls.forEach((url, index) => {
                 if (url) {
                     html += `
-                        <div class="layout-thumbnail-wrapper">
-                            <img class="layout-thumbnail-image" src="${url}" alt="Detail ${
+                                <div class="visual-card">
+                                    <div class="visual-image-container">
+                                        <img class="visual-image" src="${url}" alt="Supporting visual ${
                         index + 1
                     }" loading="lazy" />
-                        </div>
+                                        <div class="visual-overlay">
+                                            <span class="visual-number">${
+                                                index + 1
+                                            }</span>
+                                        </div>
+                                    </div>
+                                </div>
                     `;
                 } else {
                     html += `
-                        <div class="layout-thumbnail-wrapper">
-                            <div class="thumbnail-error">
-                                <span>⚠️</span>
-                            </div>
-                        </div>
+                                <div class="visual-card error-card">
+                                    <div class="visual-error">
+                                        <span class="error-icon">⚠️</span>
+                                        <span class="error-text">Visual ${
+                                            index + 1
+                                        }</span>
+                                    </div>
+                                </div>
                     `;
                 }
             });
 
-            html += `</div>`;
+            html += `
+                            </div>
+                        </div>`;
         }
 
         html += `
-                </div>
-                <div class="layout-hero-visual">
-                    <img id="${mainImageId}" class="layout-hero-image" src="${mainImageUrl}" alt="Main Visual" loading="lazy" />
+                    </div>
                 </div>
             </div>
         `;
@@ -713,29 +727,45 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-8">
-                <div class="layout-primary-content">
-                    <div class="layout-content-header">
-                        <h2 class="layout-title">${renderMarkdown(
-                            title || "Educational Topic"
-                        )}</h2>
+                <div class="layout-hero-section">
+                    <div class="layout-central-visual">
+                        <div class="image-error">
+                            <div class="error-icon">⚠️</div>
+                            <span>Main image unavailable</span>
+                        </div>
                     </div>
-                    <div class="layout-explanation">
-                        ${renderMarkdown(explanation || "")}
-                    </div>
+                </div>
+                <div class="layout-content-section">
+                    <div class="layout-educational-content">
+                        <header class="content-header">
+                            <h2 class="layout-title">${renderMarkdown(
+                                title || "Educational Topic"
+                            )}</h2>
+                        </header>
         `;
+
+        if (explanation) {
+            html += `
+                        <div class="layout-text-content">
+                            <p class="layout-description">${renderMarkdown(
+                                explanation
+                            )}</p>
+                        </div>
+            `;
+        }
 
         if (Array.isArray(smallImagePrompts) && smallImagePrompts.length > 0) {
             html += `
-                <div class="layout-thumbnail-grid">
+                <div class="layout-points-grid">
                     ${smallImagePrompts
                         .map(
                             (_, index) => `
-                        <div class="layout-thumbnail-wrapper">
-                            <div class="thumbnail-error">
-                                <span class="error-icon">⚠️</span>
-                                <span class="error-text">Error ${
+                        <div class="layout-educational-point">
+                            <div class="layout-point-icon">⚠️</div>
+                            <div class="layout-point-content">
+                                <div class="layout-point-text">Detail ${
                                     index + 1
-                                }</span>
+                                } unavailable</div>
                             </div>
                         </div>
                     `
@@ -746,11 +776,6 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
         }
 
         html += `
-                </div>
-                <div class="layout-hero-visual">
-                    <div class="image-error">
-                        <div class="error-icon">⚠️</div>
-                        <span>Main image unavailable</span>
                     </div>
                 </div>
             </div>
@@ -760,7 +785,7 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
     }
 }
 
-// Layout 9: Enhanced video player with comprehensive context and error handling
+// Layout 9: Clean video presentation inspired by Layout 12
 async function parseLayout9(content: any[], nodeId: string): Promise<string> {
     if (!validateContentArray(content, 2, 9)) {
         return `<div class="layout-error">
@@ -773,22 +798,59 @@ async function parseLayout9(content: any[], nodeId: string): Promise<string> {
     const videoId = `video-${nodeId}`;
 
     let html = `
-        <div class="layout-9">
-            <div class="layout-video-section">
-                <div class="video-header">
-                    <div class="video-icon">🎥</div>
-                    <h3 class="video-title">Educational Video</h3>
+        <div class="layout-9-infographic">
+            <div class="video-infographic-header">
+                <div class="video-header-accent"></div>
+                <div class="video-title-section">
+                    <div class="video-icon-large">�</div>
+                    <h3 class="video-infographic-title">Educational Video</h3>
                 </div>
-                <div id="${videoId}" class="layout-video-container">Loading video...</div>
+                <div class="video-header-line"></div>
             </div>
-            <div class="layout-video-context">
-                <div class="context-header">
-                    <div class="context-icon">📝</div>
-                    <h4 class="context-title">Video Context</h4>
+            
+            <div class="video-main-container">
+                <div class="video-player-section">
+                    <div class="video-frame">
+                        <div id="${videoId}" class="video-embed-container">
+                            <div class="video-loading">
+                                <div class="loading-spinner"></div>
+                                <span class="loading-text">Loading video...</span>
+                            </div>
+                        </div>
+                        <div class="video-frame-overlay"></div>
+                    </div>
                 </div>
-                <div class="layout-video-caption">
-                    ${renderMarkdown(caption || "Educational video content")}
+                
+                <div class="video-context-panel">
+                    <div class="context-panel-header">
+                        <div class="context-icon">📝</div>
+                        <h4 class="context-panel-title">Video Summary</h4>
+                    </div>
+                    
+                    <div class="context-content-card">
+                        <div class="context-accent-line"></div>
+                        <div class="video-caption-content">
+                            ${renderMarkdown(
+                                caption || "Educational video content"
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div class="video-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon">⏱️</div>
+                            <span class="stat-label">Educational Content</span>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🎯</div>
+                            <span class="stat-label">Interactive Learning</span>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            
+            <div class="video-infographic-footer">
+                <div class="footer-video-accent"></div>
             </div>
         </div>
     `;
@@ -798,27 +860,48 @@ async function parseLayout9(content: any[], nodeId: string): Promise<string> {
         const embedUrl = getYouTubeEmbedUrl(videoIdResult);
 
         const videoEmbed = `
-            <div class="video-embed-wrapper">
-                <iframe class="video-embed" 
+            <div class="responsive-video-wrapper">
+                <iframe class="video-player-iframe" 
                         src="${embedUrl}" 
                         frameborder="0" 
                         allowfullscreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         title="Educational Video">
                 </iframe>
+                <div class="video-play-overlay">
+                    <div class="play-button">
+                        <div class="play-icon">▶</div>
+                    </div>
+                </div>
             </div>
         `;
 
-        html = html.replace("Loading video...", videoEmbed);
+        html = html.replace(
+            `<div class="video-loading">
+                                <div class="loading-spinner"></div>
+                                <span class="loading-text">Loading video...</span>
+                            </div>`,
+            videoEmbed
+        );
     } catch (error) {
         console.error("Layout 9 video error:", error);
         const errorContent = `
-            <div class="video-error">
-                <div class="error-icon">🎥</div>
-                <div class="error-text">Video temporarily unavailable</div>
-                <div class="error-details">Please try again later or check your connection</div>
+            <div class="video-error-state">
+                <div class="video-error-icon">🎥</div>
+                <div class="video-error-content">
+                    <h4 class="error-title">Video Temporarily Unavailable</h4>
+                    <p class="error-description">Please check your connection and try again</p>
+                    <div class="error-code">Error: Media not found</div>
+                </div>
             </div>
         `;
-        html = html.replace("Loading video...", errorContent);
+        html = html.replace(
+            `<div class="video-loading">
+                                <div class="loading-spinner"></div>
+                                <span class="loading-text">Loading video...</span>
+                            </div>`,
+            errorContent
+        );
     }
 
     return html;
@@ -961,7 +1044,7 @@ function getDefaultIcon(index: number): string {
     return defaultIcons[index % defaultIcons.length];
 }
 
-// Layout 13: Enhanced horizontal split content with video
+// Layout 13: Enhanced split content with animated video presentation
 async function parseLayout13(content: any[], nodeId: string): Promise<string> {
     const [title, text, videoPrompt] = content;
     const videoId = `video-${nodeId}`;
@@ -972,15 +1055,46 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-13">
-                <div class="layout-left">
-                    <h2 class="layout-title">${renderMarkdown(
-                        title || "Title"
-                    )}</h2>
-                    <div class="layout-text">${renderMarkdown(text || "")}</div>
-                </div>
-                <div class="layout-right">
-                    <div id="${videoId}" class="layout-video">
-                        <iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>
+                <div class="layout-split-container">
+                    <div class="layout-content-section">
+                        <div class="layout-educational-content">
+                            <header class="content-header-enhanced">
+                                <div class="header-icon">📚</div>
+                                <h2 class="layout-title">${renderMarkdown(
+                                    title || "Educational Topic"
+                                )}</h2>
+                            </header>
+                            <div class="layout-text-content enhanced">
+                                <div class="content-wrapper">
+                                    <div class="content-accent"></div>
+                                    <div class="layout-description">${renderMarkdown(
+                                        text || ""
+                                    )}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layout-video-section">
+                        <div class="video-container-enhanced">
+                            <div class="video-header">
+                                <div class="video-icon">🎬</div>
+                                <span class="video-label">Watch & Learn</span>
+                            </div>
+                            <div id="${videoId}" class="layout-video-player enhanced">
+                                <div class="responsive-video-wrapper">
+                                    <iframe class="video-player-iframe" 
+                                            src="${embedUrl}" 
+                                            frameborder="0" 
+                                            allowfullscreen
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            title="Educational Video">
+                                    </iframe>
+                                    <div class="video-play-indicator">
+                                        <div class="play-pulse"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -990,17 +1104,40 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
     } catch (error) {
         let html = `
             <div class="layout-13">
-                <div class="layout-left">
-                    <h2 class="layout-title">${renderMarkdown(
-                        title || "Title"
-                    )}</h2>
-                    <div class="layout-text">${renderMarkdown(text || "")}</div>
-                </div>
-                <div class="layout-right">
-                    <div id="${videoId}" class="layout-video">
-                        <div class="video-error">
-                            <div class="error-icon">⚠️</div>
-                            <span>Video unavailable</span>
+                <div class="layout-split-container">
+                    <div class="layout-content-section">
+                        <div class="layout-educational-content">
+                            <header class="content-header-enhanced">
+                                <div class="header-icon">📚</div>
+                                <h2 class="layout-title">${renderMarkdown(
+                                    title || "Educational Topic"
+                                )}</h2>
+                            </header>
+                            <div class="layout-text-content enhanced">
+                                <div class="content-wrapper">
+                                    <div class="content-accent"></div>
+                                    <div class="layout-description">${renderMarkdown(
+                                        text || ""
+                                    )}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layout-video-section">
+                        <div class="video-container-enhanced">
+                            <div class="video-header">
+                                <div class="video-icon">🎬</div>
+                                <span class="video-label">Watch & Learn</span>
+                            </div>
+                            <div id="${videoId}" class="layout-video-player enhanced">
+                                <div class="video-error-state enhanced">
+                                    <div class="video-error-icon">🎥</div>
+                                    <div class="video-error-content">
+                                        <h4 class="error-title">Video Unavailable</h4>
+                                        <p class="error-description">Please try again later</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

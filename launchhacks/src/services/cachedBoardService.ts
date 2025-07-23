@@ -10,6 +10,8 @@ import {
     fetchEdgesFromBoard as originalFetchEdgesFromBoard,
     saveNodesToBoard as originalSaveNodesToBoard,
     saveEdgesToBoard as originalSaveEdgesToBoard,
+    saveIndividualNode as originalSaveIndividualNode,
+    saveIndividualEdge as originalSaveIndividualEdge,
     createBoard as originalCreateBoard,
     deleteBoard as originalDeleteBoard,
     updateBoardStatus as originalUpdateBoardStatus,
@@ -95,6 +97,34 @@ export const saveNodesToBoard = async (
 
     // Update cache with new data (even if empty array)
     cacheService.set("nodes", boardId, nodesToSave || [], CACHE_TTL.NODES);
+};
+
+/**
+ * Save individual node to board and update cache
+ */
+export const saveIndividualNode = async (
+    boardId: string,
+    node: NodeData
+): Promise<void> => {
+    await originalSaveIndividualNode(boardId, node);
+
+    // For simplicity, invalidate the nodes cache and let it be refetched
+    // This ensures consistency without complex cache management
+    cacheService.invalidate("nodes", boardId);
+};
+
+/**
+ * Save individual edge to board and update cache
+ */
+export const saveIndividualEdge = async (
+    boardId: string,
+    edge: EdgeData
+): Promise<void> => {
+    await originalSaveIndividualEdge(boardId, edge);
+
+    // For simplicity, invalidate the edges cache and let it be refetched
+    // This ensures consistency without complex cache management
+    cacheService.invalidate("edges", boardId);
 };
 
 /**

@@ -254,6 +254,109 @@ export const fetchEdgesFromBoard = async (
     }
 };
 
+// Save individual node to board
+export const saveIndividualNode = async (
+    boardId: string,
+    node: NodeData
+): Promise<void> => {
+    if (!boardId || !node) {
+        console.warn("Invalid parameters for saving individual node:", {
+            boardId,
+            node,
+        });
+        return;
+    }
+
+    try {
+        const nodeRef = doc(
+            db,
+            COLLECTIONS.BOARDS,
+            boardId,
+            COLLECTIONS.NODES,
+            node.id
+        );
+
+        // Filter out null values to prevent Firestore errors
+        const nodeData: any = {
+            type: node.type,
+            data: node.data,
+            position: node.position,
+            updatedAt: Timestamp.now(),
+        };
+
+        // Only include draggable if it's not null or undefined
+        if (node.draggable != null) {
+            nodeData.draggable = node.draggable;
+        }
+
+        // Include style if it exists
+        if (node.style != null) {
+            nodeData.style = node.style;
+        }
+
+        await setDoc(nodeRef, nodeData);
+        console.log("Individual node saved:", node.id);
+    } catch (err) {
+        console.error("Save individual node error:", err);
+        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
+    }
+};
+
+// Save individual edge to board
+export const saveIndividualEdge = async (
+    boardId: string,
+    edge: EdgeData
+): Promise<void> => {
+    if (!boardId || !edge) {
+        console.warn("Invalid parameters for saving individual edge:", {
+            boardId,
+            edge,
+        });
+        return;
+    }
+
+    try {
+        const edgeRef = doc(
+            db,
+            COLLECTIONS.BOARDS,
+            boardId,
+            COLLECTIONS.EDGES,
+            edge.id
+        );
+
+        // Filter out null values to prevent Firestore errors
+        const edgeData: any = {
+            source: edge.source,
+            target: edge.target,
+            updatedAt: Timestamp.now(),
+        };
+
+        // Only include sourceHandle and targetHandle if they're not null or undefined
+        if (edge.sourceHandle != null) {
+            edgeData.sourceHandle = edge.sourceHandle;
+        }
+        if (edge.targetHandle != null) {
+            edgeData.targetHandle = edge.targetHandle;
+        }
+
+        // Include style if it exists (for edge colors)
+        if (edge.style != null) {
+            edgeData.style = edge.style;
+        }
+
+        // Include markerEnd if it exists (for arrow colors)
+        if (edge.markerEnd != null) {
+            edgeData.markerEnd = edge.markerEnd;
+        }
+
+        await setDoc(edgeRef, edgeData);
+        console.log("Individual edge saved:", edge.id);
+    } catch (err) {
+        console.error("Save individual edge error:", err);
+        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
+    }
+};
+
 export const saveNodesToBoard = async (
     boardId: string,
     nodesToSave: NodeData[]

@@ -19,6 +19,7 @@ import LandingPage from "./components/LandingPage";
 import { CacheDebugPanel } from "./components/CacheDebugPanel";
 import RightSidePanel from "./components/RightSidePanel";
 import FloatingChatButton from "./components/SimpleFloatingChatButton";
+import { ActivityTracker } from "./components/ActivityTracker";
 import "./index.css"; // Ensure this is imported for styles
 import TempInputNode from "./components/TempInputNode";
 import { handleNodeCreation } from "./contexts/TokenInteractionContext";
@@ -82,6 +83,7 @@ function AppContent() {
         updateBoardName,
         clearBoardState,
         saveNewNodeContent,
+        performPeriodicSave,
     } = useBoardManagement(user, { showSuccess, showError, showInfo });
 
     // // Handle sign out with state cleanup
@@ -129,6 +131,7 @@ function AppContent() {
                 );
                 return;
             }
+            console.log(parent);
 
             const id = `temp-${Date.now()}-${Math.random()
                 .toString(36)
@@ -148,9 +151,15 @@ function AppContent() {
                 },
             ]);
 
-            const color = "#3b82f6";
+            const color = extraData?.isQuizMode ? "#65a30d" : "#3b82f6";
 
             if (parent) {
+                console.log(
+                    "Creating edge for parent:",
+                    parent,
+                    suggestion,
+                    id
+                );
                 onEdgesChange([
                     {
                         type: "add",
@@ -158,14 +167,16 @@ function AppContent() {
                             id: `e${parent}-${id}`,
                             source: parent,
                             target: id,
-                            sourceHandle: suggestion,
+                            sourceHandle: extraData?.isQuizMode
+                                ? null
+                                : suggestion,
                             style: {
-                                stroke: color, // blue-600 hex
+                                stroke: color,
                                 strokeWidth: 3,
                             },
                             markerEnd: {
                                 type: MarkerType.ArrowClosed,
-                                color: color, // blue-600 hex
+                                color: color,
                             },
                         },
                     },
@@ -469,6 +480,14 @@ function AppContent() {
                     </Panel>
                 </PanelGroup>
             </div>
+
+            {/* Activity Tracker for periodic saves */}
+            {user && (
+                <ActivityTracker
+                    onPeriodicSave={performPeriodicSave}
+                    saveInterval={20000} // 20 seconds
+                />
+            )}
 
             {/* Cache Debug Panel - only show in development */}
             {true && (
