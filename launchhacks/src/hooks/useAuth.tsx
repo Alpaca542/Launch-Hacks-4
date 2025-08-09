@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "../firebase";
-import { signOut } from "firebase/auth";
+import type { User } from "@supabase/supabase-js";
+import supabase from "../supabase-client";
 
 // Type definitions
 export interface UseAuthReturn {
@@ -10,29 +9,28 @@ export interface UseAuthReturn {
 }
 
 const handleSignOut = async (): Promise<void> => {
-    try {
-        await signOut(auth);
-        console.log("User signed out successfully");
-    } catch (error) {
-        console.error("Error signing out:", error);
-        throw error;
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
 };
 
 export const useAuth = (): UseAuthReturn => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-            setUser(user);
-            if (user) {
-                console.log("User signed in:", user.uid);
-            } else {
-                console.log("No user signed in");
-            }
+        let isMounted = true;
+        supabase.auth.getUser().then(({ data }) => {
+            if (!isMounted) return;
+            setUser(data.user ?? null);
         });
-
-        return () => unsubscribe();
+        const { data: sub } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                setUser(session?.user ?? null);
+            }
+        );
+        return () => {
+            isMounted = false;
+            sub.subscription.unsubscribe();
+        };
     }, []);
 
     const signOut = async (): Promise<void> => {

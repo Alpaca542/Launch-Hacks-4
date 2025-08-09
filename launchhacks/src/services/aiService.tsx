@@ -7,11 +7,10 @@
  * - Icon generation for visual representation
  * - Structured content generation with schema validation
  *
- * Uses Firebase Cloud Functions with Groq for fast, reliable AI responses.
+ * Uses Supabase Edge Functions with OpenAI for fast, reliable AI responses.
  */
 
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../firebase"; // Adjust path to your Firebase config
+import supabase from "../supabase-client";
 import { jsonrepair } from "jsonrepair";
 import {
     suggestionsPrompt,
@@ -19,7 +18,18 @@ import {
     layoutPrompt,
     contentPrompt,
     quizPrompt,
+    diagramContentPrompt,
 } from "./prompts";
+
+// AI Model Constants
+const SUMMARIZE_MODEL = "gpt-4o-mini";
+const ICON_MODEL = "gpt-4o-mini";
+const LAYOUT_MODEL = "gpt-4o-mini";
+const SUGGESTIONS_MODEL = "gpt-4o-mini";
+const CONTENT_MODEL = "gpt-4o";
+const QUIZ_MODEL = "gpt-4o-mini";
+const DIAGRAM_DESCRIPTION_MODEL = "gpt-4o-mini";
+const MERMAID_DIAGRAM_MODEL = "gpt-4o-mini";
 
 // Helper function to clean AI responses that might have markdown formatting
 const cleanJsonResponse = (response: string): string => {
@@ -55,27 +65,29 @@ const cleanJsonResponse = (response: string): string => {
     }
 };
 
-const askAI = async (message: string): Promise<any> => {
+const askAI = async (message: string, model: string): Promise<any> => {
     try {
-        // Add validation
         if (!message || typeof message !== "string") {
             throw new Error("Message must be a non-empty string");
         }
 
-        // Trim whitespace and check if message is empty after trimming
         const trimmedMessage = message.trim();
         if (!trimmedMessage) {
             throw new Error("Message cannot be empty or just whitespace");
         }
 
-        const groqChatFunction = httpsCallable(functions, "groqChat");
-        const result = await groqChatFunction({
-            message: trimmedMessage,
+        const { data, error } = await supabase.functions.invoke("ai-remote", {
+            body: {
+                message: trimmedMessage,
+                model: model,
+            },
         });
-        console.log("groqChat response:", result.data);
-        return (result.data as any).response;
+
+        if (error) throw error;
+        console.log("AI response:", data);
+        return data?.response || "";
     } catch (err) {
-        console.error("Firebase function error:", err);
+        console.error("Supabase function error:", err);
         console.error("Message sent:", message);
         throw err;
     }
@@ -151,139 +163,84 @@ export const askAIStream = async (
     options?: AIStreamOptions
 ): Promise<void> => {
     try {
-        // Add validation
         if (!message || typeof message !== "string") {
             throw new Error("Message must be a non-empty string");
         }
 
-        // Trim whitespace and check if message is empty after trimming
         const trimmedMessage = message.trim();
         if (!trimmedMessage) {
             throw new Error("Message cannot be empty or just whitespace");
         }
 
-        // Prepare the message payload for the Firebase function
         const payload: any = {
             message: trimmedMessage,
+            acceptsStreaming: true,
         };
 
-        // Add tools if enabled
         if (options?.enableTools && options?.availableTools) {
             payload.tools = options.availableTools;
-            payload.tool_choice = "auto"; // Let OpenAI decide when to use tools
+            payload.tool_choice = "auto";
         }
 
-        console.log("Calling Firebase function with payload:", {
+        console.log("Calling Supabase function with payload:", {
             ...payload,
             tools: payload.tools ? `${payload.tools.length} tools` : "no tools",
         });
 
-        // Create the callable function with streaming support
-        const openaiChatFunction = httpsCallable(functions, "groqChat");
-
         try {
             console.log("Starting streaming request...");
-            // Use Firebase callable function streaming - following the official pattern
-            const { stream, data } = await openaiChatFunction.stream(payload);
 
-            console.log("Stream started, waiting for chunks...");
-            let fullResponse = "";
+            const { data, error } = await supabase.functions.invoke(
+                "ai-remote",
+                {
+                    body: payload,
+                    headers: {
+                        Accept: "text/event-stream",
+                    },
+                }
+            );
 
-            // The `stream` async iterable will yield a new value every time
-            // the callable function calls `sendChunk()`
-            for await (const chunk of stream) {
-                console.log("Received chunk:", chunk);
-                // The chunk is the data sent directly from response.sendChunk()
-                if (
-                    chunk &&
-                    typeof chunk === "object" &&
-                    "type" in chunk &&
-                    "content" in chunk
-                ) {
-                    const typedChunk = chunk as {
-                        type: string;
-                        content: string;
-                    };
-                    console.log("Processing chunk:", typedChunk);
-                    if (typedChunk.type === "chunk" && typedChunk.content) {
-                        fullResponse += typedChunk.content;
-                        onChunk(typedChunk.content);
+            if (error) throw error;
+
+            if (data?.type === "error") {
+                throw new Error(data.message || "Stream error");
+            }
+
+            // For streaming responses, we need to handle the stream differently
+            // Since Supabase doesn't support streaming responses in the same way,
+            // we'll use the regular invoke method and process the response
+            if (data?.response) {
+                onChunk(data.response);
+            }
+
+            if (
+                data?.tool_calls &&
+                data.tool_calls.length > 0 &&
+                options?.onToolCall
+            ) {
+                console.log("Processing tool calls:", data.tool_calls);
+                for (const toolCall of data.tool_calls) {
+                    try {
+                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
+                        const toolResult = await options.onToolCall(toolCall);
+                        onChunk(`✅ ${toolResult}\n`);
+                    } catch (toolError) {
+                        console.error("Tool execution error:", toolError);
+                        onChunk(`❌ Tool execution failed: ${toolError}\n`);
                     }
                 }
             }
 
-            // The `data` promise resolves when the callable function completes
-            console.log("Waiting for final result...");
-            const finalResult = await data;
-            console.log("Final result received:", finalResult);
-
-            // Handle the final response
-            if (finalResult) {
-                const responseData = finalResult as any;
-                console.log("Response data structure:", {
-                    hasResponse: !!responseData.response,
-                    hasToolCalls: !!responseData.tool_calls?.length,
-                    toolCallsCount: responseData.tool_calls?.length || 0,
-                    keys: Object.keys(responseData),
-                });
-
-                // Handle tool calls if they exist
-                if (
-                    responseData.tool_calls &&
-                    responseData.tool_calls.length > 0 &&
-                    options?.onToolCall
-                ) {
-                    console.log(
-                        "Processing tool calls:",
-                        responseData.tool_calls
-                    );
-                    for (const toolCall of responseData.tool_calls) {
-                        try {
-                            onChunk(
-                                `\n🔧 Using ${toolCall.function.name}...\n`
-                            );
-                            const toolResult = await options.onToolCall(
-                                toolCall
-                            );
-                            onChunk(`✅ ${toolResult}\n`);
-                        } catch (toolError) {
-                            console.error("Tool execution error:", toolError);
-                            onChunk(`❌ Tool execution failed: ${toolError}\n`);
-                        }
-                    }
-                }
-
-                if (onComplete) {
-                    onComplete();
-                }
-            } else {
-                console.error("No final result received");
-                throw new Error(
-                    "No final result received from Firebase function"
-                );
+            if (onComplete) {
+                onComplete();
             }
         } catch (functionError: any) {
-            console.error("Firebase function call failed:", functionError);
+            console.error("Supabase function call failed:", functionError);
 
-            // Provide more specific error messages
             let errorMessage =
                 "I'm having trouble connecting to the AI service. ";
 
-            if (functionError.code === "functions/not-found") {
-                errorMessage +=
-                    "The chat function is not available. Please ensure the Firebase function is deployed.";
-            } else if (functionError.code === "functions/unavailable") {
-                errorMessage +=
-                    "The service is temporarily unavailable. Please try again in a moment.";
-            } else if (functionError.code === "functions/unauthenticated") {
-                errorMessage += "Please sign in to use the chat feature.";
-            } else if (functionError.code === "functions/permission-denied") {
-                errorMessage +=
-                    "You don't have permission to use this feature.";
-            } else if (functionError.code === "functions/internal") {
-                errorMessage +=
-                    "There was an internal server error. Please try again.";
-            } else if (functionError.message) {
+            if (functionError.message) {
                 errorMessage += `Error: ${functionError.message}`;
             } else {
                 errorMessage +=
@@ -317,7 +274,7 @@ export const askAIStream = async (
 
 export const askAIForQuizContent = async (message: string): Promise<string> => {
     try {
-        const response = await askAI(quizPrompt(message));
+        const response = await askAI(quizPrompt(message), QUIZ_MODEL);
         console.log("Quiz response:", response);
         return response || "✨";
     } catch (error) {
@@ -330,7 +287,10 @@ export const askAiForSuggestions = async (
     message: string
 ): Promise<string[]> => {
     try {
-        const response = await askAI(suggestionsPrompt(message, "default"));
+        const response = await askAI(
+            suggestionsPrompt(message, "default"),
+            SUGGESTIONS_MODEL
+        );
         console.log("Suggestions response:", response);
         const cleanedResponse = cleanJsonResponse(response);
 
@@ -355,12 +315,32 @@ export const askAiForSuggestions = async (
 
 export const askAIForIcon = async (message: string): Promise<string> => {
     try {
-        const response = await askAI(iconPrompt(message, "default"));
+        const response = await askAI(
+            iconPrompt(message, "default"),
+            ICON_MODEL
+        );
         console.log("Icon response:", response);
         return response || "✨";
     } catch (error) {
         console.error("Error fetching icon:", error);
         return "✨";
+    }
+};
+
+export const askAIToSummarize = async (message: string): Promise<string> => {
+    try {
+        const prompt = `Summarize the following text in 2-3 sentences, focusing on the main ideas and keeping it clear and concise. Do not include any extra commentary or formatting.
+
+Text:
+${message}
+
+Return ONLY the summary text.`;
+        const response = await askAI(prompt, SUMMARIZE_MODEL);
+        console.log("Summary response:", response);
+        return response || "";
+    } catch (error) {
+        console.error("Error fetching summary:", error);
+        return "";
     }
 };
 
@@ -370,7 +350,8 @@ export const askAiForLayout = async (
 ): Promise<number> => {
     try {
         const response = await askAI(
-            layoutPrompt(message, "default", lastTwoLayouts)
+            layoutPrompt(message, "default", lastTwoLayouts),
+            LAYOUT_MODEL
         );
         console.log("Layout response:", response);
         // Clean the response to extract just the number
@@ -426,7 +407,7 @@ Requirements:
 
 Return ONLY the description text, no JSON formatting or extra text.`;
 
-        const response = await askAI(prompt);
+        const response = await askAI(prompt, DIAGRAM_DESCRIPTION_MODEL);
         return response || `Description for ${diagramType} showing ${message}`;
     } catch (error) {
         console.error("Error fetching diagram description:", error);
@@ -479,7 +460,7 @@ REQUIREMENTS:
 - Use educational, clear node names (no generic A, B, C labels)
 - Include 4-7 meaningful elements
 - For flowcharts: use proper arrows and decision points
-- For mindmaps: use nested structure with ((root))
+- For mindmaps: use nested structure with (root)
 - For pie charts: use meaningful categories with percentages
 - For quadrant charts: include axis labels and data points
 - Make it educational and relevant to "${message}"
@@ -487,7 +468,7 @@ REQUIREMENTS:
 
 Return ONLY the Mermaid diagram string, nothing else.`;
 
-        const response = await askAI(prompt);
+        const response = await askAI(prompt, MERMAID_DIAGRAM_MODEL);
         console.log("Mermaid diagram response:", response);
 
         // Clean the response to extract just the diagram
@@ -552,35 +533,27 @@ export const askAiForContent = async (
     try {
         // For diagram layouts (3-6), split into two requests
         if (layoutNumber >= 3 && layoutNumber <= 6) {
-            console.log(
-                `Handling diagram layout ${layoutNumber} with split requests`
-            );
-
-            // Step 1: Get diagram description and explanation text concurrently
-            const [diagramDescription, explanationResponse] = await Promise.all(
-                [
-                    askAiForDiagramDescription(message, context, layoutNumber),
-                    askAI(`Generate a comprehensive educational explanation for "${message}" in the context: ${context}. 
-                      Provide 150-200 words of detailed, educational content explaining the concept thoroughly.
-                      Write in clear, engaging paragraphs with proper educational structure.
-                      Return ONLY the explanation text, no JSON formatting.`),
-                ]
-            );
-
-            console.log("Diagram description:", diagramDescription);
-            console.log("Explanation response:", explanationResponse);
-
-            // Step 2: Generate the actual Mermaid diagram
-            const mermaidDiagram = await askAiForMermaidDiagram(
+            // Step 1: Get the diagram description first
+            const diagramDescription = await askAiForDiagramDescription(
                 message,
                 context,
-                layoutNumber,
-                diagramDescription
+                layoutNumber
             );
 
-            console.log("Generated Mermaid diagram:", mermaidDiagram);
+            // Step 2: Concurrently generate the diagram and explanation text
+            const [mermaidDiagram, explanationResponse] = await Promise.all([
+                askAiForMermaidDiagram(
+                    message,
+                    context,
+                    layoutNumber,
+                    diagramDescription
+                ),
+                askAI(
+                    diagramContentPrompt(diagramDescription, message, context),
+                    CONTENT_MODEL
+                ),
+            ]);
 
-            // Return the content in the expected schema format
             return [
                 mermaidDiagram,
                 explanationResponse || `Educational explanation for ${message}`,
@@ -599,7 +572,8 @@ export const askAiForContent = async (
             : schema;
 
         const response = await askAI(
-            contentPrompt(context, message, schemaString, layoutNumber)
+            contentPrompt(context, message, schemaString, layoutNumber),
+            CONTENT_MODEL
         );
         console.log("Content response:", response);
         const cleanedResponse = cleanJsonResponse(response);
@@ -654,6 +628,18 @@ export const generateNodeContent = async (
                 fullText: message,
             };
         }
+        if (message.length > 100) {
+            askAIToSummarize(message)
+                .then((summary) => {
+                    message = summary;
+                    console.log("Summarized message:", message);
+                })
+                .catch((error) => {
+                    console.error("Error summarizing message:", error);
+                    // Fallback to original message if summarization fails
+                });
+        }
+
         // Step 1: Get layout recommendation first (needed for content)
         const layout = await askAiForLayout(message, lastTwoLayouts);
         console.log("Selected layout:", layout);

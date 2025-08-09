@@ -494,6 +494,14 @@
     color: var(--text-secondary);
 }
 
+.layout-description-content p {
+    margin: 10px;
+}
+
+.layout-description p {
+    margin: 10px;
+}
+
 /* Enhanced Layout 4: Mindmap Styles */
 .layout-mindmap-hero {
     background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(243, 244, 246, 0.8) 100%);

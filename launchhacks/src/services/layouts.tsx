@@ -173,17 +173,7 @@ export const LAYOUT_SCHEMA = {
     C -->|outcome_c| F[fa:fa-star special_case]`,
         "comprehensive_process_explanation",
     ],
-    "4": [
-        `mindmap
-  root((Central_Educational_Concept))
-    Key_Aspect_1
-      Supporting_Detail_A
-      Supporting_Detail_B
-    Key_Aspect_2
-      Supporting_Detail_C
-      Supporting_Detail_D`,
-        "detailed_concept_analysis",
-    ],
+    "4": ["detailed_concept_analysis_for_mindmap"],
     "5": [
         `pie
     title Educational_Data_Analysis

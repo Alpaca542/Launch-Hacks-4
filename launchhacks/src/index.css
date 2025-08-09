@@ -11,20 +11,3 @@ s */ * {
 .react-flow__handle {
     opacity: 0;
 }
-
-/* 
-#«r6» {
-    background: transparent;
-    position: fixed;
-    right: 6px;
-    top: 70px;
-    border-radius: 20px;
-}
-
-#«r5» {
-    background: transparent;
-    position: fixed;
-    right: 6px;
-    top: 70px;
-    border-radius: 20px;
-} */

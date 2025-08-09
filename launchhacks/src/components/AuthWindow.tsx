@@ -1,9 +1,5 @@
 import { useState } from "react";
-import { auth } from "../firebase";
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-} from "firebase/auth";
+import supabase from "../supabase-client";
 import {
     EnvelopeIcon,
     LockClosedIcon,
@@ -44,37 +40,23 @@ export default function AuthWindow() {
             if (password.length < 6)
                 throw new Error(ERROR_MESSAGES.WEAK_PASSWORD);
 
-            const fn = isSignUp
-                ? createUserWithEmailAndPassword
-                : signInWithEmailAndPassword;
-            const { user } = await fn(auth, email, password);
-            console.info("Auth success • uid:", user.uid);
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+            }
         } catch (err: any) {
-            setError(mapFirebaseError(err));
+            setError(err.message || "Authentication error");
         } finally {
             setLoading(false);
-        }
-    };
-
-    // 🗺️ ────── helper to prettify Firebase codes
-    const mapFirebaseError = (err: any): string => {
-        switch (err.code) {
-            case "auth/email-already-in-use":
-                return ERROR_MESSAGES.EMAIL_IN_USE;
-            case "auth/invalid-email":
-                return ERROR_MESSAGES.INVALID_EMAIL;
-            case "auth/weak-password":
-                return ERROR_MESSAGES.WEAK_PASSWORD;
-            case "auth/user-not-found":
-                return ERROR_MESSAGES.USER_NOT_FOUND;
-            case "auth/wrong-password":
-                return ERROR_MESSAGES.WRONG_PASSWORD;
-            case "auth/too-many-requests":
-                return ERROR_MESSAGES.TOO_MANY_REQUESTS;
-            case "auth/user-disabled":
-                return "This account has been disabled. Please contact support.";
-            default:
-                return err.message || "Authentication error";
         }
     };
 

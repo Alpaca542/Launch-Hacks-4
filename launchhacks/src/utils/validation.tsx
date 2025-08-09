@@ -1,5 +1,4 @@
 import { UI_CONSTANTS } from "./constants";
-import { User } from "firebase/auth";
 import { BoardData, NodeData, EdgeData } from "../services/boardService";
 
 // Type definitions
@@ -23,7 +22,7 @@ export const validateBoardName = (name: string): ValidationResult => {
     return { isValid: true };
 };
 
-export const validateUser = (user: User | null | { uid?: string }): boolean => {
+export const validateUser = (user: { uid?: string } | null): boolean => {
     return !!(user && user.uid);
 };
 

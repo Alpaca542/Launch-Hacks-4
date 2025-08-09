@@ -251,6 +251,7 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
                         handleDragStart={handleDragStart}
                         handleOrigin={handleOrigin}
                         getParentCenter={getParentCenter}
+                        displayLine={true}
                     />
                 )}
             </div>

@@ -11,6 +11,19 @@
  * - Timeline and card layouts
  * - Markdown text rendering
  * - Consistent styling and animations
+ *
+ * DRAGGABLE CORE ELEMENT CLASSES:
+ * - .draggable-header-block: Title + description/textbar combinations
+ * - .draggable-image-block: Single image with optional caption
+ * - .draggable-image-grid: Collection of multiple images
+ * - .draggable-text-block: Standalone text content/paragraphs
+ * - .draggable-point-item: Individual bullet point or educational point
+ * - .draggable-diagram-block: Mermaid diagrams and charts
+ * - .draggable-video-block: Video player with controls
+ * - .draggable-code-block: Code snippets with syntax highlighting
+ * - .draggable-timeline-item: Individual timeline events
+ * - .draggable-card-item: Individual cards in grid layouts
+ * - .draggable-section-block: Complete sections in alternating layouts
  */
 
 import {
@@ -185,7 +198,7 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
 
     let html = `
         <div class="layout-1">
-            <div class="layout-header">
+            <div class="layout-header draggable-header-block">
                 <h2 class="layout-title">${renderMarkdown(
                     title || "Educational Topic"
                 )}</h2>
@@ -196,7 +209,7 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
     `;
 
     if (Array.isArray(imagePrompts) && imagePrompts.length > 0) {
-        html += `<div class="layout-images">`;
+        html += `<div class="layout-images draggable-image-grid">`;
 
         // Fetch all images concurrently
         const imageUrls = await Promise.all(
@@ -206,7 +219,7 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
         imageUrls.forEach((url, index) => {
             if (url) {
                 html += `
-                    <div class="layout-image-wrapper">
+                    <div class="layout-image-wrapper draggable-image-block">
                         <img class="layout-small-image" src="${url}" alt="Illustration ${
                     index + 1
                 }" loading="lazy" />
@@ -214,7 +227,7 @@ async function parseLayout1(content: any[], _nodeId: string): Promise<string> {
                 `;
             } else {
                 html += `
-                    <div class="layout-image-wrapper">
+                    <div class="layout-image-wrapper draggable-image-block">
                         <div class="image-error">
                             <span class="error-icon">⚠️</span>
                             <span>Image ${index + 1} unavailable</span>
@@ -290,7 +303,7 @@ async function parseLayout2(content: any[], _nodeId: string): Promise<string> {
 
     imageResults.forEach(({ url, caption, error }, index) => {
         html += `
-            <div class="layout-image-caption">
+            <div class="layout-image-caption draggable-image-block">
         `;
 
         if (url) {
@@ -320,8 +333,10 @@ async function parseLayout2(content: any[], _nodeId: string): Promise<string> {
         }
 
         html += `
-                <div class="layout-caption-wrapper">
-                    <p class="layout-caption">${renderMarkdown(caption)}</p>
+                <div class="layout-caption-wrapper draggable-text-block">
+                    <p class="layout-caption draggable-text-block">${renderMarkdown(
+                        caption
+                    )}</p>
                 </div>
             </div>
         `;
@@ -338,12 +353,12 @@ async function parseLayout3(content: any[], nodeId: string): Promise<string> {
 
     let html = `
         <div class="layout-3">
-            <div class="layout-diagram-section">
+            <div class="layout-diagram-section draggable-diagram-block">
                 <div class="diagram-container">
                     <div id="${diagramId}" class="layout-mermaid-enhanced">Loading diagram...</div>
                 </div>
             </div>
-            <div class="layout-analysis-section">
+            <div class="layout-analysis-section draggable-text-block">
                 <div class="analysis-header">
                     <div class="analysis-icon">🔄</div>
                     <h3 class="analysis-title">Process Analysis</h3>
@@ -384,12 +399,12 @@ async function parseLayout4(content: any[], nodeId: string): Promise<string> {
 
     let html = `
         <div class="layout-4">
-            <div class="layout-mindmap-hero">
+            <div class="layout-mindmap-hero draggable-diagram-block">
                 <div class="mindmap-container">
                     <div id="${diagramId}" class="layout-mermaid-large">Loading mindmap...</div>
                 </div>
             </div>
-            <div class="layout-concept-analysis">
+            <div class="layout-concept-analysis draggable-text-block">
                 <div class="concept-header">
                     <div class="concept-icon">🧠</div>
                     <h3 class="concept-title">Concept Breakdown</h3>
@@ -434,12 +449,12 @@ async function parseLayout5(content: any[], nodeId: string): Promise<string> {
 
     let html = `
         <div class="layout-5">
-            <div class="layout-chart-section">
+            <div class="layout-chart-section draggable-diagram-block">
                 <div class="chart-container">
                     <div id="${diagramId}" class="layout-mermaid-chart">Loading piechart...</div>
                 </div>
             </div>
-            <div class="layout-analysis-section">
+            <div class="layout-analysis-section draggable-text-block">
                 <div class="analysis-header">
                     <div class="analysis-icon">📊</div>
                     <h3 class="analysis-title">Data Analysis</h3>
@@ -474,29 +489,63 @@ async function parseLayout5(content: any[], nodeId: string): Promise<string> {
     return html;
 }
 
-// Layout 6: Enhanced Mermaid quadrant chart with strategic analysis
+// Layout 6: Clean quadrant chart layout inspired by Layout 12's design
 async function parseLayout6(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
     let html = `
         <div class="layout-6">
-            <div class="layout-quadrant-section">
-                <div class="quadrant-container">
-                    <div id="${diagramId}" class="layout-mermaid-quadrant">Loading quadrant chart...</div>
+            <div class="layout-hero-section draggable-diagram-block">
+                <div class="layout-central-visual">
+                    <div id="${diagramId}" class="layout-mermaid">Loading quadrant chart...</div>
                 </div>
             </div>
-            <div class="layout-framework-section">
-                <div class="framework-header">
-                    <div class="framework-icon">🎯</div>
-                    <h3 class="framework-title">Strategic Framework</h3>
+            <div class="layout-content-section">
+                <div class="layout-educational-content draggable-text-block">
+                    <header class="content-header">
+                        <div class="layout-point-icon">🎯</div>
+                        <h2 class="layout-title">Strategic Framework Analysis</h2>
+                    </header>
+    `;
+
+    // Handle description - can be a string or array of strategic points
+    if (typeof description === "string") {
+        html += `
+                    <div class="layout-text-content">
+                        <p class="layout-description draggable-text-block">${renderMarkdown(
+                            description
+                        )}</p>
+                    </div>
+        `;
+    } else if (Array.isArray(description)) {
+        html += `<div class="layout-points-grid">`;
+
+        description.forEach((point, index) => {
+            // Extract icon hint if present or use strategic analysis icons
+            const iconMatch = point.match(/^(\p{Emoji}|\p{Symbol})\s+(.+)$/u);
+            const strategicIcons = ["📊", "🎯", "⚡", "🔍", "💡", "🚀"];
+            const icon = iconMatch
+                ? iconMatch[1]
+                : strategicIcons[index % strategicIcons.length];
+            const text = iconMatch ? iconMatch[2] : point;
+
+            html += `
+                <div class="layout-educational-point draggable-point-item">
+                    <div class="layout-point-icon">${icon}</div>
+                    <div class="layout-point-content">
+                        <span class="layout-point-text">${renderMarkdown(
+                            text
+                        )}</span>
+                    </div>
                 </div>
-                <div class="layout-description-content">
-                    ${renderMarkdown(description || "")}
-                </div>
-                <div class="framework-callout">
-                    <div class="callout-icon">💡</div>
-                    <span class="callout-text">Use the quadrant analysis to understand positioning and priorities</span>
+            `;
+        });
+
+        html += `</div>`;
+    }
+
+    html += `
                 </div>
             </div>
         </div>
@@ -535,14 +584,14 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-7">
-                <div class="layout-hero-section">
+                <div class="layout-hero-section draggable-image-block">
                     <div class="layout-central-visual">
                         <img id="${imageId}" class="layout-hero-image" src="${imageUrl}" alt="Featured Visual" />
                     </div>
                 </div>
                 <div class="layout-content-section">
                     <div class="layout-educational-content">
-                        <header class="content-header">
+                        <header class="content-header draggable-header-block">
                             <h2 class="layout-title">${renderMarkdown(
                                 title || "Educational Topic"
                             )}</h2>
@@ -557,7 +606,7 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
         paragraphs.forEach((paragraph, index) => {
             if (paragraph) {
                 html += `
-                    <div class="layout-educational-point">
+                    <div class="layout-educational-point draggable-point-item">
                         <div class="layout-point-icon">${
                             icons[index] || "✨"
                         }</div>
@@ -582,7 +631,7 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
     } catch (error) {
         let html = `
             <div class="layout-7">
-                <div class="layout-hero-section">
+                <div class="layout-hero-section draggable-image-block">
                     <div class="layout-central-visual">
                         <div class="image-error">
                             <div class="error-icon">⚠️</div>
@@ -592,7 +641,7 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
                 </div>
                 <div class="layout-content-section">
                     <div class="layout-educational-content">
-                        <header class="content-header">
+                        <header class="content-header draggable-header-block">
                             <h2 class="layout-title">${renderMarkdown(
                                 title || "Educational Topic"
                             )}</h2>
@@ -606,7 +655,7 @@ async function parseLayout7(content: any[], nodeId: string): Promise<string> {
         paragraphs.forEach((paragraph, index) => {
             if (paragraph) {
                 html += `
-                    <div class="layout-educational-point">
+                    <div class="layout-educational-point draggable-point-item">
                         <div class="layout-point-icon">${
                             icons[index] || "✨"
                         }</div>
@@ -642,14 +691,14 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-8">
-                <div class="layout-hero-section">
+                <div class="layout-hero-section draggable-image-block">
                     <div class="layout-central-visual">
                         <img id="${mainImageId}" class="layout-hero-image" src="${mainImageUrl}" alt="Main Visual" loading="lazy" />
                     </div>
                 </div>
                 <div class="layout-content-section">
                     <div class="layout-educational-content">
-                        <header class="content-header">
+                        <header class="content-header draggable-header-block">
                             <h2 class="layout-title">${renderMarkdown(
                                 title || "Educational Topic"
                             )}</h2>
@@ -659,7 +708,7 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
         // Main explanation as a text content block
         if (explanation) {
             html += `
-                        <div class="layout-text-content">
+                        <div class="layout-text-content draggable-text-block">
                             <div class="layout-description">${renderMarkdown(
                                 explanation
                             )}</div>
@@ -670,7 +719,7 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
         // Fetch small images if they exist - display as supporting visuals
         if (Array.isArray(smallImagePrompts) && smallImagePrompts.length > 0) {
             html += `
-                        <div class="layout-supporting-visuals">
+                        <div class="layout-supporting-visuals draggable-image-grid">
                             <h4 class="visuals-title">Supporting Details</h4>
                             <div class="visuals-grid">`;
 
@@ -747,7 +796,7 @@ async function parseLayout8(content: any[], nodeId: string): Promise<string> {
         if (explanation) {
             html += `
                         <div class="layout-text-content">
-                            <p class="layout-description">${renderMarkdown(
+                            <p class="layout-description draggable-text-block">${renderMarkdown(
                                 explanation
                             )}</p>
                         </div>
@@ -809,7 +858,7 @@ async function parseLayout9(content: any[], nodeId: string): Promise<string> {
             </div>
             
             <div class="video-main-container">
-                <div class="video-player-section">
+                <div class="video-player-section draggable-video-block">
                     <div class="video-frame">
                         <div id="${videoId}" class="video-embed-container">
                             <div class="video-loading">
@@ -821,7 +870,7 @@ async function parseLayout9(content: any[], nodeId: string): Promise<string> {
                     </div>
                 </div>
                 
-                <div class="video-context-panel">
+                <div class="video-context-panel draggable-text-block">
                     <div class="context-panel-header">
                         <div class="context-icon">📝</div>
                         <h4 class="context-panel-title">Video Summary</h4>
@@ -917,7 +966,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-12">
-                <div class="layout-hero-section">
+                <div class="layout-hero-section draggable-image-block">
                     <div class="layout-central-visual">
                         <img id="${illustrationId}" class="layout-hero-image" src="${illustrationUrl}" alt="Educational Illustration" />
                     </div>
@@ -929,8 +978,8 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
         // Handle educational content - can be a string or array of points
         if (typeof educationalContent === "string") {
             html += `
-                <div class="layout-text-content">
-                    <p class="layout-description">${renderMarkdown(
+                <div class="layout-text-content draggable-text-block">
+                    <p class="layout-description draggable-text-block">${renderMarkdown(
                         educationalContent
                     )}</p>
                 </div>
@@ -947,7 +996,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
                 const text = iconMatch ? iconMatch[2] : point;
 
                 html += `
-                    <div class="layout-educational-point">
+                    <div class="layout-educational-point draggable-point-item">
                         <div class="layout-point-icon">${icon}</div>
                         <div class="layout-point-content">
                             <span class="layout-point-text">${renderMarkdown(
@@ -972,7 +1021,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
         console.error("Layout 12 error:", error);
         let html = `
             <div class="layout-12">
-                <div class="layout-hero-section">
+                <div class="layout-hero-section draggable-image-block">
                     <div class="layout-central-visual">
                         <div class="image-error">
                             <div class="error-icon">⚠️</div>
@@ -986,8 +1035,8 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
 
         if (typeof educationalContent === "string") {
             html += `
-                <div class="layout-text-content">
-                    <p class="layout-description">${renderMarkdown(
+                <div class="layout-text-content draggable-text-block">
+                    <p class="layout-description draggable-text-block">${renderMarkdown(
                         educationalContent
                     )}</p>
                 </div>
@@ -1003,7 +1052,7 @@ async function parseLayout12(content: any[], nodeId: string): Promise<string> {
                 const text = iconMatch ? iconMatch[2] : point;
 
                 html += `
-                    <div class="layout-educational-point">
+                    <div class="layout-educational-point draggable-point-item">
                         <div class="layout-point-icon">${icon}</div>
                         <div class="layout-point-content">
                             <span class="layout-point-text">${renderMarkdown(
@@ -1057,7 +1106,7 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
             <div class="layout-13">
                 <div class="layout-split-container">
                     <div class="layout-content-section">
-                        <div class="layout-educational-content">
+                        <div class="layout-educational-content draggable-text-block">
                             <header class="content-header-enhanced">
                                 <div class="header-icon">📚</div>
                                 <h2 class="layout-title">${renderMarkdown(
@@ -1075,7 +1124,7 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
                         </div>
                     </div>
                     <div class="layout-video-section">
-                        <div class="video-container-enhanced">
+                        <div class="video-container-enhanced draggable-video-block">
                             <div class="video-header">
                                 <div class="video-icon">🎬</div>
                                 <span class="video-label">Watch & Learn</span>
@@ -1106,7 +1155,7 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
             <div class="layout-13">
                 <div class="layout-split-container">
                     <div class="layout-content-section">
-                        <div class="layout-educational-content">
+                        <div class="layout-educational-content draggable-text-block">
                             <header class="content-header-enhanced">
                                 <div class="header-icon">📚</div>
                                 <h2 class="layout-title">${renderMarkdown(
@@ -1124,7 +1173,7 @@ async function parseLayout13(content: any[], nodeId: string): Promise<string> {
                         </div>
                     </div>
                     <div class="layout-video-section">
-                        <div class="video-container-enhanced">
+                        <div class="video-container-enhanced draggable-video-block">
                             <div class="video-header">
                                 <div class="video-icon">🎬</div>
                                 <span class="video-label">Watch & Learn</span>
@@ -1168,13 +1217,13 @@ async function parseLayout14(content: any[], _nodeId: string): Promise<string> {
                         isEven
                             ? "layout-section-normal"
                             : "layout-section-reverse"
-                    }">
-                        <div class="layout-section-image">
+                    } draggable-section-block">
+                        <div class="layout-section-image draggable-image-block">
                             <img class="layout-large-image" src="${imageUrl}" alt="Section ${
                     sectionIndex + 1
                 }" />
                         </div>
-                        <div class="layout-section-content">
+                        <div class="layout-section-content draggable-text-block">
                             <div class="layout-text">${renderMarkdown(
                                 text
                             )}</div>
@@ -1187,14 +1236,14 @@ async function parseLayout14(content: any[], _nodeId: string): Promise<string> {
                         isEven
                             ? "layout-section-normal"
                             : "layout-section-reverse"
-                    }">
-                        <div class="layout-section-image">
+                    } draggable-section-block">
+                        <div class="layout-section-image draggable-image-block">
                             <div class="image-error">
                                 <div class="error-icon">⚠️</div>
                                 <span>Section image unavailable</span>
                             </div>
                         </div>
-                        <div class="layout-section-content">
+                        <div class="layout-section-content draggable-text-block">
                             <div class="layout-text">${renderMarkdown(
                                 text
                             )}</div>
@@ -1223,10 +1272,10 @@ async function parseLayout15(content: any[], _nodeId: string): Promise<string> {
             try {
                 const imageUrl = await fetchImage(imagePrompt);
                 html += `
-                    <div class="layout-timeline-item">
+                    <div class="layout-timeline-item draggable-timeline-item">
                         <div class="layout-timeline-date">${date}</div>
                         <img class="layout-timeline-image" src="${imageUrl}" alt="Timeline event" />
-                        <div class="layout-timeline-content">
+                        <div class="layout-timeline-content draggable-text-block">
                             <div class="layout-timeline-text">${renderMarkdown(
                                 eventDescription
                             )}</div>
@@ -1235,13 +1284,13 @@ async function parseLayout15(content: any[], _nodeId: string): Promise<string> {
                 `;
             } catch (error) {
                 html += `
-                    <div class="layout-timeline-item">
+                    <div class="layout-timeline-item draggable-timeline-item">
                         <div class="layout-timeline-date">${date}</div>
                         <div class="image-error">
                             <div class="error-icon">⚠️</div>
                             <span>Timeline image unavailable</span>
                         </div>
-                        <div class="layout-timeline-content">
+                        <div class="layout-timeline-content draggable-text-block">
                             <div class="layout-timeline-text">${renderMarkdown(
                                 eventDescription
                             )}</div>
@@ -1270,24 +1319,24 @@ async function parseLayout16(content: any[], _nodeId: string): Promise<string> {
             try {
                 const imageUrl = await fetchImage(imagePrompt);
                 html += `
-                    <div class="layout-card">
+                    <div class="layout-card draggable-card-item">
                         <h3 class="layout-card-title">${renderMarkdown(
                             cardTitle
                         )}</h3>
                         <img class="layout-card-image" src="${imageUrl}" alt="${cardTitle}" />
-                        <p class="layout-card-description">${renderMarkdown(
+                        <p class="layout-card-description draggable-text-block">${renderMarkdown(
                             cardDescription
                         )}</p>
                     </div>
                 `;
             } catch (error) {
                 html += `
-                    <div class="layout-card">
+                    <div class="layout-card draggable-card-item">
                         <h3 class="layout-card-title">${renderMarkdown(
                             cardTitle
                         )}</h3>
                         <div class="image-error">Error loading image</div>
-                        <p class="layout-card-description">${renderMarkdown(
+                        <p class="layout-card-description draggable-text-block">${renderMarkdown(
                             cardDescription
                         )}</p>
                     </div>
@@ -1381,27 +1430,27 @@ async function parseLayout17(content: any[], _nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-17">
-                <h2 class="layout-title">${renderMarkdown(
+                <h2 class="layout-title draggable-header-block">${renderMarkdown(
                     title || "Code Tutorial"
                 )}</h2>
                 
-                <div class="layout-code-section">
+                <div class="layout-code-section draggable-code-block">
                     <pre class="layout-code-block language-${lang1}"><code class="language-${lang1}">${cleanCode1}</code></pre>
-                    <div class="layout-code-explanation">${renderMarkdown(
+                    <div class="layout-code-explanation draggable-text-block">${renderMarkdown(
                         explanation1 || ""
                     )}</div>
                 </div>
                 
-                <div class="layout-diagram-section">
+                <div class="layout-diagram-section draggable-image-block">
                     <img class="layout-diagram-image" src="${diagramUrl}" alt="Architecture Diagram" />
-                    <div class="layout-implementation-explanation">${renderMarkdown(
+                    <div class="layout-implementation-explanation draggable-text-block">${renderMarkdown(
                         implementationExplanation || ""
                     )}</div>
                 </div>
                 
-                <div class="layout-code-section">
+                <div class="layout-code-section draggable-code-block">
                     <pre class="layout-code-block language-${lang2}"><code class="language-${lang2}">${cleanCode2}</code></pre>
-                    <div class="layout-code-explanation">${renderMarkdown(
+                    <div class="layout-code-explanation draggable-text-block">${renderMarkdown(
                         explanation2 || ""
                     )}</div>
                 </div>
@@ -1499,20 +1548,20 @@ async function parseLayout18(content: any[], _nodeId: string): Promise<string> {
 
         let html = `
             <div class="layout-18">
-                <h2 class="layout-title">${renderMarkdown(
+                <h2 class="layout-title draggable-header-block">${renderMarkdown(
                     title || "API Documentation"
                 )}</h2>
                 
                 <div class="layout-api-section">
-                    <div class="layout-code-container">
+                    <div class="layout-code-container draggable-code-block">
                         <pre class="layout-code-block language-${lang}"><code class="language-${lang}">${cleanCode}</code></pre>
                     </div>
-                    <div class="layout-documentation">${renderMarkdown(
+                    <div class="layout-documentation draggable-text-block">${renderMarkdown(
                         documentation || ""
                     )}</div>
                 </div>
                 
-                <div class="layout-usage-section">
+                <div class="layout-usage-section draggable-text-block">
                     <h3 class="layout-subtitle">Usage Examples</h3>
                     <div class="layout-usage-examples">${renderMarkdown(
                         usageExamples || ""
@@ -1520,8 +1569,8 @@ async function parseLayout18(content: any[], _nodeId: string): Promise<string> {
                 </div>
                 
                 <div class="layout-diagram-section">
-                    <img class="layout-api-diagram" src="${diagramUrl}" alt="API Flow Diagram" />
-                    <div class="layout-best-practices">
+                    <img class="layout-api-diagram draggable-image-block" src="${diagramUrl}" alt="API Flow Diagram" />
+                    <div class="layout-best-practices draggable-text-block">
                         <h3 class="layout-subtitle">Best Practices</h3>
                         ${renderMarkdown(bestPractices || "")}
                     </div>

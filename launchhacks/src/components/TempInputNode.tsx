@@ -23,6 +23,7 @@ interface NodeData {
         position?: { x: number; y: number }
     ) => void;
     isQuizMode?: boolean;
+    isDragConent?: boolean;
 }
 
 interface TempInputNodeProps {
@@ -94,7 +95,11 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
     const modes: ModeType[] = data.isQuizMode
         ? ["quiz"]
         : ["default", "explain", "answer", "argue"];
-
+    useEffect(() => {
+        if (data.isDragConent && data.onNodeCallback) {
+            data.onNodeCallback(data.label);
+        }
+    }, [data.isDragConent]);
     useEffect(() => {
         const el = inputRef.current;
         if (!el) return;

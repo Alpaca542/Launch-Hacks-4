@@ -1,5 +1,18 @@
 import Showdown from "showdown";
 
+const disableHTML = () => [
+    {
+        type: "lang",
+        regex: /</g,
+        replace: "&lt;",
+    },
+    {
+        type: "lang",
+        regex: />/g,
+        replace: "&gt;",
+    },
+];
+
 // Configure Showdown converter with sensible defaults
 const converter = new Showdown.Converter({
     tables: true,
@@ -9,11 +22,9 @@ const converter = new Showdown.Converter({
     simplifiedAutoLink: true,
     excludeTrailingPunctuationFromURLs: true,
     openLinksInNewWindow: true,
-    backslashEscapesHTMLTags: true,
     ghCodeBlocks: true,
     tasklists: true,
-    // Showdown supports _text_ for italics by default
-    // literalMidWordUnderscores: false, // (default)
+    extensions: [disableHTML],
 });
 
 export function renderMarkdown(text: string): string {

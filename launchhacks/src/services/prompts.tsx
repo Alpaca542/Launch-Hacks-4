@@ -2,7 +2,7 @@ import { LAYOUT_TYPES } from "./layouts";
 export const quizPrompt = (message: string) => {
     return `You are an expert quiz creator. Generate a quiz based on the concept: "${message}".
 
-    - Create 4+ questions with 3+ answer options each.
+    - Create 4+ questions with 4 answer options each.
     - Ensure questions are clear and concise.
     - Provide one correct answer per question.
     - Format the output as a JSON array of objects, each with "question", "options", and "answer" fields.
@@ -40,41 +40,61 @@ GLOBAL GUIDELINES
 • **Visual balance** – 70% rich markdown text, 30% visuals  
 • **Educational depth** – thorough explanations, concrete examples  
 • **Engaging writing** – heavy markdown (**bold**, *italic*, ## headers, - lists)
-
+USE A LOT OF MARKDOWN!!!!
 ════════════════════════════════════════
 LAYOUT‑SPECIFIC RULES
 ════════════════════════════════════════
 ${
     layout === 12
-        ? `FOR LAYOUT 12 → Return exactly ["image_prompt", ["insight1", "insight2", "insight3", "insight4"]] — each insight 40–50 words.`
+        ? `FOR THIS LAYOUT → Return exactly ["image_prompt", ["insight1", "insight2", "insight3", "insight4"]] — each insight 40–50 words.`
         : ""
 }
 ${
     layout === 15
-        ? `FOR TIMELINE 15 → [date1, image_prompt1, description1, …] — 4–8 items, 2–3 sentences per description.`
+        ? `FOR THIS TIMELINE → [date1, image_prompt1, description1, …] — 4–8 items, 2–3 sentences per description.`
         : ""
 }
-${
-    [3, 4, 5, 6].includes(layout)
-        ? `FOR DIAGRAM 3 / 4 / 5 / 6 → First array element **MUST BE A VALID MERMAID diagram string** (e.g. \`flowchart TD ...\`). NOT A DESCRIPTION, A VALID DIAGRAM`
-        : ""
-}
-${layout === 14 ? `FOR LAYOUT 14 → Keep descriptions 2–3 sentences.` : ""}
-${layout === 2 ? `FOR LAYOUT 2  → Keep descriptions 2–3 sentences.` : ""}
+${layout === 14 ? `FOR THIS LAYOUT → Keep descriptions 2–3 sentences.` : ""}
+${layout === 2 ? `FOR THIS LAYOUT  → Keep descriptions 2–3 sentences.` : ""}
 
 
 IMAGE PROMPTS
-• Educational, specific, with style & medium  
-  e.g. “Detailed illustration of photosynthesis in chloroplasts, realistic scientific style”
+• Nice and simple image prompts like "Illustration of photosynthesis" or "Diagram of the water cycle".
+• No need for complex prompts, just clear and concise descriptions.
 
 OUTPUT FORMAT (STRICT)
 • Return **only** a JSON array \`[]\`.  
 • Never nest objects inside the array (arrays only).  
-• Absolutely no prose, markdown, or code fences outside the array.
+• Absolutely no prose or code fences outside the array.
 
 CONCEPT: ${message}
 CONTEXT: ${context}
 SCHEMA: ${LAYOUT_SCHEMA}
+`;
+
+// Build a layout‑aware prompt for the educational‑content model
+export const diagramContentPrompt = (
+    diagram: string,
+    message: string,
+    context: string
+) => `
+You are creating educational content.
+════════════════════════════════════════
+GLOBAL GUIDELINES
+════════════════════════════════════════
+• **Well‑structured** – 3–5 sentences per paragraph (20-40 words each)  
+• **Educational depth** – thorough explanations, concrete examples  
+• **Engaging writing** – heavy markdown (**bold**, *italic*, ## headers, - lists)
+USE A LOT OF MARKDOWN!
+
+════════════════════════════════════════
+LAYOUT‑SPECIFIC RULES
+════════════════════════════════════════
+YOU NEED TO RETURN A DESCRIPTION TO THIS MERMAID DIAGRAM: ${diagram}
+THE TOPIC IS: ${message}
+THE CONTEXT IS: ${context}
+OUTPUT FORMAT (STRICT)
+• Return **only** an EXPLANATION OF THE DIAGRAM AS A STRING.
 `;
 
 // ========================================================================

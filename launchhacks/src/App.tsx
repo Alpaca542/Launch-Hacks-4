@@ -16,11 +16,10 @@ import SideBar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import NotificationContainer from "./components/NotificationContainer";
 import LandingPage from "./components/LandingPage";
-import { CacheDebugPanel } from "./components/CacheDebugPanel";
 import RightSidePanel from "./components/RightSidePanel";
 import FloatingChatButton from "./components/SimpleFloatingChatButton";
 import { ActivityTracker } from "./components/ActivityTracker";
-import "./index.css"; // Ensure this is imported for styles
+import "./index.css";
 import TempInputNode from "./components/TempInputNode";
 import { handleNodeCreation } from "./contexts/TokenInteractionContext";
 
@@ -28,7 +27,6 @@ import { handleNodeCreation } from "./contexts/TokenInteractionContext";
 import { useAuth } from "./hooks/useAuth";
 import { useBoardManagement } from "./hooks/useBoardManagement";
 import { useNotifications } from "./hooks/useNotifications";
-import { useLayoutHistory } from "./hooks/useLayoutHistory";
 
 // Configuration
 import { nodeTypes as baseNodeTypes } from "./config/nodeTypes";
@@ -44,9 +42,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AppContent() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [showCacheDebug, setShowCacheDebug] = useState(false);
     const [showRightPanel, setShowRightPanel] = useState(false);
-    const [showChat, setShowChat] = useState(true); // Always open by default
+    const [showChat, setShowChat] = useState(true);
 
     // Authentication
     const { user, signOut } = useAuth();
@@ -59,11 +56,6 @@ function AppContent() {
         showError,
         showInfo,
     } = useNotifications();
-
-    // Layout History Tracking
-    const { addLayout, getLastTwoLayouts, clearHistory } = useLayoutHistory(
-        user?.uid
-    );
 
     // Board Management
     const {
@@ -84,13 +76,14 @@ function AppContent() {
         clearBoardState,
         saveNewNodeContent,
         performPeriodicSave,
+        getLastTwoLayouts,
+        addLayout,
     } = useBoardManagement(user, { showSuccess, showError, showInfo });
 
     // // Handle sign out with state cleanup
     const handleSignOut = async () => {
         await signOut();
         clearBoardState();
-        clearHistory(); // Clear layout history on sign out
     };
     // Handle sign in state
 
@@ -121,7 +114,11 @@ function AppContent() {
             suggestion?: string,
             parent?: string,
             position?: { x: number; y: number },
-            extraData?: { initialText?: string; isQuizMode?: boolean }
+            extraData?: {
+                initialText?: string;
+                isQuizMode?: boolean;
+                isDragConent?: boolean;
+            }
         ) => {
             if (!suggestion || !position) {
                 console.warn(
@@ -131,12 +128,9 @@ function AppContent() {
                 );
                 return;
             }
-            console.log(parent);
-
             const id = `temp-${Date.now()}-${Math.random()
                 .toString(36)
                 .slice(2, 8)}`;
-
             setNodes((prev) => [
                 ...prev,
                 {
@@ -147,19 +141,12 @@ function AppContent() {
                         label: suggestion,
                         parent: parent,
                         isQuizMode: extraData?.isQuizMode || false,
+                        isDragConent: extraData?.isDragConent || false,
                     },
                 },
             ]);
-
             const color = extraData?.isQuizMode ? "#65a30d" : "#3b82f6";
-
             if (parent) {
-                console.log(
-                    "Creating edge for parent:",
-                    parent,
-                    suggestion,
-                    id
-                );
                 onEdgesChange([
                     {
                         type: "add",
@@ -170,10 +157,7 @@ function AppContent() {
                             sourceHandle: extraData?.isQuizMode
                                 ? null
                                 : suggestion,
-                            style: {
-                                stroke: color,
-                                strokeWidth: 3,
-                            },
+                            style: { stroke: color, strokeWidth: 3 },
                             markerEnd: {
                                 type: MarkerType.ArrowClosed,
                                 color: color,
@@ -205,11 +189,7 @@ function AppContent() {
                     extraData
                 );
 
-            data.onQuizCreate = (
-                topic: string,
-                parent?: string,
-                position?: { x: number; y: number }
-            ) => {
+            data.onQuizCreate = (topic: string, srcID?: string) => {
                 setNodes((nodes) =>
                     nodes.map((n) =>
                         n.id === node.id
@@ -276,6 +256,7 @@ function AppContent() {
                                       style: {
                                           ...(e.style || {}),
                                           stroke: color,
+                                          sourceHandle: srcID,
                                           strokeWidth: 3,
                                       },
                                       markerEnd: {
@@ -389,15 +370,16 @@ function AppContent() {
                 nodeTypes={nodeTypes}
                 connectionMode={ConnectionMode.Loose}
                 fitView
+                minZoom={0.1}
                 className="bg-gray-50 dark:bg-gray-900 w-full h-full"
             >
                 <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg" />
                 <Background
                     variant={BackgroundVariant.Cross}
-                    gap={30}
-                    size={10}
+                    gap={50}
+                    size={12}
                     lineWidth={0.5}
-                    color="#94a3b8"
+                    color="#737373"
                     className="bg-gray-50 dark:bg-gray-900"
                 />
             </ReactFlow>
@@ -486,14 +468,6 @@ function AppContent() {
                 <ActivityTracker
                     onPeriodicSave={performPeriodicSave}
                     saveInterval={20000} // 20 seconds
-                />
-            )}
-
-            {/* Cache Debug Panel - only show in development */}
-            {true && (
-                <CacheDebugPanel
-                    isVisible={showCacheDebug}
-                    onToggle={() => setShowCacheDebug(!showCacheDebug)}
                 />
             )}
 

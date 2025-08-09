@@ -23,7 +23,11 @@ interface NodeData {
         suggestion?: string,
         parent?: string,
         position?: { x: number; y: number },
-        extraData?: { initialText?: string; isQuizMode?: boolean }
+        extraData?: {
+            initialText?: string;
+            isQuizMode?: boolean;
+            isDragConent?: boolean;
+        }
     ) => void;
     onQuizCreate?: (
         topic: string,
@@ -48,13 +52,7 @@ function Handles(data: any) {
                 style={{ transform: "translateY(-150%)" }}
                 type="source"
                 position={Position.Bottom}
-                id={data.label}
-            />
-            <Handle
-                style={{ transform: "translateY(-150%)" }}
-                type="target"
-                position={Position.Top}
-                id={data.label}
+                id={data.label + "1"}
             />
         </>
     );
@@ -73,11 +71,13 @@ export function DraggableEditableNode({
 
     const { screenToFlowPosition } = useReactFlow();
     const nodeRef = useRef<HTMLDivElement>(null);
+    const handleQuizRef = useRef<HTMLDivElement>(null);
     const [dragState, setDragState] = useState<{
         suggestion: string;
         x: number;
         y: number;
         isDragging: boolean;
+        draggedContent?: string;
     }>({ suggestion: "", x: 0, y: 0, isDragging: false });
 
     // Add a ref to always have the latest dragState
@@ -140,6 +140,7 @@ export function DraggableEditableNode({
             y: rect.top + rect.height / 2,
         };
     }, []);
+
     // Mouse event handlers for drag (memoized)
     const handleDragStart = useCallback(
         (suggestion: string, e: MouseEvent | PointerEvent) => {
@@ -162,26 +163,6 @@ export function DraggableEditableNode({
         },
         []
     );
-
-    // Quiz drag handlers
-    const handleQuizDragStart = useCallback((e: MouseEvent | PointerEvent) => {
-        // Find the handle's DOM node
-        const handleDiv = e.target as HTMLElement;
-        const rect = handleDiv.getBoundingClientRect();
-        // Use the center of the handle div as the origin
-        setHandleOrigin({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-        });
-        setDragState({
-            suggestion: "quiz",
-            x: e.clientX,
-            y: e.clientY,
-            isDragging: true,
-        });
-        document.addEventListener("pointermove", handleDragMove);
-        document.addEventListener("pointerup", handleQuizDragEnd);
-    }, []);
 
     const handleDragMove = useCallback((e: PointerEvent) => {
         setDragState((prev) =>
@@ -209,6 +190,26 @@ export function DraggableEditableNode({
         document.removeEventListener("pointerup", handleDragEnd);
     }, [data.onNodeCallback, id, screenToFlowPosition]);
 
+    // Quiz drag handlers
+    const handleQuizDragStart = useCallback((e: MouseEvent | PointerEvent) => {
+        // Find the handle's DOM node
+        const handleDiv = e.target as HTMLElement;
+        const rect = handleDiv.getBoundingClientRect();
+        // Use the center of the handle div as the origin
+        setHandleOrigin({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+        });
+        setDragState({
+            suggestion: "quiz",
+            x: e.clientX,
+            y: e.clientY,
+            isDragging: true,
+        });
+        document.addEventListener("pointermove", handleDragMove);
+        document.addEventListener("pointerup", handleQuizDragEnd);
+    }, []);
+
     const handleQuizDragEnd = useCallback(() => {
         const latestDragState = dragStateRef.current;
         if (latestDragState.isDragging && data.onNodeCallback) {
@@ -228,6 +229,167 @@ export function DraggableEditableNode({
         document.removeEventListener("pointermove", handleDragMove);
         document.removeEventListener("pointerup", handleQuizDragEnd);
     }, [data.onNodeCallback, id, screenToFlowPosition]);
+
+    // Content drag handlers
+    const handleContentDragStart = useCallback(
+        (e: PointerEvent, draggedElement: HTMLElement) => {
+            // Get the content of the dragged element
+            const draggedContent = draggedElement.outerHTML;
+
+            // Find the center of the dragged element as the origin
+            const rect = draggedElement.getBoundingClientRect();
+            setHandleOrigin({
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+            });
+
+            setDragState({
+                suggestion: "content",
+                x: e.clientX,
+                y: e.clientY,
+                isDragging: true,
+                draggedContent: draggedContent,
+            });
+
+            document.addEventListener("pointermove", handleDragMove);
+            document.addEventListener("pointerup", handleContentDragEnd);
+        },
+        []
+    );
+
+    const optimizeToText = useCallback((html: string) => {
+        // Create a temporary DOM element to parse the HTML
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+
+        const results: string[] = [];
+
+        // Extract image titles/alt text
+        const images = tempDiv.querySelectorAll("img");
+        images.forEach((img) => {
+            const title = img.title || img.alt;
+            if (title && title.trim()) {
+                results.push(title.trim());
+            }
+        });
+
+        // Extract inner text content
+        const textContent = tempDiv.textContent || tempDiv.innerText;
+        if (textContent && textContent.trim()) {
+            results.push(textContent.trim());
+        }
+
+        // Return combined results, or original HTML if no text/images found
+        return results.length > 0 ? results.join(" ") : html;
+    }, []);
+
+    const handleContentDragEnd = useCallback(() => {
+        const latestDragState = dragStateRef.current;
+        if (
+            latestDragState.isDragging &&
+            data.onNodeCallback &&
+            latestDragState.draggedContent
+        ) {
+            // Check if the drop position is over the current node
+            const currentNode = handleQuizRef.current;
+            if (currentNode) {
+                const nodeRect = currentNode.getBoundingClientRect();
+                const dropX = latestDragState.x;
+                const dropY = latestDragState.y;
+
+                // Check if drop position is within the node bounds
+                const isOverNode =
+                    dropX >= nodeRect.left &&
+                    dropX <= nodeRect.right &&
+                    dropY >= nodeRect.top &&
+                    dropY <= nodeRect.bottom;
+
+                // Only create new node if dropped outside the current node
+                if (!isOverNode) {
+                    const rfPos = screenToFlowPosition({
+                        x: latestDragState.x,
+                        y: latestDragState.y,
+                    });
+
+                    // Create a new node with the dragged content
+                    data.onNodeCallback(
+                        optimizeToText(latestDragState.draggedContent),
+                        id,
+                        rfPos,
+                        {
+                            initialText: "",
+                            isQuizMode: false,
+                            isDragConent: true,
+                        }
+                    );
+                }
+                // If dropped over the node, the drag is discarded (no callback)
+            }
+        }
+        setDragState({
+            suggestion: "explain",
+            x: 0,
+            y: 0,
+            isDragging: false,
+            draggedContent: undefined,
+        });
+        setHandleOrigin(null);
+        document.removeEventListener("pointermove", handleDragMove);
+        document.removeEventListener("pointerup", handleContentDragEnd);
+    }, [data.onNodeCallback, id, screenToFlowPosition, optimizeToText]);
+
+    // Set up content dragging event listeners
+    useEffect(() => {
+        if (!data.contents || data.contents.length === 0) return;
+
+        const contentContainer =
+            handleQuizRef.current?.querySelector(".node-rich-content");
+        if (!contentContainer) return;
+
+        const draggableClasses = [
+            ".draggable-header-block",
+            ".draggable-image-block",
+            ".draggable-image-grid",
+            ".draggable-text-block",
+            ".draggable-point-item",
+            ".draggable-diagram-block",
+            ".draggable-video-block",
+            ".draggable-code-block",
+            ".draggable-timeline-item",
+            ".draggable-card-item",
+            ".draggable-section-block",
+        ];
+
+        const handlePointerDown = (e: Event) => {
+            const pointerEvent = e as PointerEvent;
+            // Only handle left mouse button
+            if (pointerEvent.button !== 0) return;
+
+            // Check if the target element is draggable
+            const target = pointerEvent.target as HTMLElement;
+            const draggableElement = draggableClasses.find((className) =>
+                target.closest(className)
+            );
+
+            if (draggableElement) {
+                const element = target.closest(draggableElement) as HTMLElement;
+                if (element) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleContentDragStart(pointerEvent, element);
+                }
+            }
+        };
+
+        contentContainer.addEventListener("pointerdown", handlePointerDown);
+
+        return () => {
+            contentContainer.removeEventListener(
+                "pointerdown",
+                handlePointerDown
+            );
+        };
+    }, [data.contents, handleContentDragStart]);
 
     // Memoize style objects to prevent recreation
     const nodeStyle = useMemo(
@@ -256,7 +418,7 @@ export function DraggableEditableNode({
 
     return (
         <div
-            ref={nodeRef}
+            ref={handleQuizRef}
             className="group relative bg-white/95 border border-gray-200/60 rounded-3xl
                        min-w-[320px] max-w-[640px] cursor-grab select-none
                        transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
@@ -316,6 +478,7 @@ export function DraggableEditableNode({
                         {!data.isQuiz && (
                             <div className="relative">
                                 <div
+                                    ref={nodeRef}
                                     className="group relative flex items-center justify-center w-10 h-10
                                               bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
                                               border-2 border-emerald-200 hover:border-emerald-300 
@@ -338,6 +501,14 @@ export function DraggableEditableNode({
                                                text-xs text-gray-500 font-medium whitespace-nowrap"
                                 >
                                     Quiz
+                                    <Handle
+                                        style={{
+                                            transform: "translateY(-100%)",
+                                        }}
+                                        type="source"
+                                        position={Position.Top}
+                                        id="109"
+                                    />
                                 </div>
                             </div>
                         )}
@@ -354,7 +525,7 @@ export function DraggableEditableNode({
                                         if (data.onQuizCreate) {
                                             data.onQuizCreate(
                                                 data.label || "New Quiz",
-                                                id,
+                                                "109",
                                                 getParentCenter()
                                             );
                                         }
@@ -383,6 +554,10 @@ export function DraggableEditableNode({
                         handleDragStart={handleDragStart}
                         handleOrigin={handleOrigin}
                         getParentCenter={getParentCenter}
+                        displayLine={
+                            dragState.suggestion !== "quiz" &&
+                            dragState.suggestion !== "content"
+                        }
                     />
                 )}
 
@@ -395,8 +570,7 @@ export function DraggableEditableNode({
                             {/* Connection line */}
                             <svg
                                 className="fixed inset-0 pointer-events-none z-[9998]"
-                                width="100vw"
-                                height="100vh"
+                                style={{ width: "100vw", height: "100vh" }}
                             >
                                 <defs>
                                     <linearGradient
@@ -419,16 +593,29 @@ export function DraggableEditableNode({
                                     </linearGradient>
                                 </defs>
                                 <line
-                                    x1={handleOrigin?.x || getParentCenter().x}
-                                    y1={handleOrigin?.y || getParentCenter().y}
+                                    x1={handleOrigin?.x ?? getParentCenter().x}
+                                    y1={handleOrigin?.y ?? getParentCenter().y}
                                     x2={dragState.x}
                                     y2={dragState.y}
                                     stroke="url(#quizConnectionGradient)"
                                     strokeWidth={3}
                                     strokeLinecap="round"
-                                    strokeDasharray="5,5"
-                                    className="animate-pulse"
+                                    strokeDasharray="10,6"
+                                    style={{
+                                        opacity: 0.7,
+                                        animation:
+                                            "quizLineFade 1.2s ease-in-out infinite",
+                                    }}
                                 />
+                                <style>
+                                    {`
+                                        @keyframes quizLineFade {
+                                            0% { opacity: 0.7; }
+                                            50% { opacity: 1; }
+                                            100% { opacity: 0.7; }
+                                        }
+                                    `}
+                                </style>
                             </svg>
 
                             {/* Floating quiz label */}
@@ -448,6 +635,95 @@ export function DraggableEditableNode({
                                         />
                                         Create Quiz
                                     </div>
+                                </div>
+                            </div>
+                        </>,
+                        document.body
+                    )}
+
+                {/* Content drag visualization */}
+                {dragState.isDragging &&
+                    dragState.suggestion === "content" &&
+                    typeof window !== "undefined" &&
+                    createPortal(
+                        <>
+                            {/* Connection line */}
+                            <svg
+                                className="fixed inset-0 pointer-events-none z-[9998]"
+                                style={{ width: "100vw", height: "100vh" }}
+                            >
+                                <defs>
+                                    <linearGradient
+                                        id="contentConnectionGradient"
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="0%"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stopColor="#3b82f6"
+                                            stopOpacity="0.8"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stopColor="#1d4ed8"
+                                            stopOpacity="1"
+                                        />
+                                    </linearGradient>
+                                </defs>
+                                <line
+                                    x1={handleOrigin?.x ?? getParentCenter().x}
+                                    y1={handleOrigin?.y ?? getParentCenter().y}
+                                    x2={dragState.x}
+                                    y2={dragState.y}
+                                    stroke="url(#contentConnectionGradient)"
+                                    strokeWidth={3}
+                                    strokeLinecap="round"
+                                    strokeDasharray="8,4"
+                                    style={{
+                                        opacity: 0.7,
+                                        animation:
+                                            "contentLineFade 1s ease-in-out infinite",
+                                    }}
+                                />
+                                <style>
+                                    {`
+                                        @keyframes contentLineFade {
+                                            0% { opacity: 0.7; }
+                                            50% { opacity: 1; }
+                                            100% { opacity: 0.7; }
+                                        }
+                                    `}
+                                </style>
+                            </svg>
+
+                            {/* Floating content preview */}
+                            <div
+                                className="fixed pointer-events-none z-[9999] transform -translate-x-1/2 -translate-y-1/2"
+                                style={{ left: dragState.x, top: dragState.y }}
+                            >
+                                <div
+                                    className="max-w-xs p-3 rounded-lg shadow-xl bg-white/95 backdrop-blur-sm
+                                           border-2 border-blue-500/30 animate-bounce"
+                                    style={{
+                                        transform: "scale(0.8)",
+                                        opacity: 0.9,
+                                    }}
+                                >
+                                    {dragState.draggedContent && (
+                                        <div
+                                            className="text-sm text-gray-800 overflow-hidden"
+                                            style={{
+                                                maxHeight: "200px",
+                                                fontSize: "12px",
+                                                lineHeight: "1.3",
+                                            }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: dragState.draggedContent,
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </>,

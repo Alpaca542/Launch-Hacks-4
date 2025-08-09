@@ -1,16 +1,4 @@
-import {
-    collection,
-    getDocs,
-    doc,
-    setDoc,
-    deleteDoc,
-    query,
-    where,
-    orderBy,
-    Timestamp,
-    writeBatch,
-} from "firebase/firestore";
-import { db } from "../firebase";
+import supabase from "../supabase-client";
 import { COLLECTIONS, ERROR_MESSAGES } from "../utils/constants";
 import { validateUser } from "../utils/validation";
 
@@ -19,45 +7,31 @@ export interface BoardData {
     id: string;
     userId: string;
     name: string;
-    createdAt: Date | Timestamp;
+    createdAt: string;
     isOpen: boolean;
     isFallback?: boolean;
-    updatedAt?: Date | Timestamp;
+    updatedAt?: string;
 }
 
 export interface NodeData {
     id: string;
     type: string;
-    data: {
-        label: string;
-        title?: string;
-        suggestions?: string[];
-        [key: string]: any;
-    };
-    position: {
-        x: number;
-        y: number;
-    };
+    data: { [key: string]: any };
+    position: { x: number; y: number };
     draggable?: boolean;
-    style?: {
-        [key: string]: any;
-    };
-    updatedAt?: Date | Timestamp;
+    style?: { [key: string]: any };
+    updatedAt?: string;
 }
 
 export interface EdgeData {
     id: string;
     source: string;
     target: string;
-    sourceHandle?: string;
-    targetHandle?: string;
-    style?: {
-        [key: string]: any;
-    };
-    markerEnd?: {
-        [key: string]: any;
-    };
-    updatedAt?: Date | Timestamp;
+    sourceHandle?: string | null;
+    targetHandle?: string | null;
+    style?: { [key: string]: any };
+    markerEnd?: { [key: string]: any };
+    updatedAt?: string;
 }
 
 // Initial fallback data
@@ -83,175 +57,95 @@ export const initialNodes: NodeData[] = [
 
 export const initialEdges: EdgeData[] = [];
 
+const now = () => new Date().toISOString();
+
 export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
     if (!validateUser({ uid: userId })) {
         throw new Error(ERROR_MESSAGES.AUTH_REQUIRED);
     }
-
-    try {
-        const boardsCollection = collection(db, COLLECTIONS.BOARDS);
-        const boardsQuery = query(
-            boardsCollection,
-            where("userId", "==", userId),
-            orderBy("createdAt", "desc")
-        );
-        const boardsSnapshot = await getDocs(boardsQuery);
-
-        if (boardsSnapshot.empty) {
-            // Create a default board if none exists
-            const defaultBoard = {
-                id: `board_${Date.now()}`,
-                userId: userId,
-                name: "Default Board",
-                createdAt: Timestamp.now(),
-                isOpen: true,
-            };
-
-            await setDoc(
-                doc(db, COLLECTIONS.BOARDS, defaultBoard.id),
-                defaultBoard
-            );
-            console.log("Created default board:", defaultBoard);
-            return [defaultBoard];
-        }
-
-        const boards: BoardData[] = boardsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...(doc.data() as Omit<BoardData, "id">),
-        }));
-
-        console.log("Fetched all boards:", boards);
-        return boards;
-    } catch (err: any) {
-        console.error("Fetch all boards error:", err);
-
-        // Handle specific Firestore index error
-        if (
-            err.code === "failed-precondition" ||
-            err.message?.includes("requires an index")
-        ) {
-            const indexMessage = `
-Firestore database index is missing. To fix this:
-
-1. Visit the Firebase Console: https://console.firebase.google.com/
-2. Navigate to your project
-3. Go to Firestore Database > Indexes
-4. Create a composite index for collection "boards" with:
-   - Field: userId (Ascending)
-   - Field: createdAt (Descending)
-
-Or click this direct link if available in the error logs above.
-
-Using fallback board data for now...
-            `.trim();
-
-            console.warn(indexMessage);
-
-            // Return fallback board with initial data
-            const fallbackBoard = {
-                id: `fallback_${Date.now()}`,
-                userId: userId,
-                name: "Fallback Board (Create Index)",
-                createdAt: Timestamp.now(),
-                isOpen: true,
-                isFallback: true,
-            };
-
-            return [fallbackBoard];
-        }
-
-        throw new Error(ERROR_MESSAGES.LOAD_FAILED);
+    const { data, error } = await supabase
+        .from(COLLECTIONS.BOARDS)
+        .select("id,user_id,name,created_at,is_open,updated_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+    if (error) throw new Error(ERROR_MESSAGES.LOAD_FAILED);
+    if (!data || data.length === 0) {
+        const defaultBoard: BoardData = {
+            id: `board_${Date.now()}`,
+            userId,
+            name: "Default Board",
+            createdAt: now(),
+            isOpen: true,
+        };
+        const { error: insertErr } = await supabase
+            .from(COLLECTIONS.BOARDS)
+            .insert({
+                id: defaultBoard.id,
+                user_id: defaultBoard.userId,
+                name: defaultBoard.name,
+                created_at: defaultBoard.createdAt,
+                is_open: defaultBoard.isOpen,
+            });
+        if (insertErr) throw new Error(ERROR_MESSAGES.LOAD_FAILED);
+        return [defaultBoard];
     }
+    return data.map((r: any) => ({
+        id: r.id,
+        userId: r.user_id,
+        name: r.name,
+        createdAt: r.created_at,
+        isOpen: !!r.is_open,
+        updatedAt: r.updated_at ?? undefined,
+    }));
 };
 
 export const fetchNodesFromBoard = async (
     boardId: string
 ): Promise<NodeData[]> => {
-    if (!boardId) {
-        console.warn("No board ID provided for fetching nodes");
-        return initialNodes;
-    }
-
-    try {
-        const nodesCollection = collection(
-            db,
-            COLLECTIONS.BOARDS,
-            boardId,
-            COLLECTIONS.NODES
-        );
-        const nodesSnapshot = await getDocs(nodesCollection);
-
-        if (nodesSnapshot.empty) {
-            console.log("No nodes found for board, using initial nodes");
-            return initialNodes;
-        }
-
-        const nodesFromFirestore: NodeData[] = nodesSnapshot.docs.map((doc) => {
-            const docData = doc.data();
-
-            // Ensure data has all required properties
-            const nodeData = {
-                ...docData.data,
-                // Ensure tokenColors exists for backward compatibility
-                tokenColors: docData.data?.tokenColors || {},
-                // Ensure previousNode exists for backward compatibility
-                previousNode: docData.data?.previousNode || null,
-            };
-
-            const node = {
-                id: doc.id,
-                type: docData.type,
-                position: docData.position,
-                data: nodeData,
-                draggable: docData.draggable,
-                style: docData.style,
-            };
-            return node;
-        });
-
-        console.log("Fetched nodes from board:", nodesFromFirestore);
-        return nodesFromFirestore;
-    } catch (err) {
-        console.error("Fetch nodes error:", err);
-        return initialNodes;
-    }
+    if (!boardId) return initialNodes;
+    const { data, error } = await supabase
+        .from(COLLECTIONS.NODES)
+        .select("id,board_id,type,data,position,draggable,style,updated_at")
+        .eq("board_id", boardId);
+    if (error) return initialNodes;
+    if (!data || data.length === 0) return initialNodes;
+    return data.map((r: any) => ({
+        id: r.id,
+        type: r.type,
+        data: {
+            ...(r.data || {}),
+            tokenColors: r.data?.tokenColors || {},
+            previousNode: r.data?.previousNode ?? null,
+        },
+        position: r.position,
+        draggable: r.draggable ?? undefined,
+        style: r.style ?? undefined,
+        updatedAt: r.updated_at ?? undefined,
+    }));
 };
 
 export const fetchEdgesFromBoard = async (
     boardId: string
 ): Promise<EdgeData[]> => {
-    if (!boardId) {
-        console.warn("No board ID provided for fetching edges");
-        return initialEdges;
-    }
-
-    try {
-        const edgesCollection = collection(
-            db,
-            COLLECTIONS.BOARDS,
-            boardId,
-            COLLECTIONS.EDGES
-        );
-        const edgesSnapshot = await getDocs(edgesCollection);
-
-        if (edgesSnapshot.empty) {
-            console.log("No edges found for board, using initial edges");
-            return initialEdges;
-        }
-
-        const edgesFromFirestore: EdgeData[] = edgesSnapshot.docs.map(
-            (doc) => ({
-                id: doc.id,
-                ...(doc.data() as Omit<EdgeData, "id">),
-            })
-        );
-
-        console.log("Fetched edges from board:", edgesFromFirestore);
-        return edgesFromFirestore;
-    } catch (err) {
-        console.error("Fetch edges error:", err);
-        return initialEdges;
-    }
+    if (!boardId) return initialEdges;
+    const { data, error } = await supabase
+        .from(COLLECTIONS.EDGES)
+        .select(
+            "id,board_id,source,target,source_handle,target_handle,style,marker_end,updated_at"
+        )
+        .eq("board_id", boardId);
+    if (error) return initialEdges;
+    if (!data || data.length === 0) return initialEdges;
+    return data.map((r: any) => ({
+        id: r.id,
+        source: r.source,
+        target: r.target,
+        sourceHandle: r.source_handle ?? undefined,
+        targetHandle: r.target_handle ?? undefined,
+        style: r.style ?? undefined,
+        markerEnd: r.marker_end ?? undefined,
+        updatedAt: r.updated_at ?? undefined,
+    }));
 };
 
 // Save individual node to board
@@ -259,47 +153,21 @@ export const saveIndividualNode = async (
     boardId: string,
     node: NodeData
 ): Promise<void> => {
-    if (!boardId || !node) {
-        console.warn("Invalid parameters for saving individual node:", {
-            boardId,
-            node,
-        });
-        return;
-    }
-
-    try {
-        const nodeRef = doc(
-            db,
-            COLLECTIONS.BOARDS,
-            boardId,
-            COLLECTIONS.NODES,
-            node.id
-        );
-
-        // Filter out null values to prevent Firestore errors
-        const nodeData: any = {
-            type: node.type,
-            data: node.data,
-            position: node.position,
-            updatedAt: Timestamp.now(),
-        };
-
-        // Only include draggable if it's not null or undefined
-        if (node.draggable != null) {
-            nodeData.draggable = node.draggable;
-        }
-
-        // Include style if it exists
-        if (node.style != null) {
-            nodeData.style = node.style;
-        }
-
-        await setDoc(nodeRef, nodeData);
-        console.log("Individual node saved:", node.id);
-    } catch (err) {
-        console.error("Save individual node error:", err);
-        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
-    }
+    if (!boardId || !node) return;
+    const payload = {
+        id: node.id,
+        board_id: boardId,
+        type: node.type,
+        data: node.data,
+        position: node.position,
+        draggable: node.draggable ?? null,
+        style: node.style ?? null,
+        updated_at: now(),
+    };
+    const { error } = await supabase
+        .from(COLLECTIONS.NODES)
+        .upsert(payload, { onConflict: "id" });
+    if (error) throw new Error(ERROR_MESSAGES.SAVE_FAILED);
 };
 
 // Save individual edge to board
@@ -307,181 +175,67 @@ export const saveIndividualEdge = async (
     boardId: string,
     edge: EdgeData
 ): Promise<void> => {
-    if (!boardId || !edge) {
-        console.warn("Invalid parameters for saving individual edge:", {
-            boardId,
-            edge,
-        });
-        return;
-    }
-
-    try {
-        const edgeRef = doc(
-            db,
-            COLLECTIONS.BOARDS,
-            boardId,
-            COLLECTIONS.EDGES,
-            edge.id
-        );
-
-        // Filter out null values to prevent Firestore errors
-        const edgeData: any = {
-            source: edge.source,
-            target: edge.target,
-            updatedAt: Timestamp.now(),
-        };
-
-        // Only include sourceHandle and targetHandle if they're not null or undefined
-        if (edge.sourceHandle != null) {
-            edgeData.sourceHandle = edge.sourceHandle;
-        }
-        if (edge.targetHandle != null) {
-            edgeData.targetHandle = edge.targetHandle;
-        }
-
-        // Include style if it exists (for edge colors)
-        if (edge.style != null) {
-            edgeData.style = edge.style;
-        }
-
-        // Include markerEnd if it exists (for arrow colors)
-        if (edge.markerEnd != null) {
-            edgeData.markerEnd = edge.markerEnd;
-        }
-
-        await setDoc(edgeRef, edgeData);
-        console.log("Individual edge saved:", edge.id);
-    } catch (err) {
-        console.error("Save individual edge error:", err);
-        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
-    }
+    if (!boardId || !edge) return;
+    const payload = {
+        id: edge.id,
+        board_id: boardId,
+        source: edge.source,
+        target: edge.target,
+        source_handle: edge.sourceHandle ?? null,
+        target_handle: edge.targetHandle ?? null,
+        style: edge.style ?? null,
+        marker_end: edge.markerEnd ?? null,
+        updated_at: now(),
+    };
+    const { error } = await supabase
+        .from(COLLECTIONS.EDGES)
+        .upsert(payload, { onConflict: "id" });
+    if (error) throw new Error(ERROR_MESSAGES.SAVE_FAILED);
 };
 
 export const saveNodesToBoard = async (
     boardId: string,
     nodesToSave: NodeData[]
 ): Promise<void> => {
-    if (!boardId || !Array.isArray(nodesToSave)) {
-        console.warn("Invalid parameters for saving nodes:", {
-            boardId,
-            nodesToSave,
-        });
-        return;
-    }
-
-    // If array is empty, still proceed to clear existing nodes (if that's the intent)
-    if (nodesToSave.length === 0) {
-        console.log("No nodes to save for board:", boardId);
-        return;
-    }
-
-    try {
-        // Use batch writes for better performance and atomicity
-        const batch = writeBatch(db);
-
-        nodesToSave.forEach((node) => {
-            const nodeRef = doc(
-                db,
-                COLLECTIONS.BOARDS,
-                boardId,
-                COLLECTIONS.NODES,
-                node.id
-            );
-
-            // Filter out null values to prevent Firestore errors
-            const nodeData: any = {
-                type: node.type,
-                data: node.data,
-                position: node.position,
-                updatedAt: Timestamp.now(),
-            };
-
-            // Only include draggable if it's not null or undefined
-            if (node.draggable != null) {
-                nodeData.draggable = node.draggable;
-            }
-
-            // Include style if it exists
-            if (node.style != null) {
-                nodeData.style = node.style;
-            }
-
-            batch.set(nodeRef, nodeData);
-        });
-
-        await batch.commit();
-        console.log("Nodes saved to board");
-    } catch (err) {
-        console.error("Save nodes error:", err);
-        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
-    }
+    if (!boardId || !Array.isArray(nodesToSave)) return;
+    if (nodesToSave.length === 0) return;
+    const rows = nodesToSave.map((n) => ({
+        id: n.id,
+        board_id: boardId,
+        type: n.type,
+        data: n.data,
+        position: n.position,
+        draggable: n.draggable ?? null,
+        style: n.style ?? null,
+        updated_at: now(),
+    }));
+    const { error } = await supabase
+        .from(COLLECTIONS.NODES)
+        .upsert(rows, { onConflict: "id" });
+    if (error) throw new Error(ERROR_MESSAGES.SAVE_FAILED);
 };
 
 export const saveEdgesToBoard = async (
     boardId: string,
     edgesToSave: EdgeData[]
 ): Promise<void> => {
-    if (!boardId || !Array.isArray(edgesToSave)) {
-        console.warn("Invalid parameters for saving edges:", {
-            boardId,
-            edgesToSave,
-        });
-        return;
-    }
-
-    // If array is empty, still proceed (this is valid - means no edges)
-    if (edgesToSave.length === 0) {
-        console.log("No edges to save for board:", boardId);
-        return;
-    }
-
-    try {
-        // Use batch writes for better performance and atomicity
-        const batch = writeBatch(db);
-
-        edgesToSave.forEach((edge) => {
-            const edgeRef = doc(
-                db,
-                COLLECTIONS.BOARDS,
-                boardId,
-                COLLECTIONS.EDGES,
-                edge.id
-            );
-
-            // Filter out null values to prevent Firestore errors
-            const edgeData: any = {
-                source: edge.source,
-                target: edge.target,
-                updatedAt: Timestamp.now(),
-            };
-
-            // Only include sourceHandle and targetHandle if they're not null or undefined
-            if (edge.sourceHandle != null) {
-                edgeData.sourceHandle = edge.sourceHandle;
-            }
-            if (edge.targetHandle != null) {
-                edgeData.targetHandle = edge.targetHandle;
-            }
-
-            // Include style if it exists (for edge colors)
-            if (edge.style != null) {
-                edgeData.style = edge.style;
-            }
-
-            // Include markerEnd if it exists (for arrow colors)
-            if (edge.markerEnd != null) {
-                edgeData.markerEnd = edge.markerEnd;
-            }
-
-            batch.set(edgeRef, edgeData);
-        });
-
-        await batch.commit();
-        console.log("Edges saved to board");
-    } catch (err) {
-        console.error("Save edges error:", err);
-        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
-    }
+    if (!boardId || !Array.isArray(edgesToSave)) return;
+    const rows = (edgesToSave || []).map((e) => ({
+        id: e.id,
+        board_id: boardId,
+        source: e.source,
+        target: e.target,
+        source_handle: e.sourceHandle ?? null,
+        target_handle: e.targetHandle ?? null,
+        style: e.style ?? null,
+        marker_end: e.markerEnd ?? null,
+        updated_at: now(),
+    }));
+    if (rows.length === 0) return;
+    const { error } = await supabase
+        .from(COLLECTIONS.EDGES)
+        .upsert(rows, { onConflict: "id" });
+    if (error) throw new Error(ERROR_MESSAGES.SAVE_FAILED);
 };
 
 export const createBoard = async (
@@ -489,79 +243,57 @@ export const createBoard = async (
     boardName: string | null,
     allBoards: BoardData[]
 ): Promise<BoardData> => {
-    if (!validateUser({ uid: userId })) {
+    if (!validateUser({ uid: userId }))
         throw new Error(ERROR_MESSAGES.AUTH_REQUIRED);
-    }
-
-    try {
-        const newBoard = {
-            id: `board_${Date.now()}`,
-            userId: userId,
-            name: boardName || `Board ${allBoards.length + 1}`,
-            createdAt: Timestamp.now(),
-            isOpen: false,
-        };
-
-        console.log("Creating board:", newBoard);
-        await setDoc(doc(db, COLLECTIONS.BOARDS, newBoard.id), newBoard);
-        console.log("Board created successfully:", newBoard);
-        return newBoard;
-    } catch (error: any) {
-        console.error("Error creating new board:", error);
-
-        // Handle specific Firestore errors
-        if (error.code === "permission-denied") {
-            throw new Error(
-                "Permission denied. Please check your Firestore security rules."
-            );
-        } else if (error.code === "failed-precondition") {
-            throw new Error(
-                "Database configuration error. Please check Firestore setup."
-            );
-        }
-
-        throw new Error("Failed to create board. Please try again.");
-    }
+    const newBoard: BoardData = {
+        id: `board_${Date.now()}`,
+        userId,
+        name: boardName || `Board ${allBoards.length + 1}`,
+        createdAt: now(),
+        isOpen: false,
+    };
+    const { error } = await supabase.from(COLLECTIONS.BOARDS).insert({
+        id: newBoard.id,
+        user_id: newBoard.userId,
+        name: newBoard.name,
+        created_at: newBoard.createdAt,
+        is_open: newBoard.isOpen,
+    });
+    if (error) throw new Error("Failed to create board. Please try again.");
+    return newBoard;
 };
 
 export const deleteBoard = async (boardId: string): Promise<void> => {
-    if (!boardId) {
-        throw new Error("Board ID is required for deletion");
-    }
-
-    try {
-        await deleteDoc(doc(db, COLLECTIONS.BOARDS, boardId));
-        console.log("Board deleted successfully");
-    } catch (error: any) {
-        console.error("Error deleting board:", error);
-        if (error.code === "permission-denied") {
-            throw new Error("Permission denied. Cannot delete this board.");
-        }
-        throw error;
-    }
+    if (!boardId) throw new Error("Board ID is required for deletion");
+    const { error: e1 } = await supabase
+        .from(COLLECTIONS.NODES)
+        .delete()
+        .eq("board_id", boardId);
+    if (e1) throw e1;
+    const { error: e2 } = await supabase
+        .from(COLLECTIONS.EDGES)
+        .delete()
+        .eq("board_id", boardId);
+    if (e2) throw e2;
+    const { error: e3 } = await supabase
+        .from(COLLECTIONS.BOARDS)
+        .delete()
+        .eq("id", boardId);
+    if (e3) throw e3;
 };
 
 export const updateBoardStatus = async (
     boardId: string,
     updates: Partial<BoardData>
 ): Promise<void> => {
-    if (!boardId || !updates) {
+    if (!boardId || !updates)
         throw new Error("Board ID and updates are required");
-    }
-
-    try {
-        // Ensure we use proper Timestamp for any date fields
-        const sanitizedUpdates = {
-            ...updates,
-            updatedAt: Timestamp.now(),
-        };
-
-        await setDoc(doc(db, COLLECTIONS.BOARDS, boardId), sanitizedUpdates, {
-            merge: true,
-        });
-        console.log("Board status updated:", sanitizedUpdates);
-    } catch (error) {
-        console.error("Error updating board status:", error);
-        throw error;
-    }
+    const payload: any = { updated_at: now() };
+    if (typeof updates.name === "string") payload.name = updates.name;
+    if (typeof updates.isOpen === "boolean") payload.is_open = updates.isOpen;
+    const { error } = await supabase
+        .from(COLLECTIONS.BOARDS)
+        .update(payload)
+        .eq("id", boardId);
+    if (error) throw error;
 };

@@ -10,7 +10,7 @@ const GOOGLE_CX = "93fe2cec9d77f4202";
 const GOOGLE_SEARCH_API_URL = "https://www.googleapis.com/customsearch/v1";
 
 // Tenor API configuration
-const TENOR_API_KEY = process.env.VITE_TENOR_API_KEY || "";
+const TENOR_API_KEY = "";
 const TENOR_API_URL = "https://g.tenor.com/v1/search";
 
 // YouTube Data API configuration

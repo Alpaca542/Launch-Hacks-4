@@ -15,6 +15,7 @@ interface SuggestionHandlesProps {
     handleDragStart: (suggestion: string, e: PointerEvent) => void;
     handleOrigin: { x: number; y: number } | null;
     getParentCenter: () => { x: number; y: number };
+    displayLine: boolean;
 }
 
 const MAX_VISIBLE_HANDLES = 6;
@@ -76,8 +77,20 @@ const DragVisualization = ({
                     strokeWidth={3}
                     strokeLinecap="round"
                     strokeDasharray="5,5"
-                    className="animate-pulse"
+                    style={{
+                        opacity: 0.7,
+                        animation: "quizLineFade 1.2s ease-in-out infinite",
+                    }}
                 />
+                <style>
+                    {`
+                        @keyframes quizLineFade {
+                            0% { opacity: 0.7; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0.7; }
+                        }
+                    `}
+                </style>
             </svg>
 
             {/* Floating suggestion label */}
@@ -199,6 +212,7 @@ export default function SuggestionHandles({
     handleDragStart,
     handleOrigin,
     getParentCenter,
+    displayLine,
 }: SuggestionHandlesProps) {
     if (!suggestions?.length) {
         return null;
@@ -258,11 +272,13 @@ export default function SuggestionHandles({
             })}
 
             {/* Drag visualization */}
-            <DragVisualization
-                dragState={dragState}
-                handleOrigin={handleOrigin}
-                getParentCenter={getParentCenter}
-            />
+            {displayLine && (
+                <DragVisualization
+                    dragState={dragState}
+                    handleOrigin={handleOrigin}
+                    getParentCenter={getParentCenter}
+                />
+            )}
         </>
     );
 }
