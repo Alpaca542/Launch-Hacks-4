@@ -23,7 +23,6 @@ export interface UseBoardManagementReturn {
     isLoading: boolean;
     isSwitchingBoard: boolean;
     isSaving: boolean;
-    setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
     onNodesChange: (changes: any) => void;
     onEdgesChange: (changes: any) => void;
     setNodes: (nodes: Node[] | ((nodes: Node[]) => Node[])) => void;
