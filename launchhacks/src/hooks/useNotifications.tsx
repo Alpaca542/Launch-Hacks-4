@@ -40,7 +40,9 @@ export const useNotifications = (): UseNotificationsReturn => {
     const addNotification = (
         notification: Omit<Notification, "id" | "timestamp">
     ): string => {
-        const id = Date.now().toString();
+        const id = `notification_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 6)}`;
         const newNotification: Notification = {
             id,
             timestamp: new Date(),

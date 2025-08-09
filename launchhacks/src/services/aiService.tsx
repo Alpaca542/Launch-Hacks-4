@@ -10,7 +10,7 @@
  * Uses Supabase Edge Functions with OpenAI for fast, reliable AI responses.
  */
 
-import supabase from "../supabase-client";
+import supabase, { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase-client";
 import { jsonrepair } from "jsonrepair";
 import {
     suggestionsPrompt,
@@ -128,6 +128,34 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
     {
         type: "function",
         function: {
+            name: "create_visual_node",
+            description:
+                "Creates a knowledge node with AI-generated content about a specific topic.",
+            parameters: {
+                type: "object",
+                properties: {
+                    title: {
+                        type: "string",
+                        description: "The title for the content node",
+                    },
+                    description: {
+                        type: "string",
+                        description:
+                            "A brief description or context for the node's content. An AI will generate the content based on this description.",
+                    },
+                    details: {
+                        type: "string",
+                        description:
+                            "If you want the AI to mention specific details or context, include them here. The node should feel like a natural part of the explanation.",
+                    },
+                },
+                required: ["title", "description"],
+            },
+        },
+    },
+    {
+        type: "function",
+        function: {
             name: "create_visual",
             description:
                 "Creates a detailed knowledge node with AI-generated content about a specific topic",
@@ -182,93 +210,147 @@ export const askAIStream = async (
             payload.tool_choice = "auto";
         }
 
-        console.log("Calling Supabase function with payload:", {
-            ...payload,
-            tools: payload.tools ? `${payload.tools.length} tools` : "no tools",
+        // Use direct fetch to Supabase Edge Function to support true SSE streaming
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-remote`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "text/event-stream",
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                apikey: SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify(payload),
         });
 
-        try {
-            console.log("Starting streaming request...");
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(`Supabase function error: ${res.status} ${text}`);
+        }
 
-            const { data, error } = await supabase.functions.invoke(
-                "ai-remote",
-                {
-                    body: payload,
-                    headers: {
-                        Accept: "text/event-stream",
-                    },
-                }
-            );
+        const contentType =
+            res.headers.get("content-type")?.toLowerCase() || "";
 
-            if (error) throw error;
-
+        // If server returned JSON (non-streaming fallback), handle it
+        if (!contentType.includes("text/event-stream")) {
+            const data = await res.json().catch(() => ({}));
             if (data?.type === "error") {
                 throw new Error(data.message || "Stream error");
             }
 
-            // For streaming responses, we need to handle the stream differently
-            // Since Supabase doesn't support streaming responses in the same way,
-            // we'll use the regular invoke method and process the response
             if (data?.response) {
                 onChunk(data.response);
             }
 
             if (
                 data?.tool_calls &&
-                data.tool_calls.length > 0 &&
+                data.tool_calls.length &&
                 options?.onToolCall
             ) {
-                console.log("Processing tool calls:", data.tool_calls);
-                for (const toolCall of data.tool_calls) {
+                for (const toolCall of data.tool_calls as ToolCall[]) {
                     try {
                         onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
                         const toolResult = await options.onToolCall(toolCall);
                         onChunk(`✅ ${toolResult}\n`);
-                    } catch (toolError) {
-                        console.error("Tool execution error:", toolError);
-                        onChunk(`❌ Tool execution failed: ${toolError}\n`);
+                    } catch (toolError: any) {
+                        onChunk(
+                            `❌ Tool execution failed: ${
+                                toolError?.message || toolError
+                            }\n`
+                        );
                     }
                 }
             }
 
-            if (onComplete) {
-                onComplete();
-            }
-        } catch (functionError: any) {
-            console.error("Supabase function call failed:", functionError);
+            onComplete?.();
+            return;
+        }
 
-            let errorMessage =
-                "I'm having trouble connecting to the AI service. ";
+        // Stream and parse SSE events
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No response stream available");
 
-            if (functionError.message) {
-                errorMessage += `Error: ${functionError.message}`;
-            } else {
-                errorMessage +=
-                    "Please check your internet connection and try again.";
-            }
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let lastCompleteEvent: any | null = null;
 
-            onChunk(errorMessage);
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
 
-            if (onError) {
-                onError(new Error(errorMessage));
-            }
-            if (onComplete) {
-                onComplete();
+            let idx: number;
+            while ((idx = buffer.indexOf("\n\n")) !== -1) {
+                const rawEvent = buffer.slice(0, idx);
+                buffer = buffer.slice(idx + 2);
+
+                // Each SSE event may contain multiple lines, we care about lines starting with "data:"
+                for (const line of rawEvent.split("\n")) {
+                    const m = line.match(/^data:\s*(.*)$/);
+                    if (!m) continue;
+                    const payloadStr = m[1];
+                    if (!payloadStr || payloadStr === "[DONE]") continue;
+
+                    try {
+                        const evt = JSON.parse(payloadStr);
+                        if (evt.type === "chunk" && evt.content) {
+                            onChunk(evt.content as string);
+                        } else if (evt.type === "error") {
+                            throw new Error(evt.message || "Stream error");
+                        } else if (evt.type === "complete") {
+                            lastCompleteEvent = evt;
+                        } else {
+                            // Fallback: try common provider shapes
+                            const delta =
+                                evt.choices?.[0]?.delta?.content ??
+                                evt.delta ??
+                                evt.text ??
+                                "";
+                            if (delta) onChunk(String(delta));
+                        }
+                    } catch {
+                        // Non-JSON data line; forward raw content
+                        onChunk(payloadStr);
+                    }
+                }
             }
         }
-    } catch (err) {
+
+        // Handle any final complete event (tool calls, etc.)
+        if (lastCompleteEvent) {
+            if (
+                lastCompleteEvent.tool_calls &&
+                lastCompleteEvent.tool_calls.length &&
+                options?.onToolCall
+            ) {
+                for (const toolCall of lastCompleteEvent.tool_calls as ToolCall[]) {
+                    try {
+                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
+                        const toolResult = await options.onToolCall(toolCall);
+                        onChunk(`✅ ${toolResult}\n`);
+                    } catch (toolError: any) {
+                        onChunk(
+                            `❌ Tool execution failed: ${
+                                toolError?.message || toolError
+                            }\n`
+                        );
+                    }
+                }
+            }
+
+            if (lastCompleteEvent.response) {
+                // If the server buffered the full response as well
+                // Avoid duplicating content if chunks already emitted; append only if needed
+                // Here we append nothing extra to prevent duplicates
+            }
+        }
+
+        onComplete?.();
+    } catch (err: any) {
         console.error("AI Stream error:", err);
-        const errorMessage =
-            err instanceof Error ? err.message : "An unexpected error occurred";
+        const errorMessage = err?.message || "An unexpected error occurred";
         onChunk(`Sorry, there was an error: ${errorMessage}`);
-        if (onError) {
-            onError(
-                err instanceof Error ? err : new Error("Unknown error occurred")
-            );
-        }
-        if (onComplete) {
-            onComplete();
-        }
+        onError?.(err instanceof Error ? err : new Error(errorMessage));
+        onComplete?.();
     }
 };
 

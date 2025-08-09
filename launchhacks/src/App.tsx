@@ -31,11 +31,6 @@ import { useNotifications } from "./hooks/useNotifications";
 // Configuration
 import { nodeTypes as baseNodeTypes } from "./config/nodeTypes";
 
-const nodeTypes = {
-    ...baseNodeTypes,
-    tempInput: TempInputNode,
-};
-
 // Context
 import { NodeCreationProvider } from "./contexts/TokenInteractionContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -47,6 +42,15 @@ function AppContent() {
 
     // Authentication
     const { user, signOut } = useAuth();
+
+    // Memoize nodeTypes to prevent recreation on every render
+    const nodeTypes = useMemo(
+        () => ({
+            ...baseNodeTypes,
+            tempInput: TempInputNode,
+        }),
+        []
+    );
 
     // Notifications
     const {

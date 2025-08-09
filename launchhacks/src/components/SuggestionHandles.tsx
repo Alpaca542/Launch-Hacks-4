@@ -99,7 +99,7 @@ const DragVisualization = ({
                 style={{ left: dragState.x, top: dragState.y }}
             >
                 <div
-                    className="px-4 py-2 rounded-lg shadow-xl font-medium text-white 
+                    className="px-4 py-2 rounded-lg font-medium text-white 
                                bg-gradient-to-r from-blue-600 to-blue-700 backdrop-blur-sm
                                border border-blue-500/30 animate-bounce"
                 >
@@ -157,7 +157,7 @@ const SuggestionHandle = ({
                           border-2 border-blue-200 hover:border-blue-300 
                           dark:border-blue-700 dark:hover:border-blue-600
                           rounded-full cursor-grab active:cursor-grabbing 
-                          shadow-sm hover:shadow-md transition-all duration-200 ease-out 
+                          hover:shadow-md transition-all duration-200 ease-out 
                           hover:scale-110 active:scale-95"
                 title={suggestion}
                 onPointerDown={handlePointerDown}
@@ -172,7 +172,7 @@ const SuggestionHandle = ({
                 {/* Tooltip */}
                 <div
                     className="absolute z-20 px-3 py-1.5 text-xs font-medium text-white 
-                              bg-gray-900/90 backdrop-blur-sm rounded-md shadow-lg 
+                              bg-gray-900/90 rounded-md
                               opacity-0 group-hover:opacity-100 pointer-events-none
                               transition-opacity duration-200 ease-out whitespace-nowrap
                               transform -translate-y-1/2"

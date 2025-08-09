@@ -36,12 +36,12 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
 
     return (
         <>
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <div className="max-w-none mx-auto px-4">
                     <header className="flex justify-between items-center py-3">
                         <div className="flex items-center gap-3">
                             <div className="flex items-center space-x-2">
-                                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                                <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                                     <span className="text-white font-bold text-sm">
                                         T
                                     </span>

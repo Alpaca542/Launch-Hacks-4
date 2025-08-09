@@ -71,7 +71,9 @@ export const fetchAllBoards = async (userId: string): Promise<BoardData[]> => {
     if (error) throw new Error(ERROR_MESSAGES.LOAD_FAILED);
     if (!data || data.length === 0) {
         const defaultBoard: BoardData = {
-            id: `board_${Date.now()}`,
+            id: `board_${Date.now()}_${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
             userId,
             name: "Default Board",
             createdAt: now(),
@@ -246,7 +248,7 @@ export const createBoard = async (
     if (!validateUser({ uid: userId }))
         throw new Error(ERROR_MESSAGES.AUTH_REQUIRED);
     const newBoard: BoardData = {
-        id: `board_${Date.now()}`,
+        id: `board_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
         name: boardName || `Board ${allBoards.length + 1}`,
         createdAt: now(),

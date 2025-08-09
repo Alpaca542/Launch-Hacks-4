@@ -6,4 +6,8 @@ const supabaseKey =
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Export URL & anon key for direct Edge Function fetch (needed for SSE streaming)
+export const SUPABASE_URL = supabaseUrl;
+export const SUPABASE_ANON_KEY = supabaseKey;
+
 export default supabase;

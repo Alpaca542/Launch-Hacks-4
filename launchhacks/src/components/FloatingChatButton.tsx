@@ -21,7 +21,7 @@ const FloatingChatButton: React.FC<FloatingChatButtonProps> = ({
                 onClick={onClick}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="group relative w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95"
+                className="group relative w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95"
             >
                 {/* Animated background pulse */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 animate-pulse opacity-30 scale-110"></div>
@@ -48,7 +48,7 @@ const FloatingChatButton: React.FC<FloatingChatButtonProps> = ({
 
             {/* Tooltip */}
             <div
-                className={`absolute bottom-full right-0 mb-3 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg shadow-lg whitespace-nowrap transition-all duration-200 ${
+                className={`absolute bottom-full right-0 mb-3 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg whitespace-nowrap transition-all duration-200 ${
                     isHovered
                         ? "opacity-100 transform translate-y-0"
                         : "opacity-0 transform translate-y-2 pointer-events-none"

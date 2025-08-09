@@ -171,10 +171,9 @@ export default function TempInputNode({ data }: TempInputNodeProps) {
 
     return (
         <div
-            className={`relative bg-white dark:bg-gray-900 shadow-lg rounded-xl px-4 py-3 min-w-[200px] border transition-all duration-300 ease-in-out ${border} ring-1 ${ring}`}
+            className={`relative bg-white dark:bg-gray-900 rounded-xl px-4 py-3 min-w-[200px] border transition-all duration-300 ease-in-out ${border} ring-1 ${ring}`}
             style={{
                 borderColor: color,
-                boxShadow: `0 0 0 1px ${color}20, 0 4px 6px -1px rgb(0 0 0 / 0.1)`,
             }}
         >
             <form onSubmit={handleSubmit} className="flex items-center gap-2">

@@ -448,7 +448,7 @@ export function DraggableEditableNode({
                             {/* Icon */}
                             {data.icon ? (
                                 <div
-                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 backdrop-blur-sm border border-white/80 
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-white/80 
                                                transition-transform duration-200 ease-out group-hover/header:scale-105"
                                 >
                                     <span
@@ -483,7 +483,7 @@ export function DraggableEditableNode({
                                               bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
                                               border-2 border-emerald-200 hover:border-emerald-300 
                                               rounded-full cursor-grab active:cursor-grabbing 
-                                              shadow-sm hover:shadow-md transition-all duration-200 ease-out 
+                                              hover:shadow-md transition-all duration-200 ease-out 
                                               hover:scale-110 active:scale-95"
                                     title="Drag to create quiz"
                                     onPointerDown={(e) => {
@@ -519,7 +519,7 @@ export function DraggableEditableNode({
                                               bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
                                               border-2 border-emerald-200 hover:border-emerald-300 
                                               rounded-full cursor-grab active:cursor-grabbing 
-                                              shadow-sm hover:shadow-md transition-all duration-200 ease-out 
+                                              hover:shadow-md transition-all duration-200 ease-out 
                                               hover:scale-110 active:scale-95"
                                     onClick={() => {
                                         if (data.onQuizCreate) {
@@ -624,8 +624,8 @@ export function DraggableEditableNode({
                                 style={{ left: dragState.x, top: dragState.y }}
                             >
                                 <div
-                                    className="px-4 py-2 rounded-lg shadow-xl font-medium text-white 
-                                           bg-gradient-to-r from-emerald-600 to-emerald-700 backdrop-blur-sm
+                                    className="px-4 py-2 rounded-lg font-medium text-white 
+                                           bg-gradient-to-r from-emerald-600 to-emerald-700
                                            border border-emerald-500/30 animate-bounce"
                                 >
                                     <div className="flex items-center gap-2">
@@ -704,7 +704,7 @@ export function DraggableEditableNode({
                                 style={{ left: dragState.x, top: dragState.y }}
                             >
                                 <div
-                                    className="max-w-xs p-3 rounded-lg shadow-xl bg-white/95 backdrop-blur-sm
+                                    className="max-w-xs p-3 rounded-lg bg-white/95
                                            border-2 border-blue-500/30 animate-bounce"
                                     style={{
                                         transform: "scale(0.8)",
