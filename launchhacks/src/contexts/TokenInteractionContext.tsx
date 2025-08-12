@@ -131,7 +131,7 @@ export const handleNodeCreation = (
         lastTwoLayouts,
         isQuiz
     )
-        .then(async (result) => {
+        .then(async (result: any) => {
             console.log("AI Response received:", result);
             console.log("Selected layout:", result.layout);
             console.log("Content array:", result.content);
@@ -186,7 +186,7 @@ export const handleNodeCreation = (
                 }
             }
         })
-        .catch(async (error) => {
+        .catch(async (error: any) => {
             console.error("Error generating node content:", error);
             // Fallback to original content if AI request fails
             setNodes((nds) =>

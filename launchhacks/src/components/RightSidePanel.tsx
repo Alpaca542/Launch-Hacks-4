@@ -40,6 +40,7 @@ interface RightSidePanelProps {
     onEdgesChange?: (changes: any) => void;
     getLastTwoLayouts?: () => number[];
     addLayout?: (layout: number) => void;
+    chosenNodeText?: string;
 }
 
 // Memoized single message item to avoid re-rendering the whole list on streaming updates
@@ -131,6 +132,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
     onEdgesChange,
     getLastTwoLayouts: _getLastTwoLayouts,
     addLayout: _addLayout,
+    chosenNodeText,
 }) => {
     const [activeTab, setActiveTab] = useState<"chat" | "settings">("chat");
     const [isAnimating, setIsAnimating] = useState(false);
@@ -153,7 +155,14 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
     const rafRef = useRef<number | null>(null);
 
     const { user } = useAuth();
-
+    const getMessagesAsJson = (msg: Message[]) => {
+        return JSON.stringify(
+            msg.map((m) => ({
+                role: m.role,
+                content: m.content,
+            }))
+        );
+    };
     // Load chat history when board changes
     useEffect(() => {
         const loadChatHistory = async () => {
@@ -287,6 +296,9 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                         });
                     }
                 },
+                currentBoardName || "",
+                chosenNodeText || "",
+                JSON.stringify(getMessagesAsJson(messages)) || "",
                 async () => {
                     // Finish streaming
                     if (rafRef.current) cancelAnimationFrame(rafRef.current);

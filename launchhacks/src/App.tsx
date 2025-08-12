@@ -39,7 +39,7 @@ function AppContent() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [showRightPanel, setShowRightPanel] = useState(false);
     const [showChat, setShowChat] = useState(true);
-
+    const [chosenNode, setChosenNode] = useState<string | null>(null);
     // Authentication
     const { user, signOut } = useAuth();
 
@@ -192,7 +192,11 @@ function AppContent() {
                     position,
                     extraData
                 );
-
+            data.chosen = chosenNode === node.id;
+            data.onChoose = () => {
+                console.log("Node chosen:", node.id);
+                setChosenNode(node.id);
+            };
             data.onQuizCreate = (topic: string, srcID?: string) => {
                 setNodes((nodes) =>
                     nodes.map((n) =>
@@ -490,6 +494,12 @@ function AppContent() {
                 onEdgesChange={onEdgesChange}
                 getLastTwoLayouts={getLastTwoLayouts}
                 addLayout={addLayout}
+                chosenNodeText={
+                    chosenNode
+                        ? nodes.find((n) => n.id === chosenNode)?.data.label ||
+                          ""
+                        : ""
+                }
             />
 
             {/* Floating AI Chat Button */}

@@ -38,6 +38,8 @@ interface NodeData {
     contents?: string[];
     icon?: string;
     isQuiz: boolean;
+    chosen?: boolean;
+    onChoose?: () => void;
 }
 
 interface DraggableEditableNodeProps {
@@ -419,13 +421,18 @@ export function DraggableEditableNode({
     return (
         <div
             ref={handleQuizRef}
-            className="group relative bg-white/95 border border-gray-200/60 rounded-3xl
-                       min-w-[320px] max-w-[640px] cursor-grab select-none
-                       transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-                       hover:border-gray-300/80"
+            className={`group relative bg-white/95 border rounded-3xl
+                   min-w-[320px] max-w-[640px] cursor-grab select-none
+                   transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                   ${
+                       data.chosen
+                           ? "border-green-500 border-2 hover:border-green-600"
+                           : "border-gray-200/60 hover:border-gray-300/80"
+                   }`}
             style={nodeStyle}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onClick={data.onChoose}
         >
             <div className="relative p-6 text-gray-900">
                 {/* Loading state */}
@@ -449,7 +456,7 @@ export function DraggableEditableNode({
                             {data.icon ? (
                                 <div
                                     className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-white/80 
-                                               transition-transform duration-200 ease-out group-hover/header:scale-105"
+                               transition-transform duration-200 ease-out group-hover/header:scale-105"
                                 >
                                     <span
                                         className="text-2xl"
@@ -461,14 +468,14 @@ export function DraggableEditableNode({
                             ) : (
                                 <div
                                     className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white 
-                                               transition-transform duration-200 ease-out group-hover/header:scale-105"
+                               transition-transform duration-200 ease-out group-hover/header:scale-105"
                                 >
                                     <Sparkles className="w-6 h-6" />
                                 </div>
                             )}
                             <h2
                                 className="text-2xl font-bold tracking-tight text-gray-900 
-                                          transition-colors duration-200 group-hover/header:text-gray-700"
+                          transition-colors duration-200 group-hover/header:text-gray-700"
                             >
                                 {data.label || "Node"}
                             </h2>
@@ -480,11 +487,11 @@ export function DraggableEditableNode({
                                 <div
                                     ref={nodeRef}
                                     className="group relative flex items-center justify-center w-10 h-10
-                                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
-                                              border-2 border-emerald-200 hover:border-emerald-300 
-                                              rounded-full cursor-grab active:cursor-grabbing 
-                                              hover:shadow-md transition-all duration-200 ease-out 
-                                              hover:scale-110 active:scale-95"
+                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
+                              border-2 border-emerald-200 hover:border-emerald-300 
+                              rounded-full cursor-grab active:cursor-grabbing 
+                              hover:shadow-md transition-all duration-200 ease-out 
+                              hover:scale-110 active:scale-95"
                                     title="Drag to create quiz"
                                     onPointerDown={(e) => {
                                         e.stopPropagation();
@@ -498,7 +505,7 @@ export function DraggableEditableNode({
                                 </div>
                                 <div
                                     className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 
-                                               text-xs text-gray-500 font-medium whitespace-nowrap"
+                               text-xs text-gray-500 font-medium whitespace-nowrap"
                                 >
                                     Quiz
                                     <Handle
@@ -516,11 +523,11 @@ export function DraggableEditableNode({
                             <div className="relative">
                                 <div
                                     className="group relative flex items-center justify-center w-10 h-10
-                                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
-                                              border-2 border-emerald-200 hover:border-emerald-300 
-                                              rounded-full cursor-grab active:cursor-grabbing 
-                                              hover:shadow-md transition-all duration-200 ease-out 
-                                              hover:scale-110 active:scale-95"
+                              bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200
+                              border-2 border-emerald-200 hover:border-emerald-300 
+                              rounded-full cursor-grab active:cursor-grabbing 
+                              hover:shadow-md transition-all duration-200 ease-out 
+                              hover:scale-110 active:scale-95"
                                     onClick={() => {
                                         if (data.onQuizCreate) {
                                             data.onQuizCreate(
@@ -535,7 +542,7 @@ export function DraggableEditableNode({
                                 </div>
                                 <div
                                     className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 
-                                               text-xs text-gray-500 font-medium whitespace-nowrap"
+                               text-xs text-gray-500 font-medium whitespace-nowrap"
                                 >
                                     Regenerate quiz
                                 </div>
@@ -609,12 +616,12 @@ export function DraggableEditableNode({
                                 />
                                 <style>
                                     {`
-                                        @keyframes quizLineFade {
-                                            0% { opacity: 0.7; }
-                                            50% { opacity: 1; }
-                                            100% { opacity: 0.7; }
-                                        }
-                                    `}
+                        @keyframes quizLineFade {
+                            0% { opacity: 0.7; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0.7; }
+                        }
+                        `}
                                 </style>
                             </svg>
 
@@ -625,8 +632,8 @@ export function DraggableEditableNode({
                             >
                                 <div
                                     className="px-4 py-2 rounded-lg font-medium text-white 
-                                           bg-gradient-to-r from-emerald-600 to-emerald-700
-                                           border border-emerald-500/30 animate-bounce"
+                           bg-gradient-to-r from-emerald-600 to-emerald-700
+                           border border-emerald-500/30 animate-bounce"
                                 >
                                     <div className="flex items-center gap-2">
                                         <Brain
@@ -689,12 +696,12 @@ export function DraggableEditableNode({
                                 />
                                 <style>
                                     {`
-                                        @keyframes contentLineFade {
-                                            0% { opacity: 0.7; }
-                                            50% { opacity: 1; }
-                                            100% { opacity: 0.7; }
-                                        }
-                                    `}
+                        @keyframes contentLineFade {
+                            0% { opacity: 0.7; }
+                            50% { opacity: 1; }
+                            100% { opacity: 0.7; }
+                        }
+                        `}
                                 </style>
                             </svg>
 
@@ -705,7 +712,7 @@ export function DraggableEditableNode({
                             >
                                 <div
                                     className="max-w-xs p-3 rounded-lg bg-white/95
-                                           border-2 border-blue-500/30 animate-bounce"
+                           border-2 border-blue-500/30 animate-bounce"
                                     style={{
                                         transform: "scale(0.8)",
                                         opacity: 0.9,

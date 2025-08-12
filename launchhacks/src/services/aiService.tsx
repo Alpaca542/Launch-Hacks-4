@@ -128,37 +128,9 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
     {
         type: "function",
         function: {
-            name: "create_visual_node",
-            description:
-                "Creates a knowledge node with AI-generated content about a specific topic.",
-            parameters: {
-                type: "object",
-                properties: {
-                    title: {
-                        type: "string",
-                        description: "The title for the content node",
-                    },
-                    description: {
-                        type: "string",
-                        description:
-                            "A brief description or context for the node's content. An AI will generate the content based on this description.",
-                    },
-                    details: {
-                        type: "string",
-                        description:
-                            "If you want the AI to mention specific details or context, include them here. The node should feel like a natural part of the explanation.",
-                    },
-                },
-                required: ["title", "description"],
-            },
-        },
-    },
-    {
-        type: "function",
-        function: {
             name: "create_visual",
             description:
-                "Creates a detailed knowledge node with AI-generated content about a specific topic",
+                "Creates a detailed knowledge node with AI-generated content about a specific topic. You need to provide a detailed request for the node's contents so that it perfectly matches and accompanies your message. The visuals should be a nice representation of your words.",
             parameters: {
                 type: "object",
                 properties: {
@@ -169,12 +141,7 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
                     description: {
                         type: "string",
                         description:
-                            "A brief description or context for the node's content",
-                    },
-                    mode: {
-                        type: "string",
-                        description:
-                            "The mode for the node, choose one of 'default', 'argue', 'explain', 'answer'",
+                            "A detailed description and context for the node's content",
                     },
                 },
                 required: ["title", "description"],
@@ -186,6 +153,9 @@ export const NODE_CREATION_TOOLS: OpenAITool[] = [
 export const askAIStream = async (
     message: string,
     onChunk: (chunk: string) => void,
+    currentBoardTitle: string,
+    currentNodeText: string,
+    context: string,
     onComplete?: () => void,
     onError?: (error: Error) => void,
     options?: AIStreamOptions
@@ -194,8 +164,26 @@ export const askAIStream = async (
         if (!message || typeof message !== "string") {
             throw new Error("Message must be a non-empty string");
         }
+        const stream_prompt = `You are an educational assistant with a chill, friendly vibe and a genuine enthusiasm for the subject. Your goal is to provide helpful, engaging explanations that are clear, concise, and easy to follow.
 
-        const trimmedMessage = message.trim();
+Use visual representations (e.g., diagrams, charts, examples) whenever they can help illustrate a concept.
+
+Keep the tone approachable but ensure the content remains accurate and well-structured.
+
+Show curiosity and interest in the topic, making the explanation feel inviting rather than dry.
+
+Context:
+
+Current board: ${currentBoardTitle}
+
+Current node: ${currentNodeText}
+
+Previous dialogue: ${context}
+
+Base your response on the following message:
+
+`;
+        const trimmedMessage = stream_prompt + message.trim();
         if (!trimmedMessage) {
             throw new Error("Message cannot be empty or just whitespace");
         }
@@ -272,6 +260,7 @@ export const askAIStream = async (
         const decoder = new TextDecoder();
         let buffer = "";
         let lastCompleteEvent: any | null = null;
+        const processedToolCallIds = new Set<string>(); // Track processed tool calls
 
         while (true) {
             const { value, done } = await reader.read();
@@ -298,6 +287,37 @@ export const askAIStream = async (
                             throw new Error(evt.message || "Stream error");
                         } else if (evt.type === "complete") {
                             lastCompleteEvent = evt;
+                        } else if (
+                            evt.type === "tool_calls" &&
+                            evt.tool_calls
+                        ) {
+                            // Handle tool calls mid-stream
+                            if (options?.onToolCall) {
+                                for (const toolCall of evt.tool_calls as ToolCall[]) {
+                                    if (
+                                        !processedToolCallIds.has(toolCall.id)
+                                    ) {
+                                        processedToolCallIds.add(toolCall.id);
+                                        try {
+                                            onChunk(
+                                                `\n🔧 Using ${toolCall.function.name}...\n`
+                                            );
+                                            const toolResult =
+                                                await options.onToolCall(
+                                                    toolCall
+                                                );
+                                            onChunk(`✅ ${toolResult}\n`);
+                                        } catch (toolError: any) {
+                                            onChunk(
+                                                `❌ Tool execution failed: ${
+                                                    toolError?.message ||
+                                                    toolError
+                                                }\n`
+                                            );
+                                        }
+                                    }
+                                }
+                            }
                         } else {
                             // Fallback: try common provider shapes
                             const delta =
@@ -306,6 +326,52 @@ export const askAIStream = async (
                                 evt.text ??
                                 "";
                             if (delta) onChunk(String(delta));
+
+                            // Check for tool calls in common provider formats
+                            if (
+                                evt.choices?.[0]?.delta?.tool_calls &&
+                                options?.onToolCall
+                            ) {
+                                for (const toolCall of evt.choices[0].delta
+                                    .tool_calls) {
+                                    if (
+                                        toolCall.function?.name &&
+                                        toolCall.function?.arguments
+                                    ) {
+                                        const toolCallId =
+                                            toolCall.id || `tool_${Date.now()}`;
+                                        if (
+                                            !processedToolCallIds.has(
+                                                toolCallId
+                                            )
+                                        ) {
+                                            processedToolCallIds.add(
+                                                toolCallId
+                                            );
+                                            try {
+                                                onChunk(
+                                                    `\n🔧 Using ${toolCall.function.name}...\n`
+                                                );
+                                                const toolResult =
+                                                    await options.onToolCall({
+                                                        id: toolCallId,
+                                                        type: "function",
+                                                        function:
+                                                            toolCall.function,
+                                                    });
+                                                onChunk(`✅ ${toolResult}\n`);
+                                            } catch (toolError: any) {
+                                                onChunk(
+                                                    `❌ Tool execution failed: ${
+                                                        toolError?.message ||
+                                                        toolError
+                                                    }\n`
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     } catch {
                         // Non-JSON data line; forward raw content
@@ -317,22 +383,29 @@ export const askAIStream = async (
 
         // Handle any final complete event (tool calls, etc.)
         if (lastCompleteEvent) {
+            // Only handle tool calls in complete event if they weren't already handled mid-stream
             if (
                 lastCompleteEvent.tool_calls &&
                 lastCompleteEvent.tool_calls.length &&
                 options?.onToolCall
             ) {
                 for (const toolCall of lastCompleteEvent.tool_calls as ToolCall[]) {
-                    try {
-                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
-                        const toolResult = await options.onToolCall(toolCall);
-                        onChunk(`✅ ${toolResult}\n`);
-                    } catch (toolError: any) {
-                        onChunk(
-                            `❌ Tool execution failed: ${
-                                toolError?.message || toolError
-                            }\n`
-                        );
+                    if (!processedToolCallIds.has(toolCall.id)) {
+                        try {
+                            onChunk(
+                                `\n🔧 Using ${toolCall.function.name}...\n`
+                            );
+                            const toolResult = await options.onToolCall(
+                                toolCall
+                            );
+                            onChunk(`✅ ${toolResult}\n`);
+                        } catch (toolError: any) {
+                            onChunk(
+                                `❌ Tool execution failed: ${
+                                    toolError?.message || toolError
+                                }\n`
+                            );
+                        }
                     }
                 }
             }
@@ -710,7 +783,7 @@ export const generateNodeContent = async (
                 fullText: message,
             };
         }
-        if (message.length > 100) {
+        if (message.length > 300) {
             askAIToSummarize(message)
                 .then((summary) => {
                     message = summary;

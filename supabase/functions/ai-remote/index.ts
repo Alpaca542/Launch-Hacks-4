@@ -58,16 +58,6 @@ Deno.serve(async (req) => {
       req.headers.get("accept")?.toLowerCase().includes("text/event-stream") === true ||
       new URL(req.url).searchParams.get("stream") === "true"
 
-    const messages = [
-      {
-        role: "system",
-        content: Array.isArray(tools)
-          ? "You are an AI assistant with access to node creation tools. When users ask about creating visual representations, explanations, or learning materials, use the appropriate tools to create nodes. Be helpful and suggest creating visual aids when they would enhance understanding."
-          : "You are a helpful AI assistant.",
-      },
-      { role: "user", content: message },
-    ] as Array<{ role: "system" | "user" | "assistant"; content: string }>
-
     if (wantsStream) {
       const encoder = new TextEncoder()
 
@@ -80,7 +70,7 @@ Deno.serve(async (req) => {
           try {
             const params: any = {
               model: model || "gpt-4",
-              messages,
+              messages: [{ role: "user", content: message }],
               max_tokens: 1000,
               temperature: 0.7,
               stream: true,
@@ -173,7 +163,7 @@ Deno.serve(async (req) => {
     } else {
       const params: any = {
         model: model || "gpt-4",
-        messages,
+        messages: [{ role: "user", content: message }],
         max_tokens: 1000,
         temperature: 0.7,
         stream: false,

@@ -17,6 +17,8 @@ interface NodeData {
         position?: { x: number; y: number },
         extraData?: { initialText?: string }
     ) => void;
+    chosen?: boolean;
+    onChoose?: () => void;
 }
 
 interface StaticEditableNodeProps {

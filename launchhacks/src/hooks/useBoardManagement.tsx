@@ -176,18 +176,6 @@ export const useBoardManagement = (
                         hasRelevantChanges = true;
                         console.log("Added node to pending:", change.item.id);
                     }
-                } else if (
-                    change.type === "position" ||
-                    change.type === "dimensions"
-                ) {
-                    if (change.id) {
-                        pendingNodeChanges.current.add(change.id);
-                        hasRelevantChanges = true;
-                        console.log(
-                            "Updated node position/dimensions:",
-                            change.id
-                        );
-                    }
                 } else if (change.type === "remove") {
                     if (change.id) {
                         pendingNodeChanges.current.delete(change.id);
