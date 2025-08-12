@@ -49,10 +49,10 @@ export const useBoardManagement = (
     user: { id?: string } | null,
     { showSuccess, showError }: UseBoardManagementInput = {}
 ): UseBoardManagementReturn => {
-    const [nodes, setNodes, onNodesChange] = useNodesState(
+    const [nodes, _setNodes, onNodesChange] = useNodesState(
         initialNodes as unknown as Node[]
     );
-    const [edges, setEdges, onEdgesChange] = useEdgesState(
+    const [edges, _setEdges, onEdgesChange] = useEdgesState(
         initialEdges as unknown as Edge[]
     );
     const [allBoards, setAllBoards] = useState<BoardData[]>([]);
@@ -159,6 +159,79 @@ export const useBoardManagement = (
             saveIndividualChanges();
         }, 2000); // 2 second delay to allow for batching multiple changes
     }, [saveIndividualChanges]);
+
+    // Wrapped setters to track creations/removals even when bypassing onChange handlers
+    const setNodes: UseBoardManagementReturn["setNodes"] = useCallback(
+        (updaterOrNodes) => {
+            _setNodes((prev) => {
+                const next =
+                    typeof updaterOrNodes === "function"
+                        ? (updaterOrNodes as (nodes: Node[]) => Node[])(prev)
+                        : (updaterOrNodes as Node[]);
+
+                // Detect added nodes
+                const prevIds = new Set(prev.map((n) => n.id));
+                const nextIds = new Set(next.map((n) => n.id));
+                let hasRelevantChanges = false;
+
+                next.forEach((n) => {
+                    if (!prevIds.has(n.id)) {
+                        pendingNodeChanges.current.add(n.id);
+                        hasRelevantChanges = true;
+                    }
+                });
+                // Detect removed nodes
+                prev.forEach((n) => {
+                    if (!nextIds.has(n.id)) {
+                        pendingNodeChanges.current.delete(n.id);
+                        hasRelevantChanges = true;
+                    }
+                });
+
+                if (hasRelevantChanges) {
+                    scheduleIndividualSave();
+                }
+
+                return next;
+            });
+        },
+        [_setNodes, scheduleIndividualSave]
+    );
+
+    const setEdges: UseBoardManagementReturn["setEdges"] = useCallback(
+        (updaterOrEdges) => {
+            _setEdges((prev) => {
+                const next =
+                    typeof updaterOrEdges === "function"
+                        ? (updaterOrEdges as (edges: Edge[]) => Edge[])(prev)
+                        : (updaterOrEdges as Edge[]);
+
+                const prevIds = new Set(prev.map((e) => e.id));
+                const nextIds = new Set(next.map((e) => e.id));
+                let hasRelevantChanges = false;
+
+                next.forEach((e) => {
+                    if (!prevIds.has(e.id)) {
+                        pendingEdgeChanges.current.add(e.id);
+                        hasRelevantChanges = true;
+                    }
+                });
+                prev.forEach((e) => {
+                    if (!nextIds.has(e.id)) {
+                        pendingEdgeChanges.current.delete(e.id);
+                        hasRelevantChanges = true;
+                    }
+                });
+
+                if (hasRelevantChanges) {
+                    scheduleIndividualSave();
+                }
+
+                return next;
+            });
+        },
+        [_setEdges, scheduleIndividualSave]
+    );
 
     // Enhanced onNodesChange that tracks individual node changes - optimized
     const enhancedOnNodesChange = useCallback(
