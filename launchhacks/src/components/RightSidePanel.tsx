@@ -7,6 +7,7 @@ import {
     User,
     Send,
     Loader2,
+    Download,
 } from "lucide-react";
 import { Node } from "reactflow";
 import {
@@ -51,35 +52,33 @@ const ChatMessage: React.FC<{
     const isUser = message.role === "user";
     return (
         <div
-            className={`flex items-start gap-3 ${
+            className={`flex items-start gap-4 ${
                 isUser ? "flex-row-reverse" : ""
             }`}
         >
             <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center${
+                className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                     isUser
                         ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white"
                         : "bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
-                }`}
+                } shadow-lg shadow-black/10 ring-2 ring-white/30`}
             >
                 {isUser ? (
-                    <User className="w-4 h-4" />
+                    <User className="w-5 h-5 drop-shadow" />
                 ) : (
-                    <Bot className="w-4 h-4" />
+                    <Bot className="w-5 h-5 drop-shadow" />
                 )}
             </div>
 
-            <div
-                className={`flex-1 max-w-[260px] ${isUser ? "text-right" : ""}`}
-            >
+            <div className={`flex-1 ${isUser ? "text-right" : ""}`}>
                 <div
-                    className={`inline-block px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    className={`inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                         isUser
-                            ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-tr-md"
+                            ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-tr-md shadow-md shadow-blue-900/20"
                             : true
-                            ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/50 rounded-tl-md"
+                            ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200/60 dark:border-gray-700/60 rounded-tl-md shadow-sm"
                             : "bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/50 rounded-tl-md"
-                    }`}
+                    } max-w-[320px] md:max-w-[380px]`}
                 >
                     <div className="whitespace-pre-wrap break-words">
                         {message.content}
@@ -155,12 +154,11 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
 
     const { user } = useAuth();
     const getMessagesAsJson = (msg: Message[]) => {
-        return JSON.stringify(
-            msg.map((m) => ({
-                role: m.role,
-                content: m.content,
-            }))
-        );
+        // Return raw array so the caller's JSON.stringify produces valid JSON
+        return msg.map((m) => ({
+            role: m.role,
+            content: m.content,
+        }));
     };
     // Load chat history when board changes
     useEffect(() => {
@@ -396,6 +394,36 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
         }
     };
 
+    const handleExportChat = () => {
+        const payload = {
+            boardId: currentBoardId || null,
+            boardName: currentBoardName || null,
+            exportedAt: new Date().toISOString(),
+            messages: messages.map((m) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+            })),
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+            type: "application/json",
+        });
+        const safeName = (currentBoardName || "chat")
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+        const ts = new Date().toISOString().replace(/[:.]/g, "-");
+        const fileName = `${safeName}-messages-${ts}.json`;
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+            URL.revokeObjectURL(link.href);
+            document.body.removeChild(link);
+        }, 0);
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -405,13 +433,13 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
 
     return (
         <div
-            className={`fixed top-0 right-0 w-96 h-screen z-50
-                bg-white/95 dark:bg-gray-900/95
-                border-l border-gray-200/50 dark:border-gray-700/50
+            className={`fixed top-0 right-0 h-screen z-50
+                w-full sm:w-[420px] lg:w-[520px] xl:w-[560px]
+                bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl
+                border-l border-gray-200/60 dark:border-gray-700/60
+                shadow-2xl shadow-gray-900/20
                 transition-all duration-300 ease-out motion-reduce:transition-none
-                ring-1 ring-white/20 dark:ring-white/10
-                before:from-white/40 before:to-transparent before:pointer-events-none
-                dark:before:from-gray-800/40 dark:before:to-transparent
+                ring-1 ring-white/30 dark:ring-white/10
                 overflow-hidden
                 ${
                     isOpen
@@ -429,7 +457,8 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
             >
                 {/* Header */}
                 <div
-                    className={`flex justify-between items-center p-6 border-b border-gray-200/50 dark:border-gray-700/50
+                    className={`flex justify-between items-center p-5 border-b border-gray-200/60 dark:border-gray-700/60
+                           bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10
                            transition-all duration-400 ease-out motion-reduce:transition-none ${
                                isAnimating
                                    ? "transform translate-y-0 opacity-100"
@@ -437,12 +466,17 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                            }`}
                 >
                     <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-white" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-900/20 ring-2 ring-white/40">
+                            <Bot className="w-5 h-5 text-white drop-shadow" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                            AI Assistant
-                        </h3>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                AI Assistant
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Enhanced tools and chat
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -458,7 +492,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="px-5 py-3 border-b border-gray-200/60 dark:border-gray-700/60">
                     <div className="flex space-x-2">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
@@ -470,7 +504,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                         flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                                         ${
                                             activeTab === tab.id
-                                                ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                                                ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shadow-sm"
                                                 : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                                         }
                                     `}
@@ -491,7 +525,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                             <div
                                 ref={messagesContainerRef}
                                 onScroll={handleContainerScroll}
-                                className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin"
+                                className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin"
                             >
                                 {isLoadingHistory && (
                                     <div className="text-center py-8">
@@ -506,27 +540,26 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
 
                                 {!isLoadingHistory && messages.length === 0 && (
                                     <div
-                                        className={`text-center mt-8 transition-all duration-500 ease-out motion-reduce:transition-none ${
+                                        className={`text-center mt-6 transition-all duration-500 ease-out motion-reduce:transition-none ${
                                             isAnimating
                                                 ? "transform translate-y-0 opacity-100"
                                                 : "transform translate-y-8 opacity-0"
                                         }`}
                                     >
-                                        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                                        <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-900/20 ring-2 ring-white/40">
                                             <Bot className="w-8 h-8 text-white" />
                                         </div>
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                             AI Assistant Ready
                                         </h3>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-xs mx-auto leading-relaxed">
-                                            Ask me anything and I'll help you
-                                            with intelligent responses and node
-                                            creation!
+                                            Ask anything. I can also create
+                                            nodes, concept maps, and flowcharts.
                                         </p>
 
                                         {/* Status indicators */}
                                         <div className="space-y-3">
-                                            <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                                            <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm">
                                                 <div className="flex items-center justify-center space-x-2 mb-2">
                                                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                                                     <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
@@ -535,14 +568,13 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                     </p>
                                                 </div>
                                                 <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                                                    I can create knowledge
-                                                    nodes, concept maps, and
-                                                    flowcharts
+                                                    Knowledge nodes, concept
+                                                    maps, flowcharts
                                                 </p>
                                             </div>
 
                                             {currentBoardId ? (
-                                                <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                                <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
                                                     <div className="flex items-center justify-center space-x-2 mb-1">
                                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
@@ -558,7 +590,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                                                <div className="mx-auto max-w-xs px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800 shadow-sm">
                                                     <div className="flex items-center justify-center space-x-2 mb-1">
                                                         <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
                                                         <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
@@ -576,7 +608,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                 )}
 
                                 {!isLoadingHistory && messages.length > 0 && (
-                                    <div className="text-xs text-gray-400 mb-4 text-center">
+                                    <div className="text-xs text-gray-400 mb-2 text-center">
                                         {messages.length} message
                                         {messages.length !== 1 ? "s" : ""}{" "}
                                         loaded
@@ -596,32 +628,32 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
 
                             {/* Chat Input */}
                             <div
-                                className={`border-t border-gray-200/50 dark:border-gray-700/50 ${
+                                className={`border-t border-gray-200/60 dark:border-gray-700/60 ${
                                     reduceEffects
                                         ? "bg-gray-50 dark:bg-gray-800"
-                                        : "bg-gray-50/30 dark:bg-gray-800/30 backdrop-blur-sm"
+                                        : "bg-gray-50/40 dark:bg-gray-800/40 backdrop-blur"
                                 }`}
                             >
                                 {/* Tools Toggle */}
-                                <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-                                    <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-gray-200/60 dark:border-gray-700/60">
+                                    <div className="flex items-center gap-3">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            AI Tools:
+                                            AI Tools
                                         </span>
                                         <button
                                             onClick={() =>
                                                 setEnableTools(!enableTools)
                                             }
-                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-200 ${
+                                            className={`relative inline-flex h-5 w-10 items-center rounded-full transition-all duration-200 ${
                                                 enableTools
                                                     ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
                                                     : "bg-gray-300 dark:bg-gray-600"
                                             }`}
                                         >
                                             <span
-                                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow ${
                                                     enableTools
-                                                        ? "translate-x-5"
+                                                        ? "translate-x-6"
                                                         : "translate-x-1"
                                                 }`}
                                             />
@@ -637,7 +669,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                     )}
                                 </div>
 
-                                <div className="p-6">
+                                <div className="p-5">
                                     {/* Quick suggestions */}
                                     {enableTools &&
                                         input.length === 0 &&
@@ -662,7 +694,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                                 }
                                                                 className="text-xs px-3 py-1.5 bg-white/70 dark:bg-gray-700/70 text-gray-600 dark:text-gray-300 
                                                              rounded-full hover:bg-white dark:hover:bg-gray-600 transition-all duration-200 
-                                                             border border-gray-200/50 dark:border-gray-600/50 backdrop-blur-sm"
+                                                             border border-gray-200/60 dark:border-gray-600/60 backdrop-blur-sm"
                                                             >
                                                                 {suggestion}
                                                             </button>
@@ -685,7 +717,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                 placeholder="Ask me anything..."
                                                 disabled={isLoading}
                                                 rows={1}
-                                                className={`w-full px-4 py-3 pr-12 border border-gray-300/50 dark:border-gray-600/50 rounded-xl 
+                                                className={`w-full px-4 py-3 pr-12 border border-gray-300/60 dark:border-gray-600/60 rounded-xl 
                                                          ${
                                                              reduceEffects
                                                                  ? "bg-white dark:bg-gray-800"
@@ -731,7 +763,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                      text-white rounded-xl transition-all duration-200
                                                      disabled:cursor-not-allowed hover:shadow-md
                                                      min-w-[48px] min-h-[48px] flex items-center justify-center
-                                                     transform hover:scale-105 disabled:transform-none"
+                                                     transform hover:scale-105 disabled:transform-none shadow-lg shadow-purple-900/20"
                                         >
                                             {isLoading ? (
                                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -742,18 +774,16 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                     </div>
 
                                     {/* Status indicators */}
-                                    <div className="flex items-center justify-center mt-3 min-h-[16px]">
+                                    <div className="flex items-center justify-between mt-3 min-h-[16px]">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            Press Enter to send • Shift+Enter
+                                            for new line
+                                        </div>
                                         {isSaving && (
                                             <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
                                                 <Loader2 className="w-3 h-3 animate-spin" />
                                                 <span>Saving...</span>
                                             </div>
-                                        )}
-                                        {!isSaving && !isLoading && (
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                                Press Enter to send •
-                                                Shift+Enter for new line
-                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -762,24 +792,24 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                     ) : (
                         /* Settings Tab */
                         <div
-                            className={`flex-1 overflow-y-auto p-6 transition-all duration-500 ease-out motion-reduce:transition-none ${
+                            className={`flex-1 overflow-y-auto p-5 transition-all duration-500 ease-out motion-reduce:transition-none ${
                                 isAnimating
                                     ? "transform translate-y-0 opacity-100"
                                     : "transform translate-y-4 opacity-0"
                             }`}
                         >
-                            <div className="space-y-6">
+                            <div className="space-y-5">
                                 {/* Board Info */}
-                                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-5">
+                                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/60 dark:border-gray-700/60 p-5 shadow-sm">
                                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                                            <User className="w-3 h-3 text-white" />
+                                        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow ring-2 ring-white/40">
+                                            <User className="w-3.5 h-3.5 text-white" />
                                         </div>
                                         Current Board
                                     </h3>
                                     {currentBoardId ? (
                                         <div className="space-y-3">
-                                            <div className="px-4 py-3 bg-blue-50/80 dark:bg-blue-900/20 backdrop-blur-sm rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+                                            <div className="px-4 py-3 bg-blue-50/80 dark:bg-blue-900/20 backdrop-blur-sm rounded-xl border border-blue-200/60 dark:border-blue-800/60">
                                                 <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
                                                     {currentBoardName ||
                                                         "Unnamed Board"}
@@ -788,7 +818,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                                     ID: {currentBoardId}
                                                 </p>
                                             </div>
-                                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-700/30 rounded-lg px-3 py-2">
+                                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-gray-700/30 rounded-lg px-3 py-2">
                                                 <span>Active Nodes</span>
                                                 <span className="font-semibold text-gray-700 dark:text-gray-300">
                                                     {nodes.length}
@@ -796,7 +826,7 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="px-4 py-3 bg-amber-50/80 dark:bg-amber-900/20 backdrop-blur-sm rounded-xl border border-amber-200/50 dark:border-amber-800/50">
+                                        <div className="px-4 py-3 bg-amber-50/80 dark:bg-amber-900/20 backdrop-blur-sm rounded-xl border border-amber-200/60 dark:border-amber-800/60">
                                             <p className="text-sm text-amber-700 dark:text-amber-300">
                                                 No board selected
                                             </p>
@@ -804,60 +834,55 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                     )}
                                 </div>
 
-                                {/* Quick Actions */}
-                                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-5">
+                                {/* Actions */}
+                                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl border border-gray-200/60 dark:border-gray-700/60 p-5">
                                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                                        Quick Actions
+                                        Actions
                                     </h3>
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleExportChat}
+                                            disabled={messages.length === 0}
+                                            className="text-left px-4 py-3 text-sm bg-gray-50/80 hover:bg-gray-100 dark:bg-gray-700/40 dark:hover:bg-gray-600/50 rounded-xl transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-200/40 dark:border-gray-600/40 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-2 h-2 bg-emerald-500 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
+                                                <span className="flex items-center gap-2">
+                                                    <Download className="w-4 h-4" />{" "}
+                                                    Export Chat (JSON)
+                                                </span>
+                                            </div>
+                                        </button>
                                         <button
                                             onClick={handleClearChat}
                                             disabled={
                                                 !currentBoardId ||
                                                 messages.length === 0
                                             }
-                                            className="w-full text-left px-4 py-3 text-sm bg-red-50/70 hover:bg-red-100/70 dark:bg-red-900/20 dark:hover:bg-red-800/30 rounded-xl transition-all duration-200 text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 border border-red-200/30 dark:border-red-600/30 hover:border-red-300/50 dark:hover:border-red-500/50 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="text-left px-4 py-3 text-sm bg-red-50/80 hover:bg-red-100/80 dark:bg-red-900/20 dark:hover:bg-red-800/30 rounded-xl transition-all duration-200 text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 border border-red-200/40 dark:border-red-600/40 group disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <div className="flex items-center space-x-3">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
                                                 <span>Clear Chat History</span>
                                             </div>
                                         </button>
-                                        <button className="w-full text-left px-4 py-3 text-sm bg-gray-50/70 hover:bg-gray-100/70 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-xl transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-200/30 dark:border-gray-600/30 hover:border-gray-300/50 dark:hover:border-gray-500/50 group">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-2 h-2 bg-blue-500 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
-                                                <span>Export Board</span>
-                                            </div>
-                                        </button>
-                                        <button className="w-full text-left px-4 py-3 text-sm bg-gray-50/70 hover:bg-gray-100/70 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-xl transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-200/30 dark:border-gray-600/30 hover:border-gray-300/50 dark:hover:border-gray-500/50 group">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-2 h-2 bg-green-500 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
-                                                <span>Board Settings</span>
-                                            </div>
-                                        </button>
-                                        <button className="w-full text-left px-4 py-3 text-sm bg-gray-50/70 hover:bg-gray-100/70 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-xl transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-200/30 dark:border-gray-600/30 hover:border-gray-300/50 dark:hover:border-gray-500/50 group">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-2 h-2 bg-purple-500 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
-                                                <span>View History</span>
-                                            </div>
-                                        </button>
                                     </div>
                                 </div>
 
                                 {/* AI Tools Info */}
-                                <div className="bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-900/20 dark:to-teal-900/20 backdrop-blur-sm rounded-2xl border border-emerald-200/50 dark:border-emerald-800/50 p-5">
+                                <div className="bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-900/20 dark:to-teal-900/20 backdrop-blur-sm rounded-2xl border border-emerald-200/60 dark:border-emerald-800/60 p-5">
                                     <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 mb-3 flex items-center">
                                         <span className="text-base mr-2">
                                             🤖
                                         </span>
                                         AI Capabilities
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-3 text-xs text-emerald-600 dark:text-emerald-400">
-                                        <div className="flex items-center space-x-2 bg-white/30 dark:bg-gray-800/30 rounded-lg p-2 backdrop-blur-sm">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-emerald-600 dark:text-emerald-400">
+                                        <div className="flex items-center space-x-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-2 backdrop-blur-sm">
                                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                                             <span>Knowledge nodes</span>
                                         </div>
-                                        <div className="flex items-center space-x-2 bg-white/30 dark:bg-gray-800/30 rounded-lg p-2 backdrop-blur-sm">
+                                        <div className="flex items-center space-x-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-2 backdrop-blur-sm">
                                             <div
                                                 className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
                                                 style={{
@@ -866,14 +891,14 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                             ></div>
                                             <span>Concept maps</span>
                                         </div>
-                                        <div className="flex items-center space-x-2 bg-white/30 dark:bg-gray-800/30 rounded-lg p-2 backdrop-blur-sm">
+                                        <div className="flex items-center space-x-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-2 backdrop-blur-sm">
                                             <div
                                                 className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
                                                 style={{ animationDelay: "1s" }}
                                             ></div>
                                             <span>Flowcharts</span>
                                         </div>
-                                        <div className="flex items-center space-x-2 bg-white/30 dark:bg-gray-800/30 rounded-lg p-2 backdrop-blur-sm">
+                                        <div className="flex items-center space-x-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-2 backdrop-blur-sm">
                                             <div
                                                 className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
                                                 style={{

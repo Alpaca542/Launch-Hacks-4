@@ -313,7 +313,7 @@ export function DraggableEditableNode({
                         y: latestDragState.y,
                     });
 
-                    // Create a tempInput node (handled by App via onNodeCallback)
+                    // Create a new node with the dragged content
                     data.onNodeCallback(
                         optimizeToText(latestDragState.draggedContent),
                         id,
@@ -325,6 +325,7 @@ export function DraggableEditableNode({
                         }
                     );
                 }
+                // If dropped over the node, the drag is discarded (no callback)
             }
         }
         setDragState({

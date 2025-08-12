@@ -14,7 +14,7 @@ import {
     BoardData,
 } from "../services/boardService";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../utils/constants";
-
+import { askAiForSuggestions } from "../services/aiService";
 export interface UseBoardManagementReturn {
     nodes: Node[];
     edges: Edge[];
@@ -184,6 +184,17 @@ export const useBoardManagement = (
                 prev.forEach((n) => {
                     if (!nextIds.has(n.id)) {
                         pendingNodeChanges.current.delete(n.id);
+                        hasRelevantChanges = true;
+                    }
+                });
+
+                // Detect updates to existing nodes (e.g., text/content changes)
+                // If the node object reference has changed between prev and next, treat as an update
+                const nextMap = new Map(next.map((n) => [n.id, n] as const));
+                prev.forEach((prevNode) => {
+                    const nextNode = nextMap.get(prevNode.id);
+                    if (nextNode && nextNode !== prevNode) {
+                        pendingNodeChanges.current.add(prevNode.id);
                         hasRelevantChanges = true;
                     }
                 });
@@ -499,10 +510,27 @@ export const useBoardManagement = (
                 setCurrentBoard(newBoard);
 
                 // Load the board content (should be empty for new boards)
-                const [n, e] = await Promise.all([
-                    fetchNodesFromBoard(newBoard.id),
-                    fetchEdgesFromBoard(newBoard.id),
-                ]);
+                // For new boards, create a default node with the board name
+                const suggestions: string[] = await askAiForSuggestions(
+                    boardName || "New Board"
+                );
+                const n = [
+                    {
+                        id: "1",
+                        type: "staticEditable",
+                        data: {
+                            label: newBoard.name,
+                            full_text: newBoard.name,
+                            title: newBoard.name,
+                            suggestions: suggestions,
+                            tokenColors: {},
+                            previousNode: null,
+                        },
+                        position: { x: 0, y: 0 },
+                        draggable: false,
+                    },
+                ];
+                const e: Edge[] = [];
 
                 console.log(
                     "New board loaded - nodes:",
