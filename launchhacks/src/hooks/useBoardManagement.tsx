@@ -169,7 +169,7 @@ export const useBoardManagement = (
                         ? (updaterOrNodes as (nodes: Node[]) => Node[])(prev)
                         : (updaterOrNodes as Node[]);
 
-                // Detect added nodes
+                // Detect added/removed nodes
                 const prevIds = new Set(prev.map((n) => n.id));
                 const nextIds = new Set(next.map((n) => n.id));
                 let hasRelevantChanges = false;
@@ -177,23 +177,34 @@ export const useBoardManagement = (
                 next.forEach((n) => {
                     if (!prevIds.has(n.id)) {
                         pendingNodeChanges.current.add(n.id);
-                        hasRelevantChanges = true;
+                        hasRelevantChanges = true; // creation
                     }
                 });
-                // Detect removed nodes
                 prev.forEach((n) => {
                     if (!nextIds.has(n.id)) {
                         pendingNodeChanges.current.delete(n.id);
-                        hasRelevantChanges = true;
+                        hasRelevantChanges = true; // deletion
                     }
                 });
 
-                // Detect updates to existing nodes (e.g., text/content changes)
-                // If the node object reference has changed between prev and next, treat as an update
+                // Detect data changes only (ignore position/dimensions/selection)
                 const nextMap = new Map(next.map((n) => [n.id, n] as const));
+                const isEqualData = (a: any, b: any) => {
+                    if (a === b) return true;
+                    if (!a || !b) return false;
+                    const aKeys = Object.keys(a);
+                    const bKeys = Object.keys(b);
+                    if (aKeys.length !== bKeys.length) return false;
+                    for (const k of aKeys) {
+                        if (a[k] !== b[k]) return false;
+                    }
+                    return true;
+                };
                 prev.forEach((prevNode) => {
                     const nextNode = nextMap.get(prevNode.id);
-                    if (nextNode && nextNode !== prevNode) {
+                    if (!nextNode) return; // already handled as removed
+                    // Schedule save only if node.data actually changed
+                    if (!isEqualData(prevNode.data, nextNode.data)) {
                         pendingNodeChanges.current.add(prevNode.id);
                         hasRelevantChanges = true;
                     }
@@ -247,32 +258,25 @@ export const useBoardManagement = (
     // Enhanced onNodesChange that tracks individual node changes - optimized
     const enhancedOnNodesChange = useCallback(
         (changes: any) => {
-            console.log("Node changes:", changes);
             onNodesChange(changes);
 
             let hasRelevantChanges = false;
 
-            // Track which nodes changed - only track meaningful changes
+            // Only track creations and deletions; ignore position/dimensions/select/etc.
             changes.forEach((change: any) => {
-                if (change.type === "add") {
-                    if (change.item?.id) {
-                        pendingNodeChanges.current.add(change.item.id);
-                        hasRelevantChanges = true;
-                        console.log("Added node to pending:", change.item.id);
-                    }
-                } else if (change.type === "remove") {
-                    if (change.id) {
-                        pendingNodeChanges.current.delete(change.id);
-                        hasRelevantChanges = true;
-                        console.log("Removed node from pending:", change.id);
-                    }
+                if (change.type === "add" && change.item?.id) {
+                    pendingNodeChanges.current.add(change.item.id);
+                    hasRelevantChanges = true;
+                    return;
                 }
-                // Skip 'select' changes as they don't need saving
+                if (change.type === "remove" && change.id) {
+                    pendingNodeChanges.current.delete(change.id);
+                    hasRelevantChanges = true;
+                    return;
+                }
             });
 
-            // Only schedule save if there were relevant changes
             if (hasRelevantChanges) {
-                console.log("Scheduling individual save due to node changes");
                 scheduleIndividualSave();
             }
         },
@@ -545,6 +549,19 @@ export const useBoardManagement = (
                 await updateBoardStatus(newBoard.id, { isOpen: true });
                 if (currentBoard) {
                     await updateBoardStatus(currentBoard.id, { isOpen: false });
+                }
+
+                // Persist the initial node/edges immediately so refresh shows them
+                try {
+                    await saveNodesToBoard(newBoard.id, n as any);
+                    if (e.length > 0) {
+                        await saveEdgesToBoard(newBoard.id, e as any);
+                    }
+                } catch (persistErr) {
+                    console.error(
+                        "Failed to persist initial board state:",
+                        persistErr
+                    );
                 }
 
                 showSuccess && showSuccess(SUCCESS_MESSAGES.BOARD_CREATED);

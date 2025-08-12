@@ -23,7 +23,10 @@ export const executeTool = async (
     nodes: any[],
     setNodes: any,
     onNodesChange: any,
-    onEdgesChange: any
+    onEdgesChange: any,
+    saveCallback?: () => Promise<void>,
+    getLastTwoLayouts?: () => number[],
+    addLayout?: (layout: number) => void
 ) => {
     const { function: func } = toolCall;
     const functionName = func.name;
@@ -42,7 +45,10 @@ export const executeTool = async (
                 nodes,
                 setNodes,
                 onNodesChange,
-                onEdgesChange
+                onEdgesChange,
+                saveCallback,
+                getLastTwoLayouts,
+                addLayout
             );
         default:
             throw new Error(`Unknown tool: ${functionName}`);
@@ -54,9 +60,12 @@ const create_visual = async (
     nodes: any[],
     setNodes: any,
     onNodesChange: any,
-    onEdgesChange: any
+    onEdgesChange: any,
+    saveCallback?: () => Promise<void>,
+    getLastTwoLayouts?: () => number[],
+    addLayout?: (layout: number) => void
 ) => {
-    const { title, description, mode } = parameters;
+    const { title, mode } = parameters;
 
     handleNodeCreation(
         title,
@@ -73,9 +82,9 @@ const create_visual = async (
         undefined, // sourceNodeColor
         undefined, // sourceNodeLabel
         undefined, // suggestionID
-        undefined, // saveCallback
-        undefined, // getLastTwoLayouts
-        undefined // addLayout
+        saveCallback, // saveCallback
+        getLastTwoLayouts, // getLastTwoLayouts
+        addLayout // addLayout
     );
 };
 

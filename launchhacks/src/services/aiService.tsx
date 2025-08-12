@@ -172,7 +172,11 @@ Keep the tone approachable but ensure the content remains accurate and well-stru
 
 Show curiosity and interest in the topic, making the explanation feel inviting rather than dry.
 
-Combine plain-text explanations with visual aids to enhance understanding.
+Combine plain-text explanations with visual aids to enhance understanding. ALL of your messages should include at least 2 paragraphs of text and AT LEAST 1 visual representation.
+
+You may use several visuals if relevant.
+
+You need to use markdown for the answers.
 
 Context:
 
@@ -228,7 +232,8 @@ Base your response on the following message:
             }
 
             if (data?.response) {
-                onChunk(data.response);
+                const text: string = String(data.response);
+                onChunk(text);
             }
 
             if (
@@ -262,7 +267,6 @@ Base your response on the following message:
         const decoder = new TextDecoder();
         let buffer = "";
         let lastCompleteEvent: any | null = null;
-        const processedToolCallIds = new Set<string>(); // Track processed tool calls
 
         while (true) {
             const { value, done } = await reader.read();
@@ -284,99 +288,14 @@ Base your response on the following message:
                     try {
                         const evt = JSON.parse(payloadStr);
                         if (evt.type === "chunk" && evt.content) {
-                            onChunk(evt.content as string);
+                            onChunk(String(evt.content));
                         } else if (evt.type === "error") {
                             throw new Error(evt.message || "Stream error");
                         } else if (evt.type === "complete") {
                             lastCompleteEvent = evt;
-                        } else if (
-                            evt.type === "tool_calls" &&
-                            evt.tool_calls
-                        ) {
-                            // Handle tool calls mid-stream
-                            if (options?.onToolCall) {
-                                for (const toolCall of evt.tool_calls as ToolCall[]) {
-                                    if (
-                                        !processedToolCallIds.has(toolCall.id)
-                                    ) {
-                                        processedToolCallIds.add(toolCall.id);
-                                        try {
-                                            onChunk(
-                                                `\n🔧 Using ${toolCall.function.name}...\n`
-                                            );
-                                            const toolResult =
-                                                await options.onToolCall(
-                                                    toolCall
-                                                );
-                                            onChunk(`✅ ${toolResult}\n`);
-                                        } catch (toolError: any) {
-                                            onChunk(
-                                                `❌ Tool execution failed: ${
-                                                    toolError?.message ||
-                                                    toolError
-                                                }\n`
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // Fallback: try common provider shapes
-                            const delta =
-                                evt.choices?.[0]?.delta?.content ??
-                                evt.delta ??
-                                evt.text ??
-                                "";
-                            if (delta) onChunk(String(delta));
-
-                            // Check for tool calls in common provider formats
-                            if (
-                                evt.choices?.[0]?.delta?.tool_calls &&
-                                options?.onToolCall
-                            ) {
-                                for (const toolCall of evt.choices[0].delta
-                                    .tool_calls) {
-                                    if (
-                                        toolCall.function?.name &&
-                                        toolCall.function?.arguments
-                                    ) {
-                                        const toolCallId =
-                                            toolCall.id || `tool_${Date.now()}`;
-                                        if (
-                                            !processedToolCallIds.has(
-                                                toolCallId
-                                            )
-                                        ) {
-                                            processedToolCallIds.add(
-                                                toolCallId
-                                            );
-                                            try {
-                                                onChunk(
-                                                    `\n🔧 Using ${toolCall.function.name}...\n`
-                                                );
-                                                const toolResult =
-                                                    await options.onToolCall({
-                                                        id: toolCallId,
-                                                        type: "function",
-                                                        function:
-                                                            toolCall.function,
-                                                    });
-                                                onChunk(`✅ ${toolResult}\n`);
-                                            } catch (toolError: any) {
-                                                onChunk(
-                                                    `❌ Tool execution failed: ${
-                                                        toolError?.message ||
-                                                        toolError
-                                                    }\n`
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
                     } catch {
-                        // Non-JSON data line; forward raw content
+                        // Non-JSON data line, emit as-is to preserve text
                         onChunk(payloadStr);
                     }
                 }
@@ -392,22 +311,16 @@ Base your response on the following message:
                 options?.onToolCall
             ) {
                 for (const toolCall of lastCompleteEvent.tool_calls as ToolCall[]) {
-                    if (!processedToolCallIds.has(toolCall.id)) {
-                        try {
-                            onChunk(
-                                `\n🔧 Using ${toolCall.function.name}...\n`
-                            );
-                            const toolResult = await options.onToolCall(
-                                toolCall
-                            );
-                            onChunk(`✅ ${toolResult}\n`);
-                        } catch (toolError: any) {
-                            onChunk(
-                                `❌ Tool execution failed: ${
-                                    toolError?.message || toolError
-                                }\n`
-                            );
-                        }
+                    try {
+                        onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
+                        const toolResult = await options.onToolCall(toolCall);
+                        onChunk(`✅ ${toolResult}\n`);
+                    } catch (toolError: any) {
+                        onChunk(
+                            `❌ Tool execution failed: ${
+                                toolError?.message || toolError
+                            }\n`
+                        );
                     }
                 }
             }

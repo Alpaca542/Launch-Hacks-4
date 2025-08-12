@@ -10,6 +10,7 @@ import {
     Download,
 } from "lucide-react";
 import { Node } from "reactflow";
+import Markdown from "react-markdown";
 import {
     askAIStream,
     NODE_CREATION_TOOLS,
@@ -81,7 +82,7 @@ const ChatMessage: React.FC<{
                     } max-w-[320px] md:max-w-[380px]`}
                 >
                     <div className="whitespace-pre-wrap break-words">
-                        {message.content}
+                        <Markdown>{message.content}</Markdown>
                         {message.isStreaming && (
                             <span className="inline-block w-1.5 h-4 bg-current ml-1 animate-pulse rounded-sm" />
                         )}
@@ -354,7 +355,10 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                 nodes,
                                 setNodes,
                                 onNodesChange,
-                                onEdgesChange
+                                onEdgesChange,
+                                undefined, // saveCallback (optional): we can hook into board management if provided later
+                                _getLastTwoLayouts,
+                                _addLayout
                             );
                             return "Tool executed successfully";
                         } catch (error) {
