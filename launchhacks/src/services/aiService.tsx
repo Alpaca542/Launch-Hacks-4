@@ -172,6 +172,8 @@ Keep the tone approachable but ensure the content remains accurate and well-stru
 
 Show curiosity and interest in the topic, making the explanation feel inviting rather than dry.
 
+Combine plain-text explanations with visual aids to enhance understanding.
+
 Context:
 
 Current board: ${currentBoardTitle}

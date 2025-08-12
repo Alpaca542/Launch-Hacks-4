@@ -59,7 +59,7 @@ const create_visual = async (
     const { title, description, mode } = parameters;
 
     handleNodeCreation(
-        title + description,
+        title,
         "1",
         { x: 0, y: 0 } as Position,
         "staticEditable",
