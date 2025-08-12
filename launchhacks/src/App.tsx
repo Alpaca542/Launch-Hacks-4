@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import ReactFlow, {
     Background,
     Controls,
@@ -511,10 +511,12 @@ function AppContent() {
     );
 }
 
+const MemoAppContent = memo(AppContent);
+
 function App() {
     return (
         <ThemeProvider>
-            <AppContent />
+            <MemoAppContent />
         </ThemeProvider>
     );
 }

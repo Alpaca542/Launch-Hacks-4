@@ -47,8 +47,7 @@ interface RightSidePanelProps {
 const ChatMessage: React.FC<{
     message: Message;
     enableTools: boolean;
-    reduceEffects: boolean;
-}> = React.memo(({ message, enableTools, reduceEffects }) => {
+}> = React.memo(({ message, enableTools }) => {
     const isUser = message.role === "user";
     return (
         <div
@@ -589,7 +588,6 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
                                         key={message.id}
                                         message={message}
                                         enableTools={enableTools}
-                                        reduceEffects={reduceEffects}
                                     />
                                 ))}
 
@@ -895,4 +893,23 @@ const RightSidePanel: React.FC<RightSidePanelProps> = ({
     );
 };
 
-export default RightSidePanel;
+const areEqualRight = (
+    prev: RightSidePanelProps,
+    next: RightSidePanelProps
+) => {
+    return (
+        prev.isOpen === next.isOpen &&
+        prev.onClose === next.onClose &&
+        prev.currentBoardId === next.currentBoardId &&
+        prev.currentBoardName === next.currentBoardName &&
+        prev.chosenNodeText === next.chosenNodeText &&
+        prev.nodes === next.nodes &&
+        prev.setNodes === next.setNodes &&
+        prev.onNodesChange === next.onNodesChange &&
+        prev.onEdgesChange === next.onEdgesChange &&
+        prev.getLastTwoLayouts === next.getLastTwoLayouts &&
+        prev.addLayout === next.addLayout
+    );
+};
+
+export default React.memo(RightSidePanel, areEqualRight);

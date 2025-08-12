@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import LoadingSpinner from "./LoadingSpinner";
 import { Loader2, Sparkles, Brain } from "lucide-react";
@@ -313,7 +313,7 @@ export function DraggableEditableNode({
                         y: latestDragState.y,
                     });
 
-                    // Create a new node with the dragged content
+                    // Create a tempInput node (handled by App via onNodeCallback)
                     data.onNodeCallback(
                         optimizeToText(latestDragState.draggedContent),
                         id,
@@ -325,7 +325,6 @@ export function DraggableEditableNode({
                         }
                     );
                 }
-                // If dropped over the node, the drag is discarded (no callback)
             }
         }
         setDragState({
@@ -741,3 +740,9 @@ export function DraggableEditableNode({
         </div>
     );
 }
+
+// Memoized version to prevent unnecessary re-renders
+export const DraggableEditableNodeMemo = memo(
+    DraggableEditableNode,
+    (prev, next) => prev.id === next.id && prev.data === next.data
+);

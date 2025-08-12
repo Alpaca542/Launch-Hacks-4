@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { useReactFlow, Handle, Position } from "reactflow";
 import { Sparkles } from "lucide-react";
 import SuggestionHandles from "./SuggestionHandles";
@@ -262,4 +262,4 @@ function StaticEditableNode({ data, id }: StaticEditableNodeProps) {
     );
 }
 
-export default StaticEditableNode;
+export default memo(StaticEditableNode);

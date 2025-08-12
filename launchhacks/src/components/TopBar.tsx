@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import ThemeToggle from "./ThemeToggle";
 
 interface User {
@@ -107,4 +107,14 @@ function TopBar({ name, onSetName, user, isSaving }: TopBarProps) {
     );
 }
 
-export default TopBar;
+const areEqualTopBar = (prev: TopBarProps, next: TopBarProps) => {
+    return (
+        prev.name === next.name &&
+        prev.onSetName === next.onSetName &&
+        prev.user?.isAnonymous === next.user?.isAnonymous &&
+        prev.user?.email === next.user?.email &&
+        prev.isSaving === next.isSaving
+    );
+};
+
+export default memo(TopBar, areEqualTopBar);
