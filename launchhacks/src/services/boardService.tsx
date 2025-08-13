@@ -201,20 +201,40 @@ export const saveNodesToBoard = async (
 ): Promise<void> => {
     if (!boardId || !Array.isArray(nodesToSave)) return;
     if (nodesToSave.length === 0) return;
-    const rows = nodesToSave.map((n) => ({
-        id: n.id,
-        board_id: boardId,
-        type: n.type,
-        data: n.data,
-        position: n.position,
-        draggable: n.draggable ?? null,
-        style: n.style ?? null,
-        updated_at: now(),
-    }));
+
+    console.log(`Saving ${nodesToSave.length} nodes to board ${boardId}`);
+
+    const rows = nodesToSave.map((n) => {
+        console.log(`Saving node ${n.id}:`, {
+            type: n.type,
+            position: n.position,
+            dataKeys: Object.keys(n.data || {}),
+            hasContent: !!(n.data?.contents && n.data.contents.length > 0),
+            hasLabel: !!n.data?.label,
+            hasFullText: !!n.data?.full_text,
+        });
+
+        return {
+            id: n.id,
+            board_id: boardId,
+            type: n.type,
+            data: n.data,
+            position: n.position,
+            draggable: n.draggable ?? null,
+            style: n.style ?? null,
+            updated_at: now(),
+        };
+    });
+
     const { error } = await supabase
         .from(COLLECTIONS.NODES)
         .upsert(rows, { onConflict: "id" });
-    if (error) throw new Error(ERROR_MESSAGES.SAVE_FAILED);
+    if (error) {
+        console.error("Failed to save nodes:", error);
+        throw new Error(ERROR_MESSAGES.SAVE_FAILED);
+    }
+
+    console.log(`Successfully saved ${rows.length} nodes`);
 };
 
 export const saveEdgesToBoard = async (

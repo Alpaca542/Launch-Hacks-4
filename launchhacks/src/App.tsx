@@ -475,7 +475,7 @@ function AppContent() {
             {user && (
                 <ActivityTracker
                     onPeriodicSave={performPeriodicSave}
-                    saveInterval={20000} // 20 seconds
+                    saveInterval={10000} // 10 seconds for more aggressive saving
                 />
             )}
 

@@ -157,10 +157,10 @@ export const useBoardManagement = (
 
         individualSaveTimeoutRef.current = setTimeout(() => {
             saveIndividualChanges();
-        }, 2000); // 2 second delay to allow for batching multiple changes
+        }, 1000); // 1 second delay to allow for batching multiple changes
     }, [saveIndividualChanges]);
 
-    // Wrapped setters to track creations/removals even when bypassing onChange handlers
+    // Wrapped setters to track creations/removals/changes even when bypassing onChange handlers
     const setNodes: UseBoardManagementReturn["setNodes"] = useCallback(
         (updaterOrNodes) => {
             _setNodes((prev) => {
@@ -177,40 +177,52 @@ export const useBoardManagement = (
                 next.forEach((n) => {
                     if (!prevIds.has(n.id)) {
                         pendingNodeChanges.current.add(n.id);
-                        hasRelevantChanges = true; // creation
+                        hasRelevantChanges = true;
+                        console.log("Node added via setNodes:", n.id);
                     }
                 });
                 prev.forEach((n) => {
                     if (!nextIds.has(n.id)) {
                         pendingNodeChanges.current.delete(n.id);
-                        hasRelevantChanges = true; // deletion
+                        hasRelevantChanges = true;
+                        console.log("Node removed via setNodes:", n.id);
                     }
                 });
 
-                // Detect data changes only (ignore position/dimensions/selection)
+                // Detect ALL significant changes including data, position, dimensions
                 const nextMap = new Map(next.map((n) => [n.id, n] as const));
-                const isEqualData = (a: any, b: any) => {
-                    if (a === b) return true;
-                    if (!a || !b) return false;
-                    const aKeys = Object.keys(a);
-                    const bKeys = Object.keys(b);
-                    if (aKeys.length !== bKeys.length) return false;
-                    for (const k of aKeys) {
-                        if (a[k] !== b[k]) return false;
-                    }
-                    return true;
-                };
                 prev.forEach((prevNode) => {
                     const nextNode = nextMap.get(prevNode.id);
                     if (!nextNode) return; // already handled as removed
-                    // Schedule save only if node.data actually changed
-                    if (!isEqualData(prevNode.data, nextNode.data)) {
+
+                    // Check for any meaningful changes (data, position, dimensions, etc.)
+                    const hasDataChange =
+                        JSON.stringify(prevNode.data) !==
+                        JSON.stringify(nextNode.data);
+                    const hasPositionChange =
+                        prevNode.position?.x !== nextNode.position?.x ||
+                        prevNode.position?.y !== nextNode.position?.y;
+                    const hasDimensionsChange =
+                        prevNode.width !== nextNode.width ||
+                        prevNode.height !== nextNode.height;
+
+                    if (
+                        hasDataChange ||
+                        hasPositionChange ||
+                        hasDimensionsChange
+                    ) {
                         pendingNodeChanges.current.add(prevNode.id);
                         hasRelevantChanges = true;
+                        console.log("Node changed via setNodes:", prevNode.id, {
+                            data: hasDataChange,
+                            position: hasPositionChange,
+                            dimensions: hasDimensionsChange,
+                        });
                     }
                 });
 
                 if (hasRelevantChanges) {
+                    console.log("Scheduling save due to setNodes changes");
                     scheduleIndividualSave();
                 }
 
@@ -258,25 +270,44 @@ export const useBoardManagement = (
     // Enhanced onNodesChange that tracks individual node changes - optimized
     const enhancedOnNodesChange = useCallback(
         (changes: any) => {
+            console.log("Node changes:", changes);
             onNodesChange(changes);
 
             let hasRelevantChanges = false;
 
-            // Only track creations and deletions; ignore position/dimensions/select/etc.
+            // Track ALL meaningful changes including position, dimensions, data updates
             changes.forEach((change: any) => {
                 if (change.type === "add" && change.item?.id) {
                     pendingNodeChanges.current.add(change.item.id);
                     hasRelevantChanges = true;
+                    console.log("Added node to pending:", change.item.id);
                     return;
                 }
                 if (change.type === "remove" && change.id) {
                     pendingNodeChanges.current.delete(change.id);
                     hasRelevantChanges = true;
+                    console.log("Removed node from pending:", change.id);
                     return;
                 }
+                if (change.type === "position" && change.id) {
+                    // Track position changes (node moves/drags)
+                    pendingNodeChanges.current.add(change.id);
+                    hasRelevantChanges = true;
+                    console.log("Position changed for node:", change.id);
+                    return;
+                }
+                if (change.type === "dimensions" && change.id) {
+                    // Track dimension changes (node resizing)
+                    pendingNodeChanges.current.add(change.id);
+                    hasRelevantChanges = true;
+                    console.log("Dimensions changed for node:", change.id);
+                    return;
+                }
+                // Skip only 'select' changes as they don't need saving
             });
 
             if (hasRelevantChanges) {
+                console.log("Scheduling individual save due to node changes");
                 scheduleIndividualSave();
             }
         },
@@ -347,11 +378,23 @@ export const useBoardManagement = (
                 console.log("Loaded nodes:", n.length, "edges:", e.length);
                 setNodes(n as unknown as Node[]);
                 setEdges(e as unknown as Edge[]);
+
+                // Ensure all nodes are marked for potential saving to capture any missing data
+                n.forEach((node) => {
+                    pendingNodeChanges.current.add(node.id);
+                });
+                console.log("Marked all loaded nodes for potential saving");
             } else {
                 console.log("No open board found, using initial data");
                 setCurrentBoard(null);
                 setNodes(initialNodes as unknown as Node[]);
                 setEdges(initialEdges as unknown as Edge[]);
+
+                // Mark initial nodes for saving
+                initialNodes.forEach((node) => {
+                    pendingNodeChanges.current.add(node.id);
+                });
+                console.log("Marked initial nodes for saving");
             }
 
             hasInitiallyLoaded.current = true;
@@ -389,7 +432,7 @@ export const useBoardManagement = (
         };
     }, []);
 
-    // Periodic full board save with optimization
+    // Periodic full board save - ALWAYS saves EVERYTHING to ensure data persistence
     const performPeriodicSave = useCallback(async () => {
         if (
             !currentBoard ||
@@ -400,29 +443,24 @@ export const useBoardManagement = (
             return;
         }
 
-        // Skip periodic save if there are no pending individual changes and we're not saving
-        const hasPendingChanges =
-            pendingNodeChanges.current.size > 0 ||
-            pendingEdgeChanges.current.size > 0;
-
-        if (!hasPendingChanges && !isSaving) {
-            console.log("Periodic save skipped - no pending changes detected");
-            return;
-        }
-
         try {
             setIsSaving(true);
+            console.log("Starting periodic save - saving ALL nodes and edges");
 
-            // If there are pending individual changes, save them first
-            if (hasPendingChanges) {
-                await saveIndividualChanges();
-            } else {
-                // Otherwise, perform full board save as backup
-                await saveNodesToBoard(currentBoard.id, nodes as any);
-                await saveEdgesToBoard(currentBoard.id, edges as any);
-            }
+            // Always perform a comprehensive save of ALL nodes and edges
+            // This ensures positions, content, and all data are properly saved
+            await Promise.all([
+                saveNodesToBoard(currentBoard.id, nodes as any),
+                saveEdgesToBoard(currentBoard.id, edges as any),
+            ]);
 
-            console.log("Periodic save completed successfully");
+            // Clear pending changes since everything is now saved
+            pendingNodeChanges.current.clear();
+            pendingEdgeChanges.current.clear();
+
+            console.log(
+                `Periodic save completed - saved ${nodes.length} nodes and ${edges.length} edges`
+            );
         } catch (error) {
             console.error("Periodic save failed:", error);
             showError && showError("Failed to save board changes");
@@ -439,6 +477,26 @@ export const useBoardManagement = (
         saveIndividualChanges,
         showError,
     ]);
+
+    // Save on window unload to prevent data loss
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (
+                currentBoard &&
+                !currentBoard.isFallback &&
+                (nodes.length > 0 || edges.length > 0)
+            ) {
+                console.log("Performing emergency save before unload");
+                // Attempt synchronous save during page unload
+                performPeriodicSave().catch(console.error);
+            }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, [currentBoard, nodes.length, edges.length, performPeriodicSave]);
 
     const switchToBoard = useCallback(
         async (boardId: string) => {
