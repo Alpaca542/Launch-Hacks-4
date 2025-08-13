@@ -22,15 +22,15 @@ import {
 } from "./prompts";
 
 // AI Model Constants
-const SUMMARIZE_MODEL = "gpt-5-mini";
-const ICON_MODEL = "gpt-5-mini";
-const LAYOUT_MODEL = "gpt-4-mini";
-const SUGGESTIONS_MODEL = "gpt-5-mini";
-const CONTENT_MODEL = "gpt-5-mini";
-const QUIZ_MODEL = "gpt-5-mini";
-const DIAGRAM_DESCRIPTION_MODEL = "gpt-5-mini";
-const MERMAID_DIAGRAM_MODEL = "gpt-5-mini";
-const CHAT_MODEL = "gpt-5-mini";
+const SUMMARIZE_MODEL = "gpt-5";
+const ICON_MODEL = "gpt-5";
+const LAYOUT_MODEL = "gpt-5";
+const SUGGESTIONS_MODEL = "gpt-5";
+const CONTENT_MODEL = "gpt-5";
+const QUIZ_MODEL = "gpt-5";
+const DIAGRAM_DESCRIPTION_MODEL = "gpt-5";
+const MERMAID_DIAGRAM_MODEL = "gpt-5";
+const CHAT_MODEL = "gpt-5";
 
 // Helper function to clean AI responses that might have markdown formatting
 const cleanJsonResponse = (response: string): string => {
