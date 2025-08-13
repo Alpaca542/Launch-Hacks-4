@@ -143,7 +143,10 @@ export const fetchImage = async (searchTerm: string): Promise<string> => {
         const data: GoogleSearchResponse = await response.json();
 
         if (data.items && data.items.length > 0) {
-            const item = data.items[0];
+            const randomIndex = Math.floor(
+                Math.random() * Math.min(data.items.length, 4)
+            );
+            const item = data.items[randomIndex];
             const imageUrl = item.link || item.pagemap?.cse_image?.[0]?.src;
 
             if (imageUrl) {
