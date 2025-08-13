@@ -77,16 +77,19 @@ const askAI = async (message: string, model: string): Promise<any> => {
             throw new Error("Message cannot be empty or just whitespace");
         }
 
-        const { data, error } = await supabase.functions.invoke("ai-remote", {
-            body: {
-                message: trimmedMessage,
-                model: model,
-            },
-        });
+        const { data: aiResponseData, error } = await supabase.functions.invoke(
+            "ai-remote",
+            {
+                body: {
+                    messages: [{ role: "user", content: trimmedMessage }],
+                    model: model,
+                },
+            }
+        );
 
         if (error) throw error;
-        console.log("AI response:", data);
-        return data?.response || "";
+        console.log("AI response:", aiResponseData);
+        return aiResponseData?.response || "";
     } catch (err) {
         console.error("Supabase function error:", err);
         console.error("Message sent:", message);
@@ -165,7 +168,17 @@ export const askAIStream = async (
         if (!message || typeof message !== "string") {
             throw new Error("Message must be a non-empty string");
         }
-        const stream_prompt = `You are an educational assistant with a chill, friendly vibe and a genuine enthusiasm for the subject. Your goal is to provide helpful, engaging explanations that are clear, concise, and easy to follow.
+
+        const trimmedMessage = message.trim();
+        if (!trimmedMessage) {
+            throw new Error("Message cannot be empty or just whitespace");
+        }
+
+        // Build messages array with system prompt and conversation context
+        const messages: any[] = [
+            {
+                role: "system",
+                content: `You are an educational assistant with a chill, friendly vibe and a genuine enthusiasm for the subject. Your goal is to provide helpful, engaging explanations that are clear, concise, and easy to follow.
 
 Use visual representations (e.g., diagrams, charts, examples) whenever they can help illustrate a concept.
 
@@ -180,23 +193,29 @@ You may use several visuals if relevant.
 You need to use markdown for the answers.
 
 Context:
-
 Current board: ${currentBoardTitle}
+Current node: ${currentNodeText}`,
+            },
+        ];
 
-Current node: ${currentNodeText}
-
-Previous dialogue: ${context}
-
-Base your response on the following message:
-
-`;
-        const trimmedMessage = stream_prompt + message.trim();
-        if (!trimmedMessage) {
-            throw new Error("Message cannot be empty or just whitespace");
+        // Add conversation history if available
+        if (context && context.trim()) {
+            // Parse context into individual messages if it contains conversation history
+            // For now, add it as a user message, but this could be enhanced to parse actual conversation
+            messages.push({
+                role: "user",
+                content: `Previous dialogue context: ${context.trim()}`,
+            });
         }
 
+        // Add the current user message
+        messages.push({
+            role: "user",
+            content: trimmedMessage,
+        });
+
         const payload: any = {
-            message: trimmedMessage,
+            messages: messages,
             model: CHAT_MODEL,
             acceptsStreaming: true,
         };
@@ -235,22 +254,22 @@ Base your response on the following message:
 
         // If server returned JSON (non-streaming fallback), handle it
         if (!contentType.includes("text/event-stream")) {
-            const data = await res.json().catch(() => ({}));
-            if (data?.type === "error") {
-                throw new Error(data.message || "Stream error");
+            const aiResponseData = await res.json().catch(() => ({}));
+            if (aiResponseData?.type === "error") {
+                throw new Error(aiResponseData.message || "Stream error");
             }
 
-            if (data?.response) {
-                const text: string = String(data.response);
+            if (aiResponseData?.response) {
+                const text: string = String(aiResponseData.response);
                 onChunk(text);
             }
 
             if (
-                data?.tool_calls &&
-                data.tool_calls.length &&
+                aiResponseData?.tool_calls &&
+                aiResponseData.tool_calls.length &&
                 options?.onToolCall
             ) {
-                for (const toolCall of data.tool_calls as ToolCall[]) {
+                for (const toolCall of aiResponseData.tool_calls as ToolCall[]) {
                     try {
                         onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
                         const toolResult = await options.onToolCall(toolCall);
