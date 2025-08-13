@@ -313,7 +313,6 @@ const RightSidePanel: React.FC<RightSidePanelProps> = React.memo(
                                     : msg
                             )
                         );
-                        setIsLoading(false);
                         scrollToBottom(true);
 
                         setIsSaving(true);
@@ -375,7 +374,9 @@ const RightSidePanel: React.FC<RightSidePanelProps> = React.memo(
                             }
                         },
                     }
-                );
+                ).then(() => {
+                    setIsLoading(false);
+                });
             } catch (error) {
                 console.error("Chat error:", error);
                 const errorMessage =

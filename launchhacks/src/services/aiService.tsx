@@ -22,14 +22,15 @@ import {
 } from "./prompts";
 
 // AI Model Constants
-const SUMMARIZE_MODEL = "gpt-4o-mini";
-const ICON_MODEL = "gpt-4o-mini";
-const LAYOUT_MODEL = "gpt-4o-mini";
-const SUGGESTIONS_MODEL = "gpt-4o-mini";
-const CONTENT_MODEL = "gpt-4o";
-const QUIZ_MODEL = "gpt-4o-mini";
-const DIAGRAM_DESCRIPTION_MODEL = "gpt-4o-mini";
-const MERMAID_DIAGRAM_MODEL = "gpt-4o-mini";
+const SUMMARIZE_MODEL = "gpt-5-mini";
+const ICON_MODEL = "gpt-5-mini";
+const LAYOUT_MODEL = "gpt-4-mini";
+const SUGGESTIONS_MODEL = "gpt-5-mini";
+const CONTENT_MODEL = "gpt-5-mini";
+const QUIZ_MODEL = "gpt-5-mini";
+const DIAGRAM_DESCRIPTION_MODEL = "gpt-5-mini";
+const MERMAID_DIAGRAM_MODEL = "gpt-5-mini";
+const CHAT_MODEL = "gpt-5-mini";
 
 // Helper function to clean AI responses that might have markdown formatting
 const cleanJsonResponse = (response: string): string => {
@@ -196,6 +197,7 @@ Base your response on the following message:
 
         const payload: any = {
             message: trimmedMessage,
+            model: CHAT_MODEL,
             acceptsStreaming: true,
         };
 
@@ -205,13 +207,20 @@ Base your response on the following message:
         }
 
         // Use direct fetch to Supabase Edge Function to support true SSE streaming
+        // Get current user access token for authenticated RPCs in the Edge Function
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+
         const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-remote`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Accept: "text/event-stream",
-                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                // apikey must be anon key; Authorization must be user's token for auth.uid() in RPCs
                 apikey: SUPABASE_ANON_KEY,
+                ...(accessToken
+                    ? { Authorization: `Bearer ${accessToken}` }
+                    : {}),
             },
             body: JSON.stringify(payload),
         });
