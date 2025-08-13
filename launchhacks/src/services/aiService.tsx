@@ -30,7 +30,7 @@ const CONTENT_MODEL = "gpt-5";
 const QUIZ_MODEL = "gpt-5";
 const DIAGRAM_DESCRIPTION_MODEL = "gpt-5";
 const MERMAID_DIAGRAM_MODEL = "gpt-5";
-const CHAT_MODEL = "gpt-5";
+const CHAT_MODEL = "gpt-4o";
 
 // Helper function to clean AI responses that might have markdown formatting
 const cleanJsonResponse = (response: string): string => {
