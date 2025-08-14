@@ -434,12 +434,63 @@ Current node: ${currentNodeText}`,
                                         arguments: String(argsText),
                                     },
                                 };
+                                // Handle Responses API streaming events
+                                if (
+                                    evt.type === "response.output_text.delta" &&
+                                    evt.delta
+                                ) {
+                                    const content = evt.delta;
 
-                                // Notify UI that we're executing the tool
-                                onChunk(
-                                    `\n🔧 Executing ${toolCall.function.name}...\n`
-                                );
+                                    // If content looks like JSON and there's a pending tool call, treat as arg fragment
+                                    const looksLikeJson = String(content)
+                                        .trim()
+                                        .match(/^(```json|\{|\[)/i);
+                                    const partialArgsGlobal:
+                                        | Map<string, string>
+                                        | undefined = (window as any)
+                                        .__ai_partial_args;
+                                    const toolMetaGlobal:
+                                        | Map<string, any>
+                                        | undefined = (window as any)
+                                        .__ai_tool_meta;
+                                    const lastPendingId =
+                                        partialArgsGlobal &&
+                                        partialArgsGlobal.size
+                                            ? Array.from(
+                                                  partialArgsGlobal.keys()
+                                              ).pop()
+                                            : null;
 
+                                    if (looksLikeJson && lastPendingId) {
+                                        // strip code fences
+                                        let toAppend = String(content)
+                                            .replace(/```json\s*/i, "")
+                                            .replace(/```$/i, "")
+                                            .trim();
+                                        const prev =
+                                            partialArgsGlobal!.get(
+                                                lastPendingId
+                                            ) || "";
+                                        partialArgsGlobal!.set(
+                                            lastPendingId,
+                                            prev + toAppend
+                                        );
+                                        const meta =
+                                            toolMetaGlobal?.get(
+                                                lastPendingId
+                                            ) || {};
+                                        meta.arguments =
+                                            partialArgsGlobal!.get(
+                                                lastPendingId
+                                            );
+                                        toolMetaGlobal?.set(
+                                            lastPendingId,
+                                            meta
+                                        );
+                                    } else {
+                                        onChunk(String(content));
+                                    }
+                                }
                                 // Execute tool locally (user-provided handler)
                                 if (options?.onToolCall) {
                                     try {
@@ -671,8 +722,47 @@ Current node: ${currentNodeText}`,
                             continue;
                         }
                     } catch {
-                        // Non-JSON data line, emit as-is to preserve text
-                        onChunk(payloadStr);
+                        // Non-JSON data line - try to detect JSON-like fragments that belong to a pending tool call
+                        const cleaned = String(payloadStr || "").trim();
+                        const isJsonish =
+                            cleaned.startsWith("{") ||
+                            cleaned.startsWith("[") ||
+                            cleaned.startsWith("```json") ||
+                            /\"[a-zA-Z0-9_]+\"\s*:\s*/.test(cleaned);
+
+                        const partialArgs: Map<string, string> | undefined = (
+                            window as any
+                        ).__ai_partial_args;
+                        const toolMeta: Map<string, any> | undefined = (
+                            window as any
+                        ).__ai_tool_meta;
+
+                        // Find the most recent pending item id (best-effort)
+                        let itemId: string | null = null;
+                        if (toolMeta && toolMeta.size)
+                            itemId = Array.from(
+                                toolMeta.keys()
+                            ).pop() as string;
+                        if (!itemId && partialArgs && partialArgs.size)
+                            itemId = Array.from(
+                                partialArgs.keys()
+                            ).pop() as string;
+
+                        if (isJsonish && itemId) {
+                            // attach to pending args rather than displaying raw JSON
+                            let fragment = cleaned
+                                .replace(/```json\s*/i, "")
+                                .replace(/```$/i, "")
+                                .trim();
+                            const prev = partialArgs?.get(itemId) || "";
+                            partialArgs?.set(itemId, prev + fragment);
+                            const meta = toolMeta?.get(itemId) || {};
+                            meta.arguments = partialArgs?.get(itemId);
+                            toolMeta?.set(itemId, meta);
+                        } else {
+                            // Nothing to associate - emit raw text
+                            onChunk(payloadStr);
+                        }
                     }
                 }
             }
