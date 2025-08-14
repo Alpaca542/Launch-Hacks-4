@@ -315,16 +315,337 @@ Current node: ${currentNodeText}`,
 
                     try {
                         const evt = JSON.parse(payloadStr);
+
+                        // Simple chunk events from the function that contain text
                         if (evt.type === "chunk" && evt.content) {
                             onChunk(String(evt.content));
-                        } else if (evt.type === "error") {
+                            continue;
+                        }
+
+                        if (evt.type === "error") {
                             throw new Error(evt.message || "Stream error");
-                        } else if (
+                        }
+
+                        // Keep maps for partial arguments and metadata on the client-side
+                        // (initialized once per stream)
+                        if (
+                            typeof (window as any).__ai_partial_args ===
+                            "undefined"
+                        ) {
+                            (window as any).__ai_partial_args = new Map<
+                                string,
+                                string
+                            >();
+                        }
+                        if (
+                            typeof (window as any).__ai_tool_meta ===
+                            "undefined"
+                        ) {
+                            (window as any).__ai_tool_meta = new Map<
+                                string,
+                                any
+                            >();
+                        }
+                        const partialArgs: Map<string, string> = (window as any)
+                            .__ai_partial_args;
+                        const toolMeta: Map<string, any> = (window as any)
+                            .__ai_tool_meta;
+
+                        // Handle Responses API argument-delta events
+                        if (
+                            evt.type ===
+                                "response.function_call_arguments.delta" ||
+                            evt.type ===
+                                "response.function_call_arguments.delta"
+                        ) {
+                            const itemId = evt.item_id || evt.call_id || evt.id;
+                            if (!itemId) continue;
+                            const delta =
+                                evt.delta ||
+                                evt.arguments_delta ||
+                                evt.content ||
+                                "";
+                            const prev = partialArgs.get(itemId) || "";
+                            partialArgs.set(itemId, prev + String(delta));
+                            continue;
+                        }
+
+                        // When the model signals the full arguments are available
+                        if (
+                            evt.type ===
+                                "response.function_call_arguments.done" ||
+                            evt.type === "response.custom_tool_call_input.done"
+                        ) {
+                            const itemId = evt.item_id || evt.call_id || evt.id;
+                            if (!itemId) continue;
+                            // Some events include the final input directly
+                            const final =
+                                evt.input ||
+                                evt.arguments ||
+                                partialArgs.get(itemId) ||
+                                "";
+                            partialArgs.set(itemId, String(final));
+                            // Keep the final args in meta for later pairing
+                            const meta = toolMeta.get(itemId) || {};
+                            meta.arguments = String(final);
+                            toolMeta.set(itemId, meta);
+                            continue;
+                        }
+
+                        // Detect when an output item is done and is a function_call
+                        // This event commonly looks like: { type: 'response.output_item.done', item: { type: 'function_call', name, id, ... } }
+                        if (
+                            evt.type === "response.output_item.done" ||
+                            evt.type === "response.output_item.complete"
+                        ) {
+                            const item = evt.item || evt.output_item || evt;
+                            if (item && item.type === "function_call") {
+                                const callId =
+                                    item.id || item.call_id || item.item_id;
+                                const name =
+                                    item.name ||
+                                    item.function ||
+                                    item.tool ||
+                                    item.tool_name;
+                                // pair args collected earlier
+                                const argsText =
+                                    partialArgs.get(callId) ||
+                                    toolMeta.get(callId)?.arguments ||
+                                    item.input ||
+                                    "";
+
+                                if (!name) {
+                                    console.warn(
+                                        "Function call finished but name missing",
+                                        evt
+                                    );
+                                    continue;
+                                }
+
+                                // Build ToolCall object for local executor
+                                const toolCall: ToolCall = {
+                                    id: String(
+                                        callId ||
+                                            Math.random().toString(36).slice(2)
+                                    ),
+                                    type: "function",
+                                    function: {
+                                        name: String(name),
+                                        arguments: String(argsText),
+                                    },
+                                };
+
+                                // Notify UI that we're executing the tool
+                                onChunk(
+                                    `\n🔧 Executing ${toolCall.function.name}...\n`
+                                );
+
+                                // Execute tool locally (user-provided handler)
+                                if (options?.onToolCall) {
+                                    try {
+                                        const toolResult =
+                                            await options.onToolCall(toolCall);
+
+                                        // Show immediate result in UI
+                                        onChunk(`✅ ${toolResult}\n`);
+
+                                        // Send the tool result back to the model by invoking the Edge Function
+                                        // so the model can continue the conversation using this tool output.
+                                        try {
+                                            const followupPayload: any = {
+                                                messages: [
+                                                    {
+                                                        role: "user",
+                                                        content: `Tool result for call_id:${toolCall.id} name:${toolCall.function.name} -- ${toolResult}`,
+                                                    },
+                                                ],
+                                                model: CHAT_MODEL,
+                                                acceptsStreaming: true,
+                                            };
+
+                                            // Preserve tools if provided so the model can still call others
+                                            if (
+                                                options?.enableTools &&
+                                                options?.availableTools
+                                            ) {
+                                                followupPayload.tools =
+                                                    options.availableTools;
+                                                followupPayload.tool_choice =
+                                                    "auto";
+                                            }
+
+                                            // Fire a non-blocking follow-up to ai-remote to continue the model
+                                            (async () => {
+                                                try {
+                                                    const followRes =
+                                                        await fetch(
+                                                            `${SUPABASE_URL}/functions/v1/ai-remote`,
+                                                            {
+                                                                method: "POST",
+                                                                headers: {
+                                                                    "Content-Type":
+                                                                        "application/json",
+                                                                    Accept: "text/event-stream",
+                                                                    apikey: SUPABASE_ANON_KEY,
+                                                                    ...(accessToken
+                                                                        ? {
+                                                                              Authorization: `Bearer ${accessToken}`,
+                                                                          }
+                                                                        : {}),
+                                                                },
+                                                                body: JSON.stringify(
+                                                                    followupPayload
+                                                                ),
+                                                            }
+                                                        );
+
+                                                    // If follow-up is streaming, pipe its chunks to the UI
+                                                    if (
+                                                        followRes.ok &&
+                                                        followRes.headers
+                                                            .get("content-type")
+                                                            ?.includes(
+                                                                "text/event-stream"
+                                                            )
+                                                    ) {
+                                                        const rdr =
+                                                            followRes.body?.getReader();
+                                                        if (!rdr) return;
+                                                        const dec =
+                                                            new TextDecoder();
+                                                        let buf = "";
+                                                        while (true) {
+                                                            const {
+                                                                value,
+                                                                done,
+                                                            } =
+                                                                await rdr.read();
+                                                            if (done) break;
+                                                            buf += dec.decode(
+                                                                value,
+                                                                { stream: true }
+                                                            );
+                                                            let idxx: number;
+                                                            while (
+                                                                (idxx =
+                                                                    buf.indexOf(
+                                                                        "\n\n"
+                                                                    )) !== -1
+                                                            ) {
+                                                                const ev =
+                                                                    buf.slice(
+                                                                        0,
+                                                                        idxx
+                                                                    );
+                                                                buf = buf.slice(
+                                                                    idxx + 2
+                                                                );
+                                                                for (const l of ev.split(
+                                                                    "\n"
+                                                                )) {
+                                                                    const mm =
+                                                                        l.match(
+                                                                            /^data:\s*(.*)$/
+                                                                        );
+                                                                    if (!mm)
+                                                                        continue;
+                                                                    const p =
+                                                                        mm[1];
+                                                                    if (
+                                                                        !p ||
+                                                                        p ===
+                                                                            "[DONE]"
+                                                                    )
+                                                                        continue;
+                                                                    try {
+                                                                        const o =
+                                                                            JSON.parse(
+                                                                                p
+                                                                            );
+                                                                        if (
+                                                                            o.type ===
+                                                                                "chunk" &&
+                                                                            o.content
+                                                                        )
+                                                                            onChunk(
+                                                                                String(
+                                                                                    o.content
+                                                                                )
+                                                                            );
+                                                                        else if (
+                                                                            o.type ===
+                                                                                "complete" &&
+                                                                            o.response
+                                                                        )
+                                                                            onChunk(
+                                                                                String(
+                                                                                    o.response
+                                                                                )
+                                                                            );
+                                                                    } catch {
+                                                                        onChunk(
+                                                                            p
+                                                                        );
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // Non-streaming fallback
+                                                        const json =
+                                                            await followRes
+                                                                .json()
+                                                                .catch(
+                                                                    () => null
+                                                                );
+                                                        if (json?.response)
+                                                            onChunk(
+                                                                String(
+                                                                    json.response
+                                                                )
+                                                            );
+                                                    }
+                                                } catch (followErr: any) {
+                                                    console.warn(
+                                                        "Follow-up stream failed:",
+                                                        followErr
+                                                    );
+                                                    onChunk(
+                                                        `\n⚠️ Failed to send tool result back to model: ${
+                                                            followErr?.message ||
+                                                            followErr
+                                                        }\n`
+                                                    );
+                                                }
+                                            })();
+                                        } catch (e) {
+                                            console.warn(
+                                                "Error sending tool result back to model:",
+                                                e
+                                            );
+                                        }
+                                    } catch (toolErr: any) {
+                                        onChunk(
+                                            `❌ Tool execution failed: ${
+                                                toolErr?.message || toolErr
+                                            }\n`
+                                        );
+                                    }
+                                } else {
+                                    onChunk(
+                                        `⚠️ Tool ${toolCall.function.name} requested but no executor provided.\n`
+                                    );
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Backwards-compat: we may receive a pre-packed tool_call event from the server
+                        if (
                             evt.type === "tool_call" &&
                             evt.tool_call &&
                             options?.onToolCall
                         ) {
-                            // Handle tool calls immediately during streaming
                             const toolCall = evt.tool_call as ToolCall;
                             try {
                                 onChunk(
@@ -341,8 +662,13 @@ Current node: ${currentNodeText}`,
                                     }\n`
                                 );
                             }
-                        } else if (evt.type === "complete") {
+                            continue;
+                        }
+
+                        // Final complete event
+                        if (evt.type === "complete") {
                             lastCompleteEvent = evt;
+                            continue;
                         }
                     } catch {
                         // Non-JSON data line, emit as-is to preserve text
