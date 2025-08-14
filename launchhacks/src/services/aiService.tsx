@@ -774,45 +774,22 @@ const askAiForMermaidDiagram = async (
     diagramDescription: string
 ): Promise<string> => {
     try {
-        const layouts = await import("./layouts");
-        const examples =
-            layouts.EXAMPLE_DIAGRAMS[
-                layoutNumber.toString() as keyof typeof layouts.EXAMPLE_DIAGRAMS
-            ];
-
-        const exampleDiagrams =
-            examples && Array.isArray(examples)
-                ? examples.slice(0, 2).join("\n\n--- EXAMPLE 2 ---\n\n")
-                : "";
-
-        const diagramTypes = {
-            3: "flowchart",
-            4: "mindmap",
-            5: "pie",
-            6: "quadrantChart",
-        };
-
-        const diagramType =
-            diagramTypes[layoutNumber as keyof typeof diagramTypes] ||
-            "flowchart";
-
-        const prompt = `Generate a valid Mermaid ${diagramType} diagram for the educational concept: "${message}".
+        const prompt = `Generate a valid Mermaid diagram for the educational concept: "${message}".
 
 Context: ${context}
 Diagram Description: ${diagramDescription}
 
-EXAMPLES OF VALID ${diagramType.toUpperCase()} DIAGRAMS:
-${exampleDiagrams}
-
 REQUIREMENTS:
-- Generate ONLY a valid Mermaid ${diagramType} syntax
+- Generate ONLY valid Mermaid syntax, do not use brackets in strings(mermaid does not like them)
 - Use educational, clear node names (no generic A, B, C labels)
 - Include 4-7 meaningful elements
 - For flowcharts: use proper arrows and decision points
-- For mindmaps: use nested structure with (root)
+- For mindmaps: use nested structure with clear hierarchy
 - For pie charts: use meaningful categories with percentages
 - For quadrant charts: include axis labels and data points
+- Use any diagram type that describes the concept the best. You can use any mermaid features
 - Make it educational and relevant to "${message}"
+- Make it look nice and visually appealing! With themes, different shapes, colors, etc.
 - NO explanatory text, just the diagram code
 
 Return ONLY the Mermaid diagram string, nothing else.`;
@@ -825,14 +802,6 @@ Return ONLY the Mermaid diagram string, nothing else.`;
             .replace(/```mermaid\s*\n?/gi, "")
             .replace(/```\s*$/gi, "")
             .trim();
-
-        // If response contains multiple potential diagrams, take the first one
-        const diagramMatch = cleanedDiagram.match(
-            /^(flowchart|mindmap|pie|quadrantChart)[\s\S]*?(?=\n\n|$)/
-        );
-        if (diagramMatch) {
-            cleanedDiagram = diagramMatch[0];
-        }
 
         return cleanedDiagram || getDefaultDiagram(layoutNumber, message);
     } catch (error) {
