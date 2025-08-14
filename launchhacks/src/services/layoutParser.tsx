@@ -351,6 +351,32 @@ async function parseLayout3(content: any[], nodeId: string): Promise<string> {
     const [mermaidCode, description] = content;
     const diagramId = `mermaid-${nodeId}`;
 
+    // Ensure flowcharts render horizontally (left-to-right) by
+    // normalizing any existing direction tokens or prepending
+    // a `flowchart LR` directive when the content looks like a
+    // graph but doesn't already declare one.
+    let mermaidInput = mermaidCode || "";
+
+    try {
+        // Replace existing graph/flowchart direction (TD/TB/RL/etc.) with LR
+        mermaidInput = mermaidInput.replace(
+            /(^|\n)\s*(flowchart|graph)\s+(TB|TD|RL|LR)/i,
+            "$1$2 LR"
+        );
+
+        // If the input doesn't start with graph/flowchart but looks like edges are present,
+        // assume it's a flowchart and prepend the LR directive to enforce horizontal layout.
+        if (
+            !/^\s*(flowchart|graph)/i.test(mermaidInput) &&
+            /-->|->/.test(mermaidInput)
+        ) {
+            mermaidInput = `flowchart LR\n${mermaidInput}`;
+        }
+    } catch (e) {
+        // If anything goes wrong normalizing, fall back to original code.
+        mermaidInput = mermaidCode || "";
+    }
+
     let html = `
         <div class="layout-3">
             <div class="layout-diagram-section draggable-diagram-block">
@@ -371,7 +397,7 @@ async function parseLayout3(content: any[], nodeId: string): Promise<string> {
     `;
 
     try {
-        const svg = await mermaidToSvg(mermaidCode);
+        const svg = await mermaidToSvg(mermaidInput);
         // Enhance the SVG with better styling
         const enhancedSvg = svg.outerHTML.replace(
             "<svg",

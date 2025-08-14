@@ -770,7 +770,8 @@ Return ONLY the description text, no JSON formatting or extra text.`;
 const askAiForMermaidDiagram = async (
     message: string,
     context: string,
-    layoutNumber: number
+    layoutNumber: number,
+    diagramType: string
 ): Promise<string> => {
     try {
         const prompt = `Generate a valid Mermaid diagram for the educational concept: "${message}".
@@ -789,7 +790,7 @@ REQUIREMENTS:
 - Make it educational and relevant to "${message}"
 - Make it look nice and visually appealing! With themes, different shapes, colors, etc!
 - NO explanatory text, just the diagram code
-
+- The diagram should have the type of "${diagramType}"
 Return ONLY the Mermaid diagram string, nothing else.`;
 
         const response = await askAI(prompt, MERMAID_DIAGRAM_MODEL);
@@ -851,7 +852,12 @@ export const askAiForContent = async (
         if (layoutNumber >= 3 && layoutNumber <= 6) {
             // Step 2: Concurrently generate the diagram and explanation text
             const [mermaidDiagram, explanationResponse] = await Promise.all([
-                askAiForMermaidDiagram(message, context, layoutNumber),
+                askAiForMermaidDiagram(
+                    message,
+                    context,
+                    layoutNumber,
+                    layoutNumber === 3 ? "flowchart" : "anything"
+                ),
                 askAI(
                     diagramContentPrompt(message, message, context),
                     CONTENT_MODEL
