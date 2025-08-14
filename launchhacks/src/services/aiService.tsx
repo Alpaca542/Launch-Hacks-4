@@ -319,28 +319,6 @@ Current node: ${currentNodeText}`,
                             onChunk(String(evt.content));
                         } else if (evt.type === "error") {
                             throw new Error(evt.message || "Stream error");
-                        } else if (
-                            evt.type === "tool_call" &&
-                            evt.tool_call &&
-                            options?.onToolCall
-                        ) {
-                            // Handle tool calls immediately during streaming
-                            const toolCall = evt.tool_call as ToolCall;
-                            try {
-                                onChunk(
-                                    `\n🔧 Using ${toolCall.function.name}...\n`
-                                );
-                                const toolResult = await options.onToolCall(
-                                    toolCall
-                                );
-                                onChunk(`✅ ${toolResult}\n`);
-                            } catch (toolError: any) {
-                                onChunk(
-                                    `❌ Tool execution failed: ${
-                                        toolError?.message || toolError
-                                    }\n`
-                                );
-                            }
                         } else if (evt.type === "complete") {
                             lastCompleteEvent = evt;
                         }
@@ -355,18 +333,15 @@ Current node: ${currentNodeText}`,
         // Handle any final complete event (tool calls, etc.)
         if (lastCompleteEvent) {
             // Only handle tool calls in complete event if they weren't already handled mid-stream
-            // We can check if tool calls were handled by seeing if we already executed any
-            const hasUnhandledToolCalls =
+            if (
                 lastCompleteEvent.tool_calls &&
                 lastCompleteEvent.tool_calls.length &&
-                options?.onToolCall;
-
-            if (hasUnhandledToolCalls) {
-                // This is a fallback for tool calls that weren't handled during streaming
+                options?.onToolCall
+            ) {
                 for (const toolCall of lastCompleteEvent.tool_calls as ToolCall[]) {
                     try {
                         onChunk(`\n🔧 Using ${toolCall.function.name}...\n`);
-                        const toolResult = await options!.onToolCall!(toolCall);
+                        const toolResult = await options.onToolCall(toolCall);
                         onChunk(`✅ ${toolResult}\n`);
                     } catch (toolError: any) {
                         onChunk(
