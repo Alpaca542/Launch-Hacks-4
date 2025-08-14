@@ -296,11 +296,6 @@ Current node: ${currentNodeText}`,
         let buffer = "";
         let lastCompleteEvent: any | null = null;
 
-        // Buffers for assembling function call argument streams: item_id -> accumulated args string
-        const argBuffers = new Map<string, string>();
-        // Track item_ids we've already handled to avoid duplicate execution
-        const handledItems = new Set<string>();
-
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
@@ -320,186 +315,14 @@ Current node: ${currentNodeText}`,
 
                     try {
                         const evt = JSON.parse(payloadStr);
-
-                        // Normal text chunks emitted by the server
-                        if (
-                            (evt.type === "chunk" ||
-                                evt.type === "response.output_text.delta") &&
-                            evt.content
-                        ) {
+                        if (evt.type === "chunk" && evt.content) {
                             onChunk(String(evt.content));
-                            continue;
-                        }
-
-                        // Error event
-                        if (evt.type === "error") {
+                        } else if (evt.type === "error") {
                             throw new Error(evt.message || "Stream error");
-                        }
-
-                        // Complete event from server
-                        if (
-                            evt.type === "complete" ||
-                            evt.type === "response.completed"
-                        ) {
+                        } else if (evt.type === "complete") {
                             lastCompleteEvent = evt;
-                            continue;
                         }
-
-                        // Handle incremental function/tool argument streaming. Different runtimes may use
-                        // "response.function_call_arguments.*" or "response.custom_tool_call_input.*" naming.
-                        const isArgDelta =
-                            evt.type ===
-                                "response.function_call_arguments.delta" ||
-                            evt.type ===
-                                "response.custom_tool_call_input.delta" ||
-                            evt.type ===
-                                "response.custom_tool_call_input.delta";
-                        const isArgDone =
-                            evt.type ===
-                                "response.function_call_arguments.done" ||
-                            evt.type === "response.custom_tool_call_input.done";
-
-                        if (isArgDelta && evt.item_id) {
-                            const prev = argBuffers.get(evt.item_id) ?? "";
-                            argBuffers.set(
-                                evt.item_id,
-                                prev + (evt.delta ?? "")
-                            );
-                            continue;
-                        }
-
-                        if (isArgDone && evt.item_id) {
-                            // If we've already handled this item, skip
-                            if (handledItems.has(evt.item_id)) continue;
-
-                            const rawArgs =
-                                argBuffers.get(evt.item_id) ??
-                                evt.input ??
-                                "{}";
-                            let parsedArgs: any = null;
-                            try {
-                                parsedArgs =
-                                    rawArgs && typeof rawArgs === "string"
-                                        ? JSON.parse(rawArgs)
-                                        : rawArgs;
-                            } catch (parseErr) {
-                                // If parsing fails, still expose raw string to caller
-                                parsedArgs = rawArgs;
-                            }
-
-                            // Construct a ToolCall object to match the non-streaming handler shape
-                            const toolName =
-                                evt.name ||
-                                evt.tool_name ||
-                                evt.function_name ||
-                                (evt.tool_call && evt.tool_call.name) ||
-                                "function";
-                            const toolCall: ToolCall = {
-                                id: evt.item_id,
-                                type: "function",
-                                function: {
-                                    name: toolName,
-                                    arguments:
-                                        typeof parsedArgs === "string"
-                                            ? parsedArgs
-                                            : JSON.stringify(parsedArgs),
-                                },
-                            };
-
-                            handledItems.add(evt.item_id);
-
-                            // Notify UI that we're invoking a tool
-                            onChunk(
-                                `\n🔧 Using ${toolCall.function.name}...\n`
-                            );
-
-                            // If consumer provided an onToolCall hook, call it and stream its result
-                            if (options?.onToolCall) {
-                                try {
-                                    const result = await options.onToolCall(
-                                        toolCall
-                                    );
-                                    onChunk(`✅ ${result}\n`);
-                                } catch (toolError: any) {
-                                    onChunk(
-                                        `❌ Tool execution failed: ${
-                                            toolError?.message || toolError
-                                        }\n`
-                                    );
-                                }
-                            }
-
-                            // Clean up the buffer for this item
-                            argBuffers.delete(evt.item_id);
-                            continue;
-                        }
-
-                        // Legacy or other streaming shapes: if server sends a tool_call event with full function args
-                        if (
-                            evt.type === "tool_call" ||
-                            evt.type === "response.tool_call" ||
-                            evt.type === "response.output_item"
-                        ) {
-                            // Try to extract a content string if present
-                            const maybeArgs =
-                                evt.arguments ||
-                                evt.input ||
-                                (evt.tool_call && evt.tool_call.input) ||
-                                null;
-                            const toolName =
-                                evt.name ||
-                                evt.tool_name ||
-                                (evt.tool_call && evt.tool_call.name) ||
-                                "function";
-                            const toolCall: ToolCall = {
-                                id:
-                                    evt.item_id ||
-                                    (evt.tool_call && evt.tool_call.id) ||
-                                    "",
-                                type: "function",
-                                function: {
-                                    name: toolName,
-                                    arguments:
-                                        typeof maybeArgs === "string"
-                                            ? maybeArgs
-                                            : JSON.stringify(maybeArgs),
-                                },
-                            };
-
-                            // Avoid duplicate handling
-                            if (toolCall.id && handledItems.has(toolCall.id))
-                                continue;
-                            if (toolCall.id) handledItems.add(toolCall.id);
-
-                            onChunk(
-                                `\n🔧 Using ${toolCall.function.name}...\n`
-                            );
-                            if (options?.onToolCall) {
-                                try {
-                                    const result = await options.onToolCall(
-                                        toolCall
-                                    );
-                                    onChunk(`✅ ${result}\n`);
-                                } catch (toolError: any) {
-                                    onChunk(
-                                        `❌ Tool execution failed: ${
-                                            toolError?.message || toolError
-                                        }\n`
-                                    );
-                                }
-                            }
-                            continue;
-                        }
-
-                        // Fallback: emit any textual content fields to the consumer
-                        if (typeof evt === "object") {
-                            // Try common fields
-                            if (evt.text) onChunk(String(evt.text));
-                            else if (evt.output_text)
-                                onChunk(String(evt.output_text));
-                            else if (evt.content) onChunk(String(evt.content));
-                        }
-                    } catch (err) {
+                    } catch {
                         // Non-JSON data line, emit as-is to preserve text
                         onChunk(payloadStr);
                     }
