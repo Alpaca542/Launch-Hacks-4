@@ -770,14 +770,12 @@ Return ONLY the description text, no JSON formatting or extra text.`;
 const askAiForMermaidDiagram = async (
     message: string,
     context: string,
-    layoutNumber: number,
-    diagramDescription: string
+    layoutNumber: number
 ): Promise<string> => {
     try {
         const prompt = `Generate a valid Mermaid diagram for the educational concept: "${message}".
 
 Context: ${context}
-Diagram Description: ${diagramDescription}
 
 REQUIREMENTS:
 - Generate ONLY valid Mermaid syntax, do not use brackets in strings(mermaid does not like them)
@@ -789,7 +787,7 @@ REQUIREMENTS:
 - For quadrant charts: include axis labels and data points
 - Use any diagram type that describes the concept the best. You can use any mermaid features
 - Make it educational and relevant to "${message}"
-- Make it look nice and visually appealing! With themes, different shapes, colors, etc.
+- Make it look nice and visually appealing! With themes, different shapes, colors, etc!
 - NO explanatory text, just the diagram code
 
 Return ONLY the Mermaid diagram string, nothing else.`;
@@ -851,23 +849,11 @@ export const askAiForContent = async (
     try {
         // For diagram layouts (3-6), split into two requests
         if (layoutNumber >= 3 && layoutNumber <= 6) {
-            // Step 1: Get the diagram description first
-            const diagramDescription = await askAiForDiagramDescription(
-                message,
-                context,
-                layoutNumber
-            );
-
             // Step 2: Concurrently generate the diagram and explanation text
             const [mermaidDiagram, explanationResponse] = await Promise.all([
-                askAiForMermaidDiagram(
-                    message,
-                    context,
-                    layoutNumber,
-                    diagramDescription
-                ),
+                askAiForMermaidDiagram(message, context, layoutNumber),
                 askAI(
-                    diagramContentPrompt(diagramDescription, message, context),
+                    diagramContentPrompt(message, message, context),
                     CONTENT_MODEL
                 ),
             ]);
